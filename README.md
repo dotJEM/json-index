@@ -1,2 +1,2 @@
-json-index
-==========
+dotJEM JSON Index
+=================
