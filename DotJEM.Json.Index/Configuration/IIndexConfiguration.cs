@@ -30,7 +30,6 @@ namespace DotJEM.Json.Index.Configuration
         IStrategyResolver<IIndexStrategy> Index { get; }
         IStrategyResolver<IQueryStrategy> Query { get; }
         IStrategyResolver<IIdentityStrategy> Identity { get; }
-        
     }
 
     public class IndexConfiguration : IIndexConfiguration
