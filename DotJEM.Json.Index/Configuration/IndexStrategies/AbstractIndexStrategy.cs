@@ -13,7 +13,7 @@ namespace DotJEM.Json.Index.Configuration.IndexStrategies
         protected AbstractIndexStrategy()
         {
             FieldStore = Field.Store.NO;
-            FieldIndex = Field.Index.NOT_ANALYZED;
+            FieldIndex = Field.Index.ANALYZED;
             Mapper = token => token.ToString();
         }
 

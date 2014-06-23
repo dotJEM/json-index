@@ -38,6 +38,8 @@ namespace DotJEM.Json.Index.Configuration.IndexStrategies
                 case JTokenType.Boolean:
                 case JTokenType.Raw:
                 case JTokenType.Uri:
+                    return new Field(fieldName, value.Value.ToString(), FieldStore, FieldIndex);
+
                 case JTokenType.String:
                     return new Field(fieldName, value.Value<string>(), FieldStore, FieldIndex);
 
