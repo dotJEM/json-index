@@ -3,6 +3,8 @@ using System.Diagnostics;
 using Lucene.Net.Index;
 using Lucene.Net.Search;
 
+// TODO: This collector is currently not in effect, so we disable all resharper warnings for now.
+// ReSharper disable All
 namespace DotJEM.Json.Index.Collectors
 {
     //Note: Investication in Collectors.

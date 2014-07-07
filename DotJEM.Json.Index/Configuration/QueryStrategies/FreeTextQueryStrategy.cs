@@ -7,12 +7,12 @@ namespace DotJEM.Json.Index.Configuration.QueryStrategies
 {
     public class FreeTextQueryStrategy : AbstactQueryStrategy
     {
-        private static readonly char[] DELIMITERS = " ".ToCharArray();
+        private static readonly char[] delimiters = " ".ToCharArray();
 
         public override Query Create(string field, string value)
         {
             value = value.ToLowerInvariant();
-            string[] words = value.Split(DELIMITERS, StringSplitOptions.RemoveEmptyEntries);
+            string[] words = value.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
             if (!words.Any())
                 return null;
 

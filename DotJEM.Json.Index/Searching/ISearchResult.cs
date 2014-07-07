@@ -23,7 +23,7 @@ namespace DotJEM.Json.Index.Searching
 
     public class SearchResultCollector : ISearchResult
     {
-        private int take = 25, skip = 0;
+        private int take = 25, skip;
         private Filter filtering;
         private Sort sorting;
         private Query query;
@@ -59,15 +59,15 @@ namespace DotJEM.Json.Index.Searching
             return this;
         }
 
-        public ISearchResult Filter(Filter filtering)
+        public ISearchResult Filter(Filter value)
         {
-            this.filtering = filtering;
+            filtering = value;
             return this;
         }
 
-        public ISearchResult Sort(Sort sorting)
+        public ISearchResult Sort(Sort value)
         {
-            this.sorting = sorting;
+            sorting = value;
             return this;
         }
 

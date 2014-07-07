@@ -35,7 +35,7 @@ namespace DotJEM.Json.Index.Configuration.IdentityStrategies
 
         public override string Resolve(JObject entity)
         {
-            return entity["_id"].Value<Guid>().ToString();
+            return entity[Field].Value<Guid>().ToString();
         }
     }
 }

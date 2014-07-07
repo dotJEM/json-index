@@ -3,6 +3,8 @@ using Lucene.Net.Index;
 using Lucene.Net.Search;
 using Lucene.Net.Util;
 
+// TODO: This collector is an extract from the Lucene source, it's here for sort of documentation on how to do collectors, so no warnings on this.
+// ReSharper disable All
 namespace DotJEM.Json.Index.Collectors
 {
     //Note: For Inspirational purposes.
@@ -84,7 +86,7 @@ namespace DotJEM.Json.Index.Collectors
         {
             float num1 = scorer.Score();
             int num2 = internalTotalHits + 1;
-            this.internalTotalHits = num2;
+            internalTotalHits = num2;
             if ((double)num1 <= pqTop.Score)
                 return;
 
@@ -97,7 +99,7 @@ namespace DotJEM.Json.Index.Collectors
         {
             int num = internalTotalHits < pq.Size() ? internalTotalHits : pq.Size();
             if (start < 0 || start >= num || howMany <= 0)
-                return NewTopDocs((ScoreDoc[])null, start);
+                return NewTopDocs(null, start);
             howMany = Math.Min(num - start, howMany);
             ScoreDoc[] results = new ScoreDoc[howMany];
             for (int index = pq.Size() - start - howMany; index > 0; --index)

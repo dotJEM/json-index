@@ -1,5 +1,6 @@
 ﻿using System;
 using Lucene.Net.Documents;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace DotJEM.Json.Index.Configuration.IndexStrategies
@@ -13,8 +14,8 @@ namespace DotJEM.Json.Index.Configuration.IndexStrategies
         protected AbstractIndexStrategy()
         {
             FieldStore = Field.Store.NO;
-            FieldIndex = Field.Index.ANALYZED;
-            Mapper = token => token.ToString();
+            FieldIndex = Field.Index.NOT_ANALYZED;
+            Mapper = token => token.ToString(Formatting.None);
         }
 
         public AbstractIndexStrategy Map(Func<JValue, dynamic> func)

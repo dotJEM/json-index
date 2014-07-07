@@ -58,7 +58,7 @@ namespace DotJEM.Json.Index
         }
     }
 
-    public static class IJsonIndexExtensions
+    public static class JsonIndexExtensions
     {
         public static ISearchResult Find(this IJsonIndex self, string query)
         {
