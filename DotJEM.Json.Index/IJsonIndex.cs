@@ -1,5 +1,7 @@
-﻿using DotJEM.Json.Index.Configuration;
+﻿using System.Collections.Generic;
+using DotJEM.Json.Index.Configuration;
 using DotJEM.Json.Index.Searching;
+using Newtonsoft.Json.Linq;
 
 namespace DotJEM.Json.Index
 {
@@ -63,6 +65,24 @@ namespace DotJEM.Json.Index
         public static ISearchResult Find(this IJsonIndex self, string query)
         {
             return self.CreateSearcher().Search(query);
+        }
+
+        public static IJsonIndex Write(this IJsonIndex self, JObject entity)
+        {
+            self.CreateWriter().Write(entity);
+            return self;
+        }
+
+        public static IJsonIndex WriteAll(this IJsonIndex self, IEnumerable<JObject> entities)
+        {
+            self.CreateWriter().WriteAll(entities);
+            return self;
+        }
+
+        public static IJsonIndex Delete(this IJsonIndex self, JObject entity)
+        {
+            self.CreateWriter().Delete(entity);
+            return self;
         }
     }
 }
