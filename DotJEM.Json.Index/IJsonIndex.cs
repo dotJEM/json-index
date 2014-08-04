@@ -84,5 +84,11 @@ namespace DotJEM.Json.Index
             self.CreateWriter().Delete(entity);
             return self;
         }
+
+        public static IEnumerable<string> Terms(this IJsonIndex self, string field)
+        {
+            return self.CreateSearcher().Terms(field);
+        }
+
     }
 }

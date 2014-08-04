@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Lucene.Net.Index;
 using Lucene.Net.Search;
 using Newtonsoft.Json.Linq;
 
@@ -7,9 +8,12 @@ namespace DotJEM.Json.Index.Searching
     public interface ILuceneSearcher
     {
         ISearchResult Search(Query query);
+        ISearchResult Search(string value);
         ISearchResult Search(JObject query, string contentType = "");
-        ISearchResult Search(string query, string contentType = "");
+        ISearchResult Search(string query, string contentType);
         ISearchResult Search(string query, IEnumerable<string> fields, string contentType = "");
+
+        IEnumerable<string> Terms(string field);
     }
 
     public class LuceneSearcher : ILuceneSearcher
@@ -33,7 +37,12 @@ namespace DotJEM.Json.Index.Searching
             return InternalSearch(query);
         }
 
-        public ISearchResult Search(string value, string contentType = "")
+        public ISearchResult Search(string value)
+        {
+            return Search(queryBuilder.Build(value));
+        }
+
+        public ISearchResult Search(string value, string contentType)
         {
             return Search(value, index.Fields.AllFields(), contentType);
         }
@@ -53,6 +62,20 @@ namespace DotJEM.Json.Index.Searching
             return new SearchResultCollector(query, index);
         }
 
+        public IEnumerable<string> Terms(string field)
+        {
+            using (var reader = index.Storage.OpenReader())
+            {
+                TermEnum terms = reader.Terms(new Term(field));
+                do
+                {
+                    if (terms.Term.Field != field)
+                        yield break;
+                    yield return terms.Term.Text;
+                } while (terms.Next());
+
+            }
+        }
         //private dynamic CreateJson(dynamic hit, Query queryBuilder)
         //{
         //    string content = hit.Document.GetField("html").StringValue;

@@ -2,7 +2,11 @@
 using System.Diagnostics;
 using System.Linq;
 using DotJEM.Json.Index.Configuration;
+using Lucene.Net.Analysis;
+using Lucene.Net.Analysis.Standard;
+using Lucene.Net.QueryParsers;
 using Lucene.Net.Search;
+using Lucene.Net.Util;
 using Newtonsoft.Json.Linq;
 
 namespace DotJEM.Json.Index.Searching
@@ -10,7 +14,8 @@ namespace DotJEM.Json.Index.Searching
     public interface IQueryBuilder
     {
         //TODO: encapsulate Query object so Lucene isn't a core dependency.
-        Query Build(string querytext, IEnumerable<string> allFields, string contentType = null);
+        Query Build(string querytext);
+        Query Build(string querytext, IEnumerable<string> fields, string contentType = null);
         Query Build(JObject queryobj, string contentType = null);
     }
 
@@ -28,6 +33,14 @@ namespace DotJEM.Json.Index.Searching
         {
             this.enumarator = enumarator;
             this.configuration = configuration;
+        }
+
+        public Query Build(string querytext)
+        {
+            QueryParser parser = new QueryParser(Version.LUCENE_30, "*", new StandardAnalyzer(Version.LUCENE_30));
+            Query query = parser.Parse(querytext);
+            Debug.WriteLine("QUERY: " + query);
+            return query;
         }
 
         public Query Build(string querytext, IEnumerable<string> fields, string contentType)

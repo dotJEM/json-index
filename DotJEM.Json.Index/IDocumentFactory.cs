@@ -32,9 +32,11 @@ namespace DotJEM.Json.Index
             string contentType = index.Configuration.TypeResolver.Resolve(value);
 
             Document doc = new Document();
-            foreach (IFieldable field in enumarator
+            var x = enumarator
                 .Flatten(value, (fn, v) => factory.Create(fn, contentType, v))
-                .Where(field => field != null))
+                .Where(field => field != null).ToList();
+
+            foreach (IFieldable field in x)
             {
                 index.Fields.Add(contentType, field.Name, field.IsIndexed);
                 doc.Add(field);
