@@ -21,12 +21,12 @@ namespace DotJEM.Json.Index.Test.Integration
     //        //builder.Container.Register(Component.For<ILuceneSearcher>().ImplementedBy<LuceneSearcher>().LifestyleSingleton());
     //        //builder.Container.Register(Component.For<IQueryBuilder>().ImplementedBy<LuceneQueryBuilder>().LifestyleSingleton());
 
-    //        //builder.Container.Register(Component.For<IJsonIndex>().ImplementedBy<LuceneJsonIndex>().LifestyleSingleton());
+    //        //builder.Container.Register(Component.For<IStorageIndex>().ImplementedBy<LuceneStorageIndex>().LifestyleSingleton());
 
     //        //builder.Container.Register(Component.For<IFieldFactory>().ImplementedBy<FieldFactory>().LifestyleSingleton());
     //        //builder.Container.Register(Component.For<IIndexConfiguration>().ImplementedBy<IndexConfiguration>().LifestyleSingleton());
 
-    //        IJsonIndex init = new LuceneJsonIndex();
+    //        IStorageIndex init = new LuceneStorageIndex();
     //        init.Configuration.SetTypeResolver("$contentType")
     //            .ForAll()
     //            .SetIdentity("$id")
@@ -47,7 +47,7 @@ namespace DotJEM.Json.Index.Test.Integration
     [TestFixture]
     public class LuceneSearcherSimpleDataTest
     {
-        private readonly IJsonIndex index = new LuceneJsonIndex();
+        private readonly IStorageIndex index = new LuceneStorageIndex();
 
         [TestFixtureSetUp]
         public void TestFixtureSetUp()

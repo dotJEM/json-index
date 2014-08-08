@@ -8,7 +8,7 @@ namespace DotJEM.Json.Index.Test.Integration
     [TestFixture]
     public class LuceneSearcherTests
     {
-        private readonly IJsonIndex index = new LuceneJsonIndex();
+        private readonly IStorageIndex index = new LuceneStorageIndex();
 
         [TestFixtureSetUp]
         public void TestFixtureSetUp()

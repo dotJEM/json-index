@@ -103,7 +103,7 @@
     <Compile Include="IFieldFactory.cs" />
     <Compile Include="IDocumentFactory.cs" />
     <Compile Include="IFieldCollection.cs" />
-    <Compile Include="IJsonIndex.cs" />
+    <Compile Include="IStorageIndex.cs" />
     <Compile Include="IIndexStorage.cs" />
     <Compile Include="ILuceneWriter.cs" />
     <Compile Include="JObjectExtensions.cs" />

@@ -12,15 +12,15 @@ namespace DotJEM.Json.Index
     public class LuceneDocumentFactory : IDocumentFactory
     {
         private readonly IFieldFactory factory;
-        private readonly IJsonIndex index;
+        private readonly IStorageIndex index;
         private readonly IJObjectEnumarator enumarator;
 
-        public LuceneDocumentFactory(IJsonIndex index)
+        public LuceneDocumentFactory(IStorageIndex index)
             : this(index, new FieldFactory(index.Configuration), new JObjectEnumerator())
         {
         }
 
-        public LuceneDocumentFactory(IJsonIndex index, IFieldFactory factory,  IJObjectEnumarator enumarator)
+        public LuceneDocumentFactory(IStorageIndex index, IFieldFactory factory,  IJObjectEnumarator enumarator)
         {
             this.index = index;
             this.factory = factory;

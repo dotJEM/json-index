@@ -15,17 +15,17 @@ namespace DotJEM.Json.Index
 
     internal class LuceneWriter : ILuceneWriter
     {
-        private readonly IJsonIndex index;
+        private readonly IStorageIndex index;
         private readonly IDocumentFactory factory;
 
         private readonly StandardAnalyzer analyzer = new StandardAnalyzer(Version.LUCENE_30);
 
-        public LuceneWriter(IJsonIndex index) 
+        public LuceneWriter(IStorageIndex index) 
             : this(index, new LuceneDocumentFactory(index))
         {
         }
 
-        public LuceneWriter(IJsonIndex index, IDocumentFactory factory)
+        public LuceneWriter(IStorageIndex index, IDocumentFactory factory)
         {
             this.index = index;
             this.factory = factory;

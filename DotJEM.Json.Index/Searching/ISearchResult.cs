@@ -29,11 +29,11 @@ namespace DotJEM.Json.Index.Searching
         private Query query;
         private IndexSearcher searcher;
 
-        private readonly IJsonIndex index;
+        private readonly IStorageIndex index;
 
         public long TotalCount { get; private set; }
 
-        public SearchResultCollector(Query query, IJsonIndex index)
+        public SearchResultCollector(Query query, IStorageIndex index)
         {
             this.query = query;
             this.index = index;

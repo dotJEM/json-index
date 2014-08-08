@@ -5,7 +5,7 @@ using Newtonsoft.Json.Linq;
 
 namespace DotJEM.Json.Index
 {
-    public interface IJsonIndex
+    public interface IStorageIndex
     {
         IFieldCollection Fields { get; }
         IIndexStorage Storage { get; }
@@ -15,33 +15,33 @@ namespace DotJEM.Json.Index
         ILuceneSearcher CreateSearcher();
     }
 
-    public class LuceneJsonIndex : IJsonIndex
+    public class LuceneStorageIndex : IStorageIndex
     {
         public IFieldCollection Fields { get; private set; }
         public IIndexStorage Storage { get; private set; }
         public IIndexConfiguration Configuration { get; private set; }
 
-        public LuceneJsonIndex() 
+        public LuceneStorageIndex() 
             : this(new IndexConfiguration(), new LuceneMemmoryIndexStorage())
         {
         }
 
-        public LuceneJsonIndex(string path)
+        public LuceneStorageIndex(string path)
             : this(new IndexConfiguration(), new LuceneMemmoryMappedFileIndexStorage(path))
         {
         }
 
-        public LuceneJsonIndex(IIndexStorage storage)
+        public LuceneStorageIndex(IIndexStorage storage)
             : this(new IndexConfiguration(), storage)
         {
         }
 
-        public LuceneJsonIndex(IIndexConfiguration configuration)
+        public LuceneStorageIndex(IIndexConfiguration configuration)
             : this(configuration, new LuceneMemmoryIndexStorage())
         {
         }
 
-        public LuceneJsonIndex(IIndexConfiguration configuration, IIndexStorage storage)
+        public LuceneStorageIndex(IIndexConfiguration configuration, IIndexStorage storage)
         {
             Fields = new FieldCollection();
 
@@ -62,30 +62,30 @@ namespace DotJEM.Json.Index
 
     public static class JsonIndexExtensions
     {
-        public static ISearchResult Find(this IJsonIndex self, string query)
+        public static ISearchResult Find(this IStorageIndex self, string query)
         {
             return self.CreateSearcher().Search(query);
         }
 
-        public static IJsonIndex Write(this IJsonIndex self, JObject entity)
+        public static IStorageIndex Write(this IStorageIndex self, JObject entity)
         {
             self.CreateWriter().Write(entity);
             return self;
         }
 
-        public static IJsonIndex WriteAll(this IJsonIndex self, IEnumerable<JObject> entities)
+        public static IStorageIndex WriteAll(this IStorageIndex self, IEnumerable<JObject> entities)
         {
             self.CreateWriter().WriteAll(entities);
             return self;
         }
 
-        public static IJsonIndex Delete(this IJsonIndex self, JObject entity)
+        public static IStorageIndex Delete(this IStorageIndex self, JObject entity)
         {
             self.CreateWriter().Delete(entity);
             return self;
         }
 
-        public static IEnumerable<string> Terms(this IJsonIndex self, string field)
+        public static IEnumerable<string> Terms(this IStorageIndex self, string field)
         {
             return self.CreateSearcher().Terms(field);
         }

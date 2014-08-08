@@ -17,7 +17,7 @@ namespace DotJEM.Json.Index.Collectors
 
         private readonly Dictionary<int, float> finite;
 
-        public LuceneCollector(IJsonIndex index)
+        public LuceneCollector(IStorageIndex index)
         {
             this.finite = new Dictionary<int, float>();
         }

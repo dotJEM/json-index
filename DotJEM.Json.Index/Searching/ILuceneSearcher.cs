@@ -18,15 +18,15 @@ namespace DotJEM.Json.Index.Searching
 
     public class LuceneSearcher : ILuceneSearcher
     {
-        private readonly IJsonIndex index;
+        private readonly IStorageIndex index;
         private readonly IQueryBuilder queryBuilder;
 
-        public LuceneSearcher(IJsonIndex index)
+        public LuceneSearcher(IStorageIndex index)
             : this(index, new LuceneQueryBuilder(index.Configuration))
         {
         }
 
-        public LuceneSearcher(IJsonIndex index, IQueryBuilder queryBuilder)
+        public LuceneSearcher(IStorageIndex index, IQueryBuilder queryBuilder)
         {
             this.index = index;
             this.queryBuilder = queryBuilder;
