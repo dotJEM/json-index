@@ -48,7 +48,9 @@ namespace DotJEM.Json.Index.Configuration.IndexStrategies
                     break;
 
                 case JTokenType.String:
-                    yield return new Field(fieldName, value.Value<string>(), FieldStore, FieldIndex);
+                    yield return new Field(fieldName, value.Value<string>(), Field.Store.NO, Field.Index.NOT_ANALYZED);
+                    yield return new Field(fieldName, value.Value<string>(), Field.Store.NO, Field.Index.ANALYZED);
+                    yield return new Field("*", value.Value<string>(), Field.Store.NO, Field.Index.ANALYZED);
                     break;
 
                 case JTokenType.Null:

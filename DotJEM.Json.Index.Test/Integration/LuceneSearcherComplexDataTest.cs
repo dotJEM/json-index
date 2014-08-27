@@ -63,6 +63,42 @@ namespace DotJEM.Json.Index.Test.Integration
         }
 
         [Test]
+        public void Search_()
+        {
+            List<dynamic> result = index.CreateSearcher()
+                .Search("Brand:Dodge")
+                .Select(hit => hit.Json)
+                .ToList();
+
+            Assert.That(result,
+                Has.Count.EqualTo(1));
+        }
+
+        [Test]
+        public void Search_1()
+        {
+            List<dynamic> result = index.CreateSearcher()
+                .Search("Dodge")
+                .Select(hit => hit.Json)
+                .ToList();
+
+            Assert.That(result,
+                Has.Count.EqualTo(1));
+        }
+
+        [Test]
+        public void Search_2()
+        {
+            List<dynamic> result = index.CreateSearcher()
+                .Search(JObject.Parse("{ Brand: 'Dodge' }"))
+                .Select(hit => hit.Json)
+                .ToList();
+
+            Assert.That(result,
+                Has.Count.EqualTo(1));
+        }
+
+        [Test]
         public void Search_ForAllPersons_ReturnsJohnPeterAndAlice()
         {
             List<dynamic> result = index.CreateSearcher()
