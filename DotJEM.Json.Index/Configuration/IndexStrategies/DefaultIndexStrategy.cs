@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Lucene.Net.Documents;
 using Newtonsoft.Json.Linq;
 
@@ -6,51 +8,57 @@ namespace DotJEM.Json.Index.Configuration.IndexStrategies
 {
     public class NullIndexStrategy : AbstractIndexStrategy
     {
-        public override IFieldable CreateField(string fieldName, JValue value)
+        public override IEnumerable<IFieldable> CreateField(string fieldName, JValue value)
         {
-            return null;
+            return Enumerable.Empty<IFieldable>();
         }
     }
 
     public class DefaultIndexStrategy : AbstractIndexStrategy
     {
-        public override IFieldable CreateField(string fieldName, JValue value)
+        public override IEnumerable<IFieldable> CreateField(string fieldName, JValue value)
         {
             switch (value.Type)
             {
                 case JTokenType.Integer:
-                    return new NumericField(fieldName, FieldStore, FieldIndex != Field.Index.NO)
+                    yield return new NumericField(fieldName, FieldStore, FieldIndex != Field.Index.NO)
                         .SetLongValue(value.Value<long>());
-                
+                    break;
+
                 case JTokenType.Float:
-                    return new NumericField(fieldName, FieldStore, FieldIndex != Field.Index.NO)
+                    yield return new NumericField(fieldName, FieldStore, FieldIndex != Field.Index.NO)
                         .SetDoubleValue(value.Value<double>());
+                    break;
                 
                 case JTokenType.Date:
-                    return new NumericField(fieldName, FieldStore, FieldIndex != Field.Index.NO)
+                    yield return new NumericField(fieldName, FieldStore, FieldIndex != Field.Index.NO)
                         .SetLongValue(value.Value<DateTime>().Ticks);
+                    break;
 
                 case JTokenType.TimeSpan:
-                    return new NumericField(fieldName, FieldStore, FieldIndex != Field.Index.NO)
+                    yield return new NumericField(fieldName, FieldStore, FieldIndex != Field.Index.NO)
                         .SetLongValue(value.Value<TimeSpan>().Ticks);
+                    break;
 
                 case JTokenType.Guid:
                 case JTokenType.Boolean:
                 case JTokenType.Raw:
                 case JTokenType.Uri:
-                    return new Field(fieldName, value.Value.ToString(), FieldStore, FieldIndex);
+                    yield return new Field(fieldName, value.Value.ToString(), FieldStore, FieldIndex);
+                    break;
 
                 case JTokenType.String:
-                    return new Field(fieldName, value.Value<string>(), FieldStore, FieldIndex);
+                    yield return new Field(fieldName, value.Value<string>(), FieldStore, FieldIndex);
+                    break;
 
                 case JTokenType.Null:
                 case JTokenType.Undefined:
-                    return new Field(fieldName, "NULL", FieldStore, FieldIndex);
+                    yield return new Field(fieldName, "NULL", FieldStore, FieldIndex);
+                    break;
 
                 case JTokenType.Bytes:
                     break;
             }
-            return null;
         }
     }
 
@@ -63,7 +71,7 @@ namespace DotJEM.Json.Index.Configuration.IndexStrategies
             compoundFunc = compound;
         }
 
-        public override IFieldable CreateField(string fieldName, JValue value)
+        public override IEnumerable<IFieldable> CreateField(string fieldName, JValue value)
         {
             string comp = compoundFunc(value);
 
@@ -88,7 +96,7 @@ namespace DotJEM.Json.Index.Configuration.IndexStrategies
             //TimeSpan,
 
             //TODO: Default handling, we should figure out what we might want to do here.
-            return new Field(fieldName, comp, FieldStore, FieldIndex);
+            yield return new Field(fieldName, comp, FieldStore, FieldIndex);
         }
     }
 }

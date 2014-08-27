@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Lucene.Net.Documents;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -36,7 +37,7 @@ namespace DotJEM.Json.Index.Configuration.IndexStrategies
             return this;
         }
 
-        public abstract IFieldable CreateField(string fieldName, JValue value);
+        public abstract IEnumerable<IFieldable> CreateField(string fieldName, JValue value);
 
     }
 }

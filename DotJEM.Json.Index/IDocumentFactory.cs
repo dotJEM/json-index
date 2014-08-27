@@ -34,7 +34,8 @@ namespace DotJEM.Json.Index
             Document doc = new Document();
             var x = enumarator
                 .Flatten(value, (fn, v) => factory.Create(fn, contentType, v))
-                .Where(field => field != null).ToList();
+                .SelectMany(enumerable => enumerable.ToArray())
+                .ToList();
 
             foreach (IFieldable field in x)
             {
