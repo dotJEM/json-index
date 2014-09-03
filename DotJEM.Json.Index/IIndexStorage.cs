@@ -11,12 +11,13 @@ namespace DotJEM.Json.Index
     {
         IndexReader OpenReader();
         IndexWriter GetWriter(Analyzer analyzer);
+        bool Exists { get; }
     }
 
     public abstract class AbstractLuceneIndexStorage : IIndexStorage
     {
         protected Directory Directory { get; private set; }
-        protected virtual bool Exists { get { return Directory.ListAll().Any(); } }
+        public virtual bool Exists { get { return Directory.ListAll().Any(); } }
 
         private IndexWriter writer;
 
@@ -33,7 +34,7 @@ namespace DotJEM.Json.Index
 
         public IndexReader OpenReader()
         {
-            return IndexReader.Open(Directory, true);
+            return Exists ? IndexReader.Open(Directory, true) : null;
         }
     }
 

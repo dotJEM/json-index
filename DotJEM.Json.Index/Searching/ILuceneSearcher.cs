@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Lucene.Net.Index;
 using Lucene.Net.Search;
 using Newtonsoft.Json.Linq;
@@ -64,7 +65,10 @@ namespace DotJEM.Json.Index.Searching
 
         public IEnumerable<string> Terms(string field)
         {
-            using (var reader = index.Storage.OpenReader())
+            if (!index.Storage.Exists)
+                yield break;
+
+            using (IndexReader reader = index.Storage.OpenReader())
             {
                 TermEnum terms = reader.Terms(new Term(field));
                 do

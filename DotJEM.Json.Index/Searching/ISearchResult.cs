@@ -73,6 +73,9 @@ namespace DotJEM.Json.Index.Searching
 
         public IEnumerator<IHit> GetEnumerator()
         {
+            if(!index.Storage.Exists)
+                yield break;
+
             using (searcher = new IndexSearcher(index.Storage.OpenReader()))
             {
                 query = searcher.Rewrite(query);
