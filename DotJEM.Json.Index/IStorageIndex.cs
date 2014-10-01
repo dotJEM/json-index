@@ -67,6 +67,16 @@ namespace DotJEM.Json.Index
             return self.CreateSearcher().Search(query);
         }
 
+        public static ISearchResult Find(this IStorageIndex self, JObject query)
+        {
+            return self.CreateSearcher().Search(query);
+        }
+
+        public static ISearchResult Find(this IStorageIndex self, dynamic query)
+        {
+            return self.CreateSearcher().Search(JObject.FromObject((object)query));
+        }
+
         public static IStorageIndex Write(this IStorageIndex self, JObject entity)
         {
             self.CreateWriter().Write(entity);
