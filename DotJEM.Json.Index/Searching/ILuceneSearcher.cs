@@ -23,7 +23,7 @@ namespace DotJEM.Json.Index.Searching
         private readonly IQueryBuilder queryBuilder;
 
         public LuceneSearcher(IStorageIndex index)
-            : this(index, new LuceneQueryBuilder(index.Configuration))
+            : this(index, new LuceneQueryBuilder(index))
         {
         }
 

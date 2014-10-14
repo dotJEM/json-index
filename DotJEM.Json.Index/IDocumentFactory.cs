@@ -20,7 +20,7 @@ namespace DotJEM.Json.Index
         {
         }
 
-        public LuceneDocumentFactory(IStorageIndex index, IFieldFactory factory,  IJObjectEnumarator enumarator)
+        public LuceneDocumentFactory(IStorageIndex index, IFieldFactory factory, IJObjectEnumarator enumarator)
         {
             this.index = index;
             this.factory = factory;
