@@ -14,6 +14,16 @@ namespace DotJEM.Json.Index.Configuration.IndexStrategies
         }
     }
 
+    public class GenericStringIndexStrategy : AbstractIndexStrategy
+    {
+        public override IEnumerable<IFieldable> CreateField(string fieldName, JValue value)
+        {
+            yield return new Field(fieldName, value.Value<string>(), Field.Store.NO, Field.Index.NOT_ANALYZED);
+            yield return new Field(fieldName, value.Value<string>(), Field.Store.NO, Field.Index.ANALYZED);
+            yield return new Field("*", value.Value<string>(), Field.Store.NO, Field.Index.ANALYZED);
+        }
+    }
+
     public class DefaultIndexStrategy : AbstractIndexStrategy
     {
         public override IEnumerable<IFieldable> CreateField(string fieldName, JValue value)

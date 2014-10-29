@@ -44,17 +44,17 @@ namespace DotJEM.Json.Index.Configuration
 
         public static AbstractIndexStrategy Term()
         {
-            return new DefaultIndexStrategy().Analyzed(Field.Index.NOT_ANALYZED);
+            return new GenericStringIndexStrategy();
         }
 
         public static AbstractIndexStrategy Analyzed()
         {
-            return new DefaultIndexStrategy().Analyzed(Field.Index.ANALYZED);
+            return new GenericStringIndexStrategy().Analyzed(Field.Index.ANALYZED);
         }
 
         internal static AbstractIndexStrategy Stored()
         {
-            return new DefaultIndexStrategy().Stored(Field.Store.YES);
+            return new GenericStringIndexStrategy().Stored(Field.Store.YES);
         }
     }
 
