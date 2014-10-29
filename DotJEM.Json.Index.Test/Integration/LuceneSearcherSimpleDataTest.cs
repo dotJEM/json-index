@@ -23,7 +23,7 @@ namespace DotJEM.Json.Index.Test.Integration
             config.SetTypeResolver("Type")
                 .ForAll().SetIdentity("Id");
 
-            config.For("ship").Index("number", As.Long());
+            //config.For("ship").Index("number", As.Long());
 
             //config.ForAll().Index("Number", As.Term());
 
