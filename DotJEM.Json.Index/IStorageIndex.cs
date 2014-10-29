@@ -1,33 +1,42 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Configuration;
 using DotJEM.Json.Index.Configuration;
 using DotJEM.Json.Index.Searching;
+using Lucene.Net.Analysis;
+using Lucene.Net.Analysis.Standard;
+using Lucene.Net.Search;
 using Newtonsoft.Json.Linq;
+using Version = Lucene.Net.Util.Version;
 
 namespace DotJEM.Json.Index
 {
     public interface IStorageIndex
     {
-        IFieldCollection Fields { get; }
+        IFieldMap Fields { get; }
         IIndexStorage Storage { get; }
         IIndexConfiguration Configuration { get; }
 
-        ILuceneWriter CreateWriter();
-        ILuceneSearcher CreateSearcher();
+        ILuceneWriter Writer { get; }
+        ILuceneSearcher Searcher { get; }
     }
 
     public class LuceneStorageIndex : IStorageIndex
     {
-        public IFieldCollection Fields { get; private set; }
+        public Analyzer Analyzer { get; private set; }
+
+        public IFieldMap Fields { get; private set; }
         public IIndexStorage Storage { get; private set; }
         public IIndexConfiguration Configuration { get; private set; }
 
-        public LuceneStorageIndex() 
+        #region Constructor Overloads
+        public LuceneStorageIndex()
             : this(new IndexConfiguration(), new LuceneMemmoryIndexStorage())
         {
         }
 
         public LuceneStorageIndex(string path)
-            : this(new IndexConfiguration(), new LuceneMemmoryMappedFileIndexStorage(path))
+            : this(new IndexConfiguration(), new LuceneFileIndexStorage(path))
         {
         }
 
@@ -40,65 +49,63 @@ namespace DotJEM.Json.Index
             : this(configuration, new LuceneMemmoryIndexStorage())
         {
         }
+        #endregion
 
         public LuceneStorageIndex(IIndexConfiguration configuration, IIndexStorage storage)
         {
-            Fields = new FieldCollection();
+            Fields = new FieldMap();
+            Analyzer = new StandardAnalyzer(Version.LUCENE_30);
 
             Storage = storage;
             Configuration = configuration;
+
+            writer = new Lazy<ILuceneWriter>(() => new LuceneWriter(this));
+            searcher = new Lazy<ILuceneSearcher>(() => new LuceneSearcher(this));
         }
 
-        public ILuceneWriter CreateWriter()
+        //TODO: Do we need to be able to release these?
+        private readonly Lazy<ILuceneWriter> writer;
+        private readonly Lazy<ILuceneSearcher> searcher;
+
+        public ILuceneWriter Writer { get { return writer.Value; } }
+        public ILuceneSearcher Searcher { get { return searcher.Value; } }
+
+        public ISearchResult Search(string query)
         {
-            return new LuceneWriter(this);
+            return Searcher.Search(query);
         }
 
-        public ILuceneSearcher CreateSearcher()
+        public ISearchResult Search(JObject query)
         {
-            return new LuceneSearcher(this);
+            return Searcher.Search(query);
         }
-    }
 
-    public static class JsonIndexExtensions
-    {
-        public static ISearchResult Find(this IStorageIndex self, string query)
+        public ISearchResult Search(Query query)
         {
-            return self.CreateSearcher().Search(query);
+            return Searcher.Search(query);
         }
 
-        public static ISearchResult Find(this IStorageIndex self, JObject query)
+        public IStorageIndex Write(JObject entity)
         {
-            return self.CreateSearcher().Search(query);
+            Writer.Write(entity);
+            return this;
         }
 
-        public static ISearchResult Find(this IStorageIndex self, dynamic query)
+        public IStorageIndex WriteAll(IEnumerable<JObject> entities)
         {
-            return self.CreateSearcher().Search(JObject.FromObject((object)query));
+            Writer.WriteAll(entities);
+            return this;
         }
 
-        public static IStorageIndex Write(this IStorageIndex self, JObject entity)
+        public IStorageIndex Delete(JObject entity)
         {
-            self.CreateWriter().Write(entity);
-            return self;
+            Writer.Delete(entity);
+            return this;
         }
 
-        public static IStorageIndex WriteAll(this IStorageIndex self, IEnumerable<JObject> entities)
+        public IEnumerable<string> Terms(string field)
         {
-            self.CreateWriter().WriteAll(entities);
-            return self;
+            return Searcher.Terms(field);
         }
-
-        public static IStorageIndex Delete(this IStorageIndex self, JObject entity)
-        {
-            self.CreateWriter().Delete(entity);
-            return self;
-        }
-
-        public static IEnumerable<string> Terms(this IStorageIndex self, string field)
-        {
-            return self.CreateSearcher().Terms(field);
-        }
-
     }
 }

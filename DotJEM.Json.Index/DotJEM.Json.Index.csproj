@@ -81,8 +81,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Collectors\LuceneCollector.cs" />
-    <Compile Include="Collectors\XTopScoreDocCollector.cs" />
     <Compile Include="Configuration\As.cs" />
     <Compile Include="Configuration\IContentTypeConfiguration.cs" />
     <Compile Include="Configuration\IContentTypeResolver.cs" />
@@ -102,7 +100,7 @@
     <Compile Include="Configuration\Using.cs" />
     <Compile Include="IFieldFactory.cs" />
     <Compile Include="IDocumentFactory.cs" />
-    <Compile Include="IFieldCollection.cs" />
+    <Compile Include="IFieldMap.cs" />
     <Compile Include="IStorageIndex.cs" />
     <Compile Include="IIndexStorage.cs" />
     <Compile Include="ILuceneWriter.cs" />
@@ -112,6 +110,7 @@
     <Compile Include="Searching\IQueryBuilder.cs" />
     <Compile Include="Searching\ILuceneSearcher.cs" />
     <Compile Include="Searching\ISearchResult.cs" />
+    <Compile Include="StorageIndexExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

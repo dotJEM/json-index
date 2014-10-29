@@ -46,9 +46,9 @@ namespace DotJEM.Json.Index
         }
     }
 
-    public class LuceneSimpleFileIndexStorage : AbstractLuceneIndexStorage
+    public class LuceneFileIndexStorage : AbstractLuceneIndexStorage
     {
-        public LuceneSimpleFileIndexStorage(string path)
+        public LuceneFileIndexStorage(string path)
             : base(FSDirectory.Open(path))
         {
             //Note: Ensure directory.

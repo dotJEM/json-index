@@ -35,7 +35,7 @@ namespace DotJEM.Json.Index.Searching
 
         public ISearchResult Search(Query query)
         {
-            return InternalSearch(query);
+            return new SearchResultCollector(query, index);
         }
 
         public ISearchResult Search(string value)
@@ -58,11 +58,6 @@ namespace DotJEM.Json.Index.Searching
             return Search(queryBuilder.Build(query, contentType));
         }
 
-        private ISearchResult InternalSearch(Query query)
-        {
-            return new SearchResultCollector(query, index);
-        }
-
         public IEnumerable<string> Terms(string field)
         {
             if (!index.Storage.Exists)
@@ -77,42 +72,7 @@ namespace DotJEM.Json.Index.Searching
                         yield break;
                     yield return terms.Term.Text;
                 } while (terms.Next());
-
             }
         }
-        //private dynamic CreateJson(dynamic hit, Query queryBuilder)
-        //{
-        //    string content = hit.Document.GetField("html").StringValue;
-        //    string title = hit.Document.GetField("title").StringValue;
-
-        //    dynamic json = new JObject();
-        //    json.Id = hit.Id;
-        //    json.Content = new JsonRaw(hit.Document.GetField("json").StringValue);
-        //    json.Text = FragmentContent(queryBuilder, content);
-        //    json.Title = FragmentTitle(queryBuilder, title);
-        //    json.Score = hit.Score;
-        //    return json;
-        //}
-
-        //public string FragmentContent(Query queryBuilder, string text)
-        //{
-        //    QueryScorer scorer = new QueryScorer(queryBuilder);
-        //    SimpleHTMLFormatter formatter = new SimpleHTMLFormatter("<span class=\"hit\">", "</span>");
-        //    Highlighter highlighter = new Highlighter(formatter, scorer);
-        //    highlighter.TextFragmenter = new SimpleFragmenter(60);
-
-        //    return highlighter.GetBestFragments(analyzer.ReusableTokenStream("text", new StringReader(text)), text, 8, "........ ");
-        //}
-
-        //public string FragmentTitle(Query queryBuilder, string text)
-        //{
-        //    QueryScorer scorer = new QueryScorer(queryBuilder);
-        //    SimpleHTMLFormatter formatter = new SimpleHTMLFormatter("<span class=\"hit\">", "</span>");
-        //    Highlighter highlighter = new Highlighter(formatter, scorer);
-        //    highlighter.TextFragmenter = new SimpleFragmenter(256);
-
-        //    var fragment = highlighter.GetBestFragments(analyzer.ReusableTokenStream("text", new StringReader(text)), text, 1, "");
-        //    return fragment.Length > 0 ? fragment : text;
-        //}
     }
 }

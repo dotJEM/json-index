@@ -1,5 +1,7 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using Lucene.Net.Documents;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace DotJEM.Json.Index
@@ -16,7 +18,7 @@ namespace DotJEM.Json.Index
         private readonly IJObjectEnumarator enumarator;
 
         public LuceneDocumentFactory(IStorageIndex index)
-            : this(index, new FieldFactory(index.Configuration), new JObjectEnumerator())
+            : this(index, new FieldFactory(index), new JObjectEnumerator())
         {
         }
 
@@ -30,20 +32,19 @@ namespace DotJEM.Json.Index
         public Document Create(JObject value)
         {
             string contentType = index.Configuration.TypeResolver.Resolve(value);
-
-            Document doc = new Document();
-            var x = enumarator
+            
+            Document document = enumarator
                 .Flatten(value, (fn, v) => factory.Create(fn, contentType, v))
                 .SelectMany(enumerable => enumerable.ToArray())
-                .ToList();
+                .Aggregate(new Document(), (doc, field) =>
+                {
+                    index.Fields.Add(contentType, field.Name, field.IsIndexed);
+                    doc.Add(field);
+                    return doc;
+                });
 
-            foreach (IFieldable field in x)
-            {
-                index.Fields.Add(contentType, field.Name, field.IsIndexed);
-                doc.Add(field);
-            }
-            doc.Add(new Field(index.Configuration.RawField, value.ToString(), Field.Store.YES, Field.Index.NO));
-            return doc;
+            document.Add(new Field(index.Configuration.RawField, value.ToString(Formatting.None), Field.Store.YES, Field.Index.NO));
+            return document;
         }
     }
 }

@@ -45,7 +45,7 @@ namespace DotJEM.Json.Index.Test.Integration
             //Note: Use http://www.jsoneditoronline.org/ to edit.
             JArray raw = JArray.Parse(@"[{'Id':1,'Type':'Person','Name':'John','LasName':'Doe','Age':24,'Created':'2014-03-30 15:18:53Z','Special':{'Status':'Presumed Dead','Rank':15},'Skills':[{'Name':'.NET','Level':4},{'Name':'JavaScript','Level':3},{'Name':'Lucene','Level':2}]},{'Id':2,'Type':'Person','Name':'Peter','LasName':'Pan','Age':12,'Created':'2014-03-20 15:18:53Z','Special':{'Status':'Fictional','Rank':10},'Skills':[{'Name':'Flying','Level':5},{'Name':'JavaScript','Level':1},{'Name':'Lucene','Level':4}]},{'Id':3,'Type':'Person','Name':'Alice','LasName':'Pan','Age':16,'Created':'2014-03-10 15:18:53Z','Special':{'Status':'Fictional','Rank':20},'Friends':[{'Name':'White Rabbit','Gender':'Male','Species':'Rabbit'},{'Name':'Dodo','Gender':'Male','Species':'Dodo'},{'Name':'Lory ','Gender':'Female','Species':'Lory '},{'Name':'Eaglet','Gender':'Female','Species':'Eagle'}]}]");
 
-            ILuceneWriter writer = index.CreateWriter();
+            ILuceneWriter writer = index.Writer;
             foreach (JObject child in raw.Children<JObject>())
             {
                 writer.Write(child);
@@ -65,7 +65,7 @@ namespace DotJEM.Json.Index.Test.Integration
         [Test]
         public void Search_()
         {
-            List<dynamic> result = index.CreateSearcher()
+            List<dynamic> result = index.Searcher
                 .Search("Brand:Dodge")
                 .Select(hit => hit.Json)
                 .ToList();
@@ -77,7 +77,7 @@ namespace DotJEM.Json.Index.Test.Integration
         [Test]
         public void Search_1()
         {
-            List<dynamic> result = index.CreateSearcher()
+            List<dynamic> result = index.Searcher
                 .Search("Dodge")
                 .Select(hit => hit.Json)
                 .ToList();
@@ -89,7 +89,7 @@ namespace DotJEM.Json.Index.Test.Integration
         [Test]
         public void Search_2()
         {
-            List<dynamic> result = index.CreateSearcher()
+            List<dynamic> result = index.Searcher
                 .Search(JObject.Parse("{ Brand: 'Dodge' }"))
                 .Select(hit => hit.Json)
                 .ToList();
@@ -101,7 +101,7 @@ namespace DotJEM.Json.Index.Test.Integration
         [Test]
         public void Search_ForAllPersons_ReturnsJohnPeterAndAlice()
         {
-            List<dynamic> result = index.CreateSearcher()
+            List<dynamic> result = index.Searcher
                 .Search("Person", "Type".Split(','), "Person")
                 .Select(hit => hit.Json)
                 .ToList();
@@ -118,7 +118,7 @@ namespace DotJEM.Json.Index.Test.Integration
         [Test]
         public void Search_ForAllPersonsUnder20_ReturnsJohnPeterAndAlice()
         {
-            List<dynamic> result = index.CreateSearcher()
+            List<dynamic> result = index.Searcher
                 .Search("0-20", "Age".Split(','), "Person")
                 .Select(hit => hit.Json)
                 .ToList();
@@ -135,7 +135,7 @@ namespace DotJEM.Json.Index.Test.Integration
         {
             JObject query = JObject.Parse("{ Skills: { Name: 'Lucene', Level: '3-5' } }");
 
-            List<dynamic> result = index.CreateSearcher()
+            List<dynamic> result = index.Searcher
                 .Search(query, "Person")
                 .Select(hit => hit.Json)
                 .ToList();

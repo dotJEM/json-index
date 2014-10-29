@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
 
@@ -35,29 +36,34 @@ namespace DotJEM.Json.Index
                 JArray jarr = property.Value as JArray;
                 if (jarr != null)
                 {
-                    foreach (JToken token in jarr)
-                    {
-                        JObject tjobj = token as JObject;
-                        if (tjobj != null)
-                        {
-                            foreach (T item in Flatten(tjobj, factory, fullname))
-                                yield return item;
-                            continue;
-                        }
+                    foreach (var p in FlattenArray(factory, jarr, fullname)) yield return p;
+                }
+            }
+        }
 
-                        JValue tjval = token as JValue;
-                        if (tjval != null)
-                        {
-                            yield return factory(fullname, tjval);
-                            continue;
-                        }
+        private IEnumerable<T> FlattenArray<T>(Func<string, JValue, T> factory, IEnumerable<JToken> jarr, string fullname)
+        {
+            foreach (JToken token in jarr)
+            {
+                JObject tjobj = token as JObject;
+                if (tjobj != null)
+                {
+                    foreach (T item in Flatten(tjobj, factory, fullname))
+                        yield return item;
+                    continue;
+                }
 
-                        JArray tjarr = token as JArray;
-                        if (tjarr != null)
-                        {
-                            //TODO: Bull!
-                        }
-                    }
+                JValue tjval = token as JValue;
+                if (tjval != null)
+                {
+                    yield return factory(fullname, tjval);
+                    continue;
+                }
+
+                JArray tjarr = token as JArray;
+                if (tjarr != null)
+                {
+                    foreach (var p in FlattenArray(factory, tjarr, fullname)) yield return p;
                 }
             }
         }

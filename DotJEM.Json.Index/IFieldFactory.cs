@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using DotJEM.Json.Index.Configuration;
 using Lucene.Net.Documents;
 using Newtonsoft.Json.Linq;
@@ -12,16 +13,18 @@ namespace DotJEM.Json.Index
 
     public class FieldFactory : IFieldFactory
     {
-        private readonly IIndexConfiguration configuration;
+        private readonly IStorageIndex index;
 
-        public FieldFactory(IIndexConfiguration configuration)
+        public FieldFactory(IStorageIndex index)
         {
-            this.configuration = configuration;
+            this.index = index;
         }
 
         public IEnumerable<IFieldable> Create(string fullName, string contentType, JValue value)
         {
-            return configuration.Index.Strategy(contentType, fullName).CreateField(fullName, value);
+            //TODO: Return FieldDefinitions???
+            List<IFieldable> fields = index.Configuration.Index.Strategy(contentType, fullName).CreateField(fullName, value).ToList();
+            return fields;
         }
     }
 }

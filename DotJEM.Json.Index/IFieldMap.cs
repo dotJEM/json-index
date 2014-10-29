@@ -3,14 +3,14 @@ using System.Linq;
 
 namespace DotJEM.Json.Index
 {
-    public interface IFieldCollection
+    public interface IFieldMap
     {
         void Add(string contentType, string name, bool isIndexed);
         IEnumerable<string> AllFields();
         IEnumerable<string> Fields(string contentType);
     }
 
-    public class FieldCollection : IFieldCollection
+    public class FieldMap : IFieldMap
     {
         private readonly IDictionary<string, HashSet<string>> fieldMap = new Dictionary<string, HashSet<string>>();
 
