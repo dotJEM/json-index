@@ -19,6 +19,16 @@ namespace DotJEM.Json.Index
 
         ILuceneWriter Writer { get; }
         ILuceneSearcher Searcher { get; }
+
+        ISearchResult Search(string query);
+        ISearchResult Search(JObject query);
+        ISearchResult Search(Query query);
+
+        IStorageIndex Write(JObject entity);
+        IStorageIndex WriteAll(IEnumerable<JObject> entities);
+        IStorageIndex Delete(JObject entity);
+        
+        IEnumerable<string> Terms(string field);
     }
 
     public class LuceneStorageIndex : IStorageIndex
