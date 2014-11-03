@@ -18,6 +18,8 @@ namespace DotJEM.Json.Index.Test.Unit
 
             var json = JObject.Parse("{ simple: 'test', complex: { child: 42 }, array: [ 'str', 'str2', { ups: 45 } ] }");
 
+            json.Merge();
+
             foreach (JNode node in enumerator.Enumerate(json, "ship"))
             {
                 Console.WriteLine(node.Path + " = " + node.Type);

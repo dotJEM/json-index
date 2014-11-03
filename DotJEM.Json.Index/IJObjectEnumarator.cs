@@ -11,10 +11,8 @@ namespace DotJEM.Json.Index
         public string Path { get; private set; }
         public JToken Token { get; private set; }
 
-        public JTokenType Type
-        {
-            get { return Token.Type; }
-        }
+        public bool IsLeaf { get { return Token is JValue; } }
+        public JTokenType Type { get { return Token.Type; } }
 
         public JNode(string path, JToken token)
         {
@@ -25,6 +23,10 @@ namespace DotJEM.Json.Index
 
     public interface IJObjectEnumarator
     {
+        IEnumerable<JNode> Enumerate(JObject json, string path = "");
+        IEnumerable<JNode> Enumerate(JValue json, string path = "");
+        IEnumerable<JNode> Enumerate(JArray json, string path = "");
+
         IEnumerable<T> Flatten<T>(JObject json, Func<string, JValue, T> factory, string path = "");
     }
 
