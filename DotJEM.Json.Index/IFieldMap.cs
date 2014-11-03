@@ -1,38 +1,71 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json.Linq;
 
 namespace DotJEM.Json.Index
 {
     public interface IFieldMap
     {
-        void Add(string contentType, string name, bool isIndexed);
+        void AddOrUpdate(string contentType, string path, JTokenType type, bool b);
+
         IEnumerable<string> AllFields();
         IEnumerable<string> Fields(string contentType);
     }
 
     public class FieldMap : IFieldMap
     {
-        private readonly IDictionary<string, HashSet<string>> fieldMap = new Dictionary<string, HashSet<string>>();
+        private readonly IDictionary<string, IDictionary<string, FieldDefinition>> map = new Dictionary<string, IDictionary<string, FieldDefinition>>();
 
-        public void Add(string contentType, string name, bool isIndexed)
+        public void AddOrUpdate(string contentType, string path, JTokenType type, bool indexed)
         {
-            //TODO: Track non-indexed fields?... If so we should be able to filter them out when getting all fields.
-            if(!isIndexed)
-                return;
-            
-            if (!fieldMap.ContainsKey(contentType))
-                fieldMap[contentType] = new HashSet<string>();
-            fieldMap[contentType].Add(name);
+            FieldDefinition definition;
+            if (!map.ContainsKey(contentType))
+            {
+                definition = new FieldDefinition(contentType, path);
+                map[contentType] = new Dictionary<string, FieldDefinition> {{path, definition}};
+            }
+            else
+            {
+                IDictionary<string, FieldDefinition> fields = map[contentType];
+                if (!fields.ContainsKey(path)) definition = fields[path] = new FieldDefinition(contentType, path);
+                else definition = fields[path];
+            }
+            definition.AddType(type, indexed);
         }
 
         public IEnumerable<string> AllFields()
         {
-            return fieldMap.SelectMany(map => map.Value).Distinct();
+            return map.Values.SelectMany(fields => fields.Values.Where(def => def.Indexed).Select(def => def.Path)).Distinct();
         }
 
         public IEnumerable<string> Fields(string contentType)
         {
-            return !fieldMap.ContainsKey(contentType) ? Enumerable.Empty<string>() : fieldMap[contentType];
+            return !map.ContainsKey(contentType)
+                ? Enumerable.Empty<string>()
+                : map[contentType].Values.Where(def => def.Indexed).Select(def => def.Path);
+        }
+
+        private class FieldDefinition
+        {
+            private readonly HashSet<JTokenType> types = new HashSet<JTokenType>();
+
+            public string Path { get; private set; }
+            public string ContentType { get; private set; }
+            public bool Indexed { get; private set; }
+
+            public FieldDefinition(string contentType, string path)
+            {
+                ContentType = contentType;
+                Path = path;
+            }
+
+            public void AddType(JTokenType type, bool indexed)
+            {
+                types.Add(type);
+                Indexed = Indexed || indexed;
+            }
         }
     }
+
+    
 }

@@ -32,19 +32,35 @@ namespace DotJEM.Json.Index
         public Document Create(JObject value)
         {
             string contentType = index.Configuration.TypeResolver.Resolve(value);
-            
+
             Document document = enumarator
-                .Flatten(value, (fn, v) => factory.Create(fn, contentType, v))
-                .SelectMany(enumerable => enumerable.ToArray())
-                .Aggregate(new Document(), (doc, field) =>
+                .Enumerate(value)
+                .Where(node =>
                 {
-                    index.Fields.Add(contentType, field.Name, field.IsIndexed);
-                    doc.Add(field);
-                    return doc;
-                });
+                    if (!node.IsLeaf) index.Fields.AddOrUpdate(contentType, node.Path, node.Type, false);
+                    return node.IsLeaf;
+                })
+                .Select(node => factory.Create(node.Path, contentType, node.Token as JValue)
+                    .Select(field => new { Node = node, Field = field }))
+                .SelectMany(enumerable => enumerable.ToArray())
+                .Select(token =>
+                {
+                    index.Fields.AddOrUpdate(contentType, token.Field.Name, token.Node.Type, token.Field.IsIndexed);
+                    return token.Field;
+                })
+                .Aggregate(new Document(), (doc, field) => doc.Put(field));
 
             document.Add(new Field(index.Configuration.RawField, value.ToString(Formatting.None), Field.Store.YES, Field.Index.NO));
             return document;
+        }
+    }
+
+    internal static class DocumentExtensions
+    {
+        public static Document Put(this Document self, IFieldable field)
+        {
+            self.Add(field);
+            return self;
         }
     }
 }
