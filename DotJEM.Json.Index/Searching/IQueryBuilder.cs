@@ -63,12 +63,12 @@ namespace DotJEM.Json.Index.Searching
         //TODO: Remove content type.
         public Query Build(JObject queryobj, string contentType = null)
         {
-            BooleanQuery query = new BooleanQuery();
-            foreach (Query q in enumarator.Flatten(queryobj,
-                (field, value) => index.Configuration.Query.Strategy(contentType, field).Create(field, value.Value<string>())))
-            {
-                query.Add(q, Occur.MUST);
-            }
+            BooleanQuery query = enumarator
+                .Enumerate(queryobj)
+                .Where(node => node.IsLeaf)
+                .Select(node => index.Configuration.Query.Strategy(contentType, node.Path).Create(node.Path, node.Token.Value<string>()))
+                .Aggregate(new BooleanQuery(), (bq, q) => bq.Put(q, Occur.MUST));
+
             Debug.WriteLine("QUERY: " + query);
             return query;
         }
