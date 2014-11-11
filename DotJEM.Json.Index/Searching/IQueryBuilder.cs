@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using DotJEM.Json.Index.Schema;
 using Lucene.Net.Analysis;
 using Lucene.Net.Analysis.Standard;
 using Lucene.Net.QueryParsers;
@@ -37,7 +38,7 @@ namespace DotJEM.Json.Index.Searching
 
         public Query Build(string querytext)
         {
-            QueryParser parser = new MultiFieldQueryParser(Version.LUCENE_30, index.Fields.AllFields().ToArray(), new StandardAnalyzer(Version.LUCENE_30));
+            QueryParser parser = new MultiFieldQueryParser(Version.LUCENE_30, index.Schemas.AllFields().ToArray(), new StandardAnalyzer(Version.LUCENE_30));
             parser.AllowLeadingWildcard = true;
             parser.DefaultOperator = QueryParser.Operator.AND;
 

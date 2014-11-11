@@ -1,9 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using DotJEM.Json.Index.Schema;
 using Lucene.Net.Documents;
-using Lucene.Net.Search;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Schema;
 
 namespace DotJEM.Json.Index
 {
@@ -34,11 +35,13 @@ namespace DotJEM.Json.Index
         {
             string contentType = index.Configuration.TypeResolver.Resolve(value);
 
+            //JSchema schema = new JSchema(JsonSchemaType.Object); //index.Schemas[contentType];
+
             Document document = enumarator
                 .Enumerate(value)
                 .Where(node =>
                 {
-                    if (!node.IsLeaf) index.Fields.AddOrUpdate(contentType, node.Path, node.Type, false);
+                    if (!node.IsLeaf) index.Schemas.AddOrUpdate(contentType, node.Path, node.Type, false);
                     return node.IsLeaf;
                 })
                 .Select(node => factory.Create(node.Path, contentType, node.Token as JValue)
@@ -46,28 +49,13 @@ namespace DotJEM.Json.Index
                 .SelectMany(enumerable => enumerable.ToArray())
                 .Select(token =>
                 {
-                    index.Fields.AddOrUpdate(contentType, token.Field.Name, token.Node.Type, token.Field.IsIndexed);
+                    index.Schemas.AddOrUpdate(contentType, token.Field.Name, token.Node.Type, token.Field.IsIndexed);
                     return token.Field;
                 })
                 .Aggregate(new Document(), (doc, field) => doc.Put(field));
 
             document.Add(new Field(index.Configuration.RawField, value.ToString(Formatting.None), Field.Store.YES, Field.Index.NO));
             return document;
-        }
-    }
-
-    internal static class LuceneExtensions
-    {
-        public static Document Put(this Document self, IFieldable field)
-        {
-            self.Add(field);
-            return self;
-        }
-
-        public static BooleanQuery Put(this BooleanQuery self, Query query, Occur occur)
-        {
-            self.Add(query, occur);
-            return self;
         }
     }
 }

@@ -13,7 +13,7 @@ namespace DotJEM.Json.Index
 {
     public interface IStorageIndex
     {
-        IFieldMap Fields { get; }
+        ISchemaCollection Schemas { get; }
         IIndexStorage Storage { get; }
         IIndexConfiguration Configuration { get; }
 
@@ -35,7 +35,7 @@ namespace DotJEM.Json.Index
     {
         public Analyzer Analyzer { get; private set; }
 
-        public IFieldMap Fields { get; private set; }
+        public ISchemaCollection Schemas { get; private set; }
         public IIndexStorage Storage { get; private set; }
         public IIndexConfiguration Configuration { get; private set; }
 
@@ -63,7 +63,7 @@ namespace DotJEM.Json.Index
 
         public LuceneStorageIndex(IIndexConfiguration configuration, IIndexStorage storage)
         {
-            Fields = new FieldMap();
+            Schemas = new SchemaCollection();
             Analyzer = new StandardAnalyzer(Version.LUCENE_30);
 
             Storage = storage;

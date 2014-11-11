@@ -1,10 +1,8 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json.Linq;
 
-namespace DotJEM.Json.Index
+namespace DotJEM.Json.Index.Schema
 {
     public class JNode
     {

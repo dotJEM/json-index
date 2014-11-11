@@ -45,7 +45,7 @@ namespace DotJEM.Json.Index.Searching
 
         public ISearchResult Search(string value, string contentType)
         {
-            return Search(value, index.Fields.AllFields(), contentType);
+            return Search(value, index.Schemas.AllFields(), contentType);
         }
 
         public ISearchResult Search(string text, IEnumerable<string> fields, string contentType = "")

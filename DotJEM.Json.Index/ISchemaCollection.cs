@@ -5,7 +5,7 @@ using Newtonsoft.Json.Linq;
 
 namespace DotJEM.Json.Index
 {
-    public interface IFieldMap
+    public interface ISchemaCollection
     {
         void AddOrUpdate(string contentType, string path, JTokenType type, bool b);
 
@@ -15,7 +15,7 @@ namespace DotJEM.Json.Index
         IEnumerable<IFieldDefinition> this[string contentType] { get; }
     }
 
-    public class FieldMap : IFieldMap
+    public class SchemaCollection : ISchemaCollection
     {
         private readonly IDictionary<string, IDictionary<string, FieldDefinition>> map = new Dictionary<string, IDictionary<string, FieldDefinition>>();
         

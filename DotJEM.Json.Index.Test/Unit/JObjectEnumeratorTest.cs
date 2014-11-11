@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using DotJEM.Json.Index.Schema;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 
@@ -23,6 +24,7 @@ namespace DotJEM.Json.Index.Test.Unit
             {
                 Console.WriteLine(node.Path + " = " + node.Type);
             }
+
 
         }
 
