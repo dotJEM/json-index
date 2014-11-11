@@ -33,5 +33,10 @@ namespace DotJEM.Json.Index.Schema
         {
             return string.Join(separator, segments.Where(s => !string.IsNullOrWhiteSpace(s)));
         }
+
+        public override string ToString()
+        {
+            return ToString(".");
+        }
     }
 }

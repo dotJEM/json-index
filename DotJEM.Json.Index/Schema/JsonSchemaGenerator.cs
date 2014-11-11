@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -11,11 +12,24 @@ namespace DotJEM.Json.Index.Schema
 {
     public interface IJSchemaGenerator
     {
-
+        JSchema Generate(JObject json);
+        JSchema Update(JSchema schema, JObject json);
     }
 
     public class JSchemaGenerator : IJSchemaGenerator
     {
+        private readonly Uri root;
+
+        public JSchemaGenerator(string uri) 
+            : this(new Uri(uri))
+        {
+        }
+
+        public JSchemaGenerator(Uri root)
+        {
+            this.root = root;
+        }
+
         public JSchema Generate(JObject json)
         {
             return InternalGenerate(json, "");
@@ -33,23 +47,25 @@ namespace DotJEM.Json.Index.Schema
 
         private JSchema InternalGenerate(JObject json, JPath path)
         {
-            if (json == null)
-            {
-                return new JSchema(JsonSchemaType.Null){ Id = path.ToString("/") };
-            }
+            if (json == null) return null;
 
-            var schema = new JSchema(JsonSchemaType.Object);
-            schema.Id = path.ToString("/");
-            schema.Field = path.ToString(".");
-            
+            JSchema schema = new JSchema(JsonSchemaType.Object)
+            {
+                Id = root + "/" + path.ToString("/"), 
+                Field = path.ToString(".")
+            };
 
             IDictionary<string, JSchema> properties = new Dictionary<string, JSchema>();
             foreach (JProperty property in json.Properties())
             {
-                JPath child = path += property.Name;
-                properties[property.Name] = InternalGenerate(property.Value as JObject, child)
-                                                ?? InternalGenerate(property.Value as JValue, child)
-                                                ?? InternalGenerate(property.Value as JArray, child);
+                JPath child = path + property.Name;
+                var prop = InternalGenerate(property.Value as JValue, child)
+                        ?? InternalGenerate(property.Value as JArray, child)
+                        ?? InternalGenerate(property.Value as JObject, child);
+                if (prop != null)
+                {
+                    properties[property.Name] = prop;
+                }
             }
             if (properties.Any())
             {
@@ -61,17 +77,21 @@ namespace DotJEM.Json.Index.Schema
 
         private JSchema InternalGenerate(JValue json, JPath path)
         {
+            if (json == null) return null;
+
             var schema = new JSchema(json.Type.ToSchemaType());
-            schema.Id = path.ToString("/");
+            schema.Id = root + "/" + path.ToString("/");
             schema.Field = path.ToString(".");
             return schema;
         }
 
         private JSchema InternalGenerate(JArray json, JPath path)
         {
+            if (json == null) return null;
+
             return new JSchema(JsonSchemaType.Array)
             {
-                Id = path.ToString("/"),
+                Id = root + "/"+ path.ToString("/"),
                 Field = path.ToString("."),
                 Items = json.Aggregate(new JSchema(JsonSchemaType.None), (schema, token) => InternalUpdate(schema, token, path))
             };
@@ -88,9 +108,7 @@ namespace DotJEM.Json.Index.Schema
 
         public bool Required { get; set; }
 
-        [JsonConverter(typeof(JsonSchemeTypeConverter))]
         public JsonSchemaType Type { get; set; }
-
         public JSchema Items { get; set; }
         public IDictionary<string, JSchema> Properties { get; set; }
 
@@ -108,6 +126,7 @@ namespace DotJEM.Json.Index.Schema
 
         public JRootSchema(JsonSchemaType type) : base(type)
         {
+            Schema = "kk";
         }
     }
 
