@@ -18,41 +18,38 @@ namespace DotJEM.Json.Index
         private readonly IFieldFactory factory;
         private readonly IStorageIndex index;
         private readonly IJObjectEnumarator enumarator;
+        private readonly IJSchemaGenerator generator;
 
         public LuceneDocumentFactory(IStorageIndex index)
-            : this(index, new FieldFactory(index), new JObjectEnumerator())
+            : this(index, new FieldFactory(index), new JObjectEnumerator(), new JSchemaGenerator())
         {
         }
 
-        public LuceneDocumentFactory(IStorageIndex index, IFieldFactory factory, IJObjectEnumarator enumarator)
+        public LuceneDocumentFactory(IStorageIndex index, IFieldFactory factory, IJObjectEnumarator enumarator, IJSchemaGenerator generator)
         {
             this.index = index;
             this.factory = factory;
             this.enumarator = enumarator;
+            this.generator = generator;
         }
 
         public Document Create(JObject value)
         {
             string contentType = index.Configuration.TypeResolver.Resolve(value);
 
-            //JSchema schema = new JSchema(JsonSchemaType.Object); //index.Schemas[contentType];
+            JSchema schema = index.Schemas[contentType];
+            schema = schema == null 
+                ? generator.Generate(value)
+                : schema.Merge(generator.Generate(value));
 
+            index.Schemas[contentType] = schema;
+            
             Document document = enumarator
                 .Enumerate(value)
-                .Where(node =>
-                {
-                    if (!node.IsLeaf) index.Schemas.AddOrUpdate(contentType, node.Path, node.Type, false);
-                    return node.IsLeaf;
-                })
-                .Select(node => factory.Create(node.Path, contentType, node.Token as JValue)
-                    .Select(field => new { Node = node, Field = field }))
-                .SelectMany(enumerable => enumerable.ToArray())
-                .Select(token =>
-                {
-                    index.Schemas.AddOrUpdate(contentType, token.Field.Name, token.Node.Type, token.Field.IsIndexed);
-                    return token.Field;
-                })
+                .Where(node => node.IsLeaf)
+                .SelectMany(node => factory.Create(node.Path, contentType, node.Token as JValue))
                 .Aggregate(new Document(), (doc, field) => doc.Put(field));
+
 
             document.Add(new Field(index.Configuration.RawField, value.ToString(Formatting.None), Field.Store.YES, Field.Index.NO));
             return document;

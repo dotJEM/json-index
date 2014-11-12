@@ -11,11 +11,11 @@ namespace DotJEM.Json.Index.Test.Unit
         [Test]
         public void Test()
         {
-            var generator = new JSchemaGenerator(new Uri("http://www.dotjem.com/api/schema"));
+            var generator = new JSchemaGenerator();
             var json = JObject.Parse("{ simple: 'test', complex: { child: 42 }, array: [ 'str', 'str2', { ups: 45 } ] }");
             var schema = generator.Generate(json);
 
-            Console.WriteLine(JObject.FromObject(schema));
+            Console.WriteLine(schema.Serialize("http://dotjem.com/api/schema"));
 
         }
     }

@@ -1,26 +1,44 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Newtonsoft.Json;
+using DotJEM.Json.Index.Schema;
 using Newtonsoft.Json.Linq;
 
 namespace DotJEM.Json.Index
 {
     public interface ISchemaCollection
     {
+        IEnumerable<string> ContentTypes { get; }
+        JSchema this[string contentType] { get; set; }
+     
         void AddOrUpdate(string contentType, string path, JTokenType type, bool b);
 
         IEnumerable<string> AllFields();
         IEnumerable<string> Fields(string contentType);
-        IEnumerable<string> ContentTypes { get; }
-        IEnumerable<IFieldDefinition> this[string contentType] { get; }
+
+        JSchema Add(string contentType, JSchema schema);
     }
 
     public class SchemaCollection : ISchemaCollection
     {
+        private readonly IDictionary<string, JSchema> schemas = new Dictionary<string, JSchema>();
         private readonly IDictionary<string, IDictionary<string, FieldDefinition>> map = new Dictionary<string, IDictionary<string, FieldDefinition>>();
         
         public IEnumerable<string> ContentTypes { get { return map.Keys; } }
-        public IEnumerable<IFieldDefinition> this[string contentType] { get { return map[contentType].Values; } }
+
+        public JSchema this[string contentType]
+        {
+            get
+            {
+                return schemas.ContainsKey(contentType) ? schemas[contentType] : null;
+            }
+            set { schemas[contentType] = value; }
+        }
+
+        public JSchema Add(string contentType, JSchema schema)
+        {
+            schemas.Add(contentType, schema);
+            return schema;
+        }
 
         public void AddOrUpdate(string contentType, string path, JTokenType type, bool indexed)
         {
