@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Configuration;
 using DotJEM.Json.Index.Configuration;
+using DotJEM.Json.Index.Schema;
 using DotJEM.Json.Index.Searching;
 using Lucene.Net.Analysis;
 using Lucene.Net.Analysis.Standard;
