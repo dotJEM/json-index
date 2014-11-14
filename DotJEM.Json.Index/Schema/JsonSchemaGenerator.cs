@@ -4,7 +4,9 @@ using System.Data;
 using System.Diagnostics.Eventing.Reader;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Text;
 using Lucene.Net.QueryParsers;
+using Lucene.Net.Util;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Schema;
@@ -104,11 +106,16 @@ namespace DotJEM.Json.Index.Schema
 
         public IEnumerable<JSchema> Traverse()
         {
-            yield return this;
-            if (Items != null) yield return Items;
-            if (Properties != null)
-                foreach (var property in Properties.Values)
-                    yield return property;
+            var all = Enumerable.Empty<JSchema>()
+                .Union(new[] {this});
+
+            if(Items != null)
+                all = all.Union(Items.Traverse());
+
+            if(Properties != null)
+                all = all.Union(Properties.Values.SelectMany(property => property.Traverse()));
+
+            return all;
         }
 
         public virtual JObject Serialize(string httpDotjemComApiSchema)

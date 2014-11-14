@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using DotJEM.Json.Index.Schema;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
@@ -16,6 +18,14 @@ namespace DotJEM.Json.Index.Test.Unit
             var schema = generator.Generate(json);
 
             Console.WriteLine(schema.Serialize("http://dotjem.com/api/schema"));
+
+            IEnumerable<JSchema> schemata = schema.Traverse();
+            foreach (string path in schemata.Select(f => f.Field))
+            {
+                Console.WriteLine(path);
+            }
+            
+
 
         }
     }
