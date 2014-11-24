@@ -19,6 +19,9 @@ namespace DotJEM.Json.Index.Searching
 
         //TODO: Sort Builder instead.
         ISearchResult Sort(Sort sorting);
+
+        //TODO: Sort Builder instead.
+        ISearchResult All();
     }
 
     public class SearchResultCollector : ISearchResult
@@ -68,6 +71,12 @@ namespace DotJEM.Json.Index.Searching
         public ISearchResult Sort(Sort value)
         {
             sorting = value;
+            return this;
+        }
+
+        public ISearchResult All()
+        {
+            take = int.MaxValue;
             return this;
         }
 

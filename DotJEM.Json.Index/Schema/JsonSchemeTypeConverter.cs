@@ -6,8 +6,6 @@ using Newtonsoft.Json.Schema;
 
 namespace DotJEM.Json.Index.Schema
 {
-    
-
     public class JSchemeConverter : JsonConverter
     {
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)

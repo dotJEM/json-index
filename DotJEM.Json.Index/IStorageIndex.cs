@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Configuration;
 using DotJEM.Json.Index.Configuration;
 using DotJEM.Json.Index.Schema;
 using DotJEM.Json.Index.Searching;
@@ -22,8 +21,11 @@ namespace DotJEM.Json.Index
         ILuceneSearcher Searcher { get; }
 
         ISearchResult Search(string query);
-        ISearchResult Search(JObject query);
         ISearchResult Search(Query query);
+
+        ISearchResult Search(object query);
+        ISearchResult Search(JObject query);
+
 
         IStorageIndex Write(JObject entity);
         IStorageIndex WriteAll(IEnumerable<JObject> entities);
@@ -86,12 +88,25 @@ namespace DotJEM.Json.Index
             return Searcher.Search(query);
         }
 
-        public ISearchResult Search(JObject query)
+        public ISearchResult Search(Query query)
         {
             return Searcher.Search(query);
         }
+        
+        public ISearchResult Search(object query)
+        {
+            string stringQuery = query as string;
+            if (stringQuery != null)
+                return Search(stringQuery);
 
-        public ISearchResult Search(Query query)
+            Query queryObject = query as Query;
+            if (queryObject != null)
+                return Search(queryObject);
+
+            return Searcher.Search(query as JObject ?? JObject.FromObject(query));
+        }
+
+        public ISearchResult Search(JObject query)
         {
             return Searcher.Search(query);
         }
