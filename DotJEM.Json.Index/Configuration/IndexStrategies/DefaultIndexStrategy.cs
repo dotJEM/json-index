@@ -20,7 +20,6 @@ namespace DotJEM.Json.Index.Configuration.IndexStrategies
         {
             yield return new Field(fieldName, value.Value<string>(), Field.Store.NO, Field.Index.NOT_ANALYZED);
             yield return new Field(fieldName, value.Value<string>(), Field.Store.NO, Field.Index.ANALYZED);
-            //yield return new Field("*", value.Value<string>(), Field.Store.NO, Field.Index.ANALYZED);
         }
     }
 
@@ -50,27 +49,17 @@ namespace DotJEM.Json.Index.Configuration.IndexStrategies
                         .SetLongValue(value.Value<TimeSpan>().Ticks);
                     break;
 
-                case JTokenType.Guid:
-                case JTokenType.Boolean:
-                case JTokenType.Raw:
-                case JTokenType.Uri:
-                    yield return new Field(fieldName, value.Value.ToString(), FieldStore, FieldIndex);
-                    break;
-
-                case JTokenType.String:
-                    yield return new Field(fieldName, value.Value<string>(), Field.Store.NO, Field.Index.NOT_ANALYZED);
-                    yield return new Field(fieldName, value.Value<string>(), Field.Store.NO, Field.Index.ANALYZED);
-                    //yield return new Field("*", value.Value<string>(), Field.Store.NO, Field.Index.ANALYZED);
-                    break;
-
                 case JTokenType.Null:
                 case JTokenType.Undefined:
-                    yield return new Field(fieldName, "NULL", FieldStore, FieldIndex);
-                    break;
+                    yield return new Field(fieldName, "NULL", Field.Store.NO, Field.Index.NOT_ANALYZED);
+                    yield break;
 
                 case JTokenType.Bytes:
-                    break;
+                    yield break;
             }
+            //NOTE: Always add as string.
+            yield return new Field(fieldName, value.Value.ToString(), Field.Store.NO, Field.Index.NOT_ANALYZED);
+            yield return new Field(fieldName, value.Value.ToString(), Field.Store.NO, Field.Index.ANALYZED);
         }
     }
 
