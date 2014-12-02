@@ -127,7 +127,7 @@ namespace DotJEM.Json.Index.Test.Integration
         [TestCase("2014-09-10 11:00", "2014-09-11 13:00", 2)]
         [TestCase("2014-09-10 11:00", "2014-09-11 11:00", 1)]
         [TestCase("2014-09-10 11:00", "2014-09-13 13:00", 4)]
-        public void JsonNetTest(string from, string to, int results)
+        public void Search_DateRanges_ReturnsResultsWitinRanges(string from, string to, int results)
         {
             Query query = NumericRangeQuery
                 .NewLongRange("date", NumericUtils.PRECISION_STEP_DEFAULT, DateTime.Parse(from).Ticks, DateTime.Parse(to).Ticks, true, true);
@@ -136,16 +136,30 @@ namespace DotJEM.Json.Index.Test.Integration
             Assert.That(result, Has.Length.EqualTo(results));
         }
 
-        [Test]
-        public void JsonNetParesTest()
+        [TestCase("2014-09-10 11:00", 4)]
+        [TestCase("2014-09-11 11:00", 3)]
+        [TestCase("2014-09-12 11:00", 2)]
+        [TestCase("2014-09-13 11:00", 1)]
+        public void Search_DateAbove_ReturnsResultsWitinRanges(string date, int results)
         {
-            string j = "{ \"date\": \"2014-04-14T09:23:27.9420589+02:00\", \"long\": 9223372036854775807 }";
-            JObject json = JObject.Parse(j);
+            Query query = NumericRangeQuery
+                .NewLongRange("date", NumericUtils.PRECISION_STEP_DEFAULT, DateTime.Parse(date).Ticks, null, true, true);
 
-            Debug.WriteLine("date type: " + json["date"].Type);
-            Debug.WriteLine("long type: " + json["long"].Type);
+            var result = index.Search(query).All().ToArray();
+            Assert.That(result, Has.Length.EqualTo(results));
+        }
 
-            Debug.WriteLine(json.ToString());
+        [TestCase("2014-09-10 13:00", 1)]
+        [TestCase("2014-09-11 13:00", 2)]
+        [TestCase("2014-09-12 13:00", 3)]
+        [TestCase("2014-09-13 13:00", 4)]
+        public void Search_DateBelow_ReturnsResultsWitinRanges(string date, int results)
+        {
+            Query query = NumericRangeQuery
+                .NewLongRange("date", NumericUtils.PRECISION_STEP_DEFAULT, null, DateTime.Parse(date).Ticks, true, true);
+
+            var result = index.Search(query).All().ToArray();
+            Assert.That(result, Has.Length.EqualTo(results));
         }
     }
 }
