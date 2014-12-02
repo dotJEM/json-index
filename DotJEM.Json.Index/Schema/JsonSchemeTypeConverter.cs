@@ -21,6 +21,7 @@ namespace DotJEM.Json.Index.Schema
             }
             WriteProperty(writer, serializer, "id", schema.Id);
             WriteTypeEnum(writer, serializer, schema.Type);
+            WriteExtendedTypeEnum(writer, serializer, schema.ExtendedType);
             WriteProperty(writer, serializer, "required", schema.Required);
             WriteProperty(writer, serializer, "field", schema.Field);
             WriteProperty(writer, serializer, "title", schema.Title);
@@ -44,6 +45,24 @@ namespace DotJEM.Json.Index.Schema
                 enumArr = enumArr.Skip(1).ToArray();
 
             writer.WritePropertyName("type");
+            if (enumArr.Length == 1)
+                serializer.Serialize(writer, enumArr.First());
+            else
+                serializer.Serialize(writer, enumArr);
+        }
+
+        private static void WriteExtendedTypeEnum(JsonWriter writer, JsonSerializer serializer, JsonSchemaExtendedType value)
+        {
+            var enumArr = Enum.GetValues(value.GetType())
+                .Cast<JsonSchemaExtendedType>()
+                .Where(x => (x & value) == x)
+                .Select(x => Enum.ToObject(value.GetType(), x).ToString().ToLowerInvariant())
+                .ToArray();
+
+            if (enumArr.Length > 1)
+                enumArr = enumArr.Skip(1).ToArray();
+
+            writer.WritePropertyName("extendedType");
             if (enumArr.Length == 1)
                 serializer.Serialize(writer, enumArr.First());
             else

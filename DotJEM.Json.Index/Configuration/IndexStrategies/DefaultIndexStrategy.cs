@@ -18,8 +18,9 @@ namespace DotJEM.Json.Index.Configuration.IndexStrategies
     {
         public override IEnumerable<IFieldable> CreateField(string fieldName, JValue value)
         {
-            yield return new Field(fieldName, value.Value<string>(), Field.Store.NO, Field.Index.NOT_ANALYZED);
-            yield return new Field(fieldName, value.Value<string>(), Field.Store.NO, Field.Index.ANALYZED);
+            var str = value.ToString();
+            yield return new Field(fieldName, str, Field.Store.NO, Field.Index.NOT_ANALYZED);
+            yield return new Field(fieldName, str, Field.Store.NO, Field.Index.ANALYZED);
         }
     }
 
@@ -58,8 +59,9 @@ namespace DotJEM.Json.Index.Configuration.IndexStrategies
                     yield break;
             }
             //NOTE: Always add as string.
-            yield return new Field(fieldName, value.Value.ToString(), Field.Store.NO, Field.Index.NOT_ANALYZED);
-            yield return new Field(fieldName, value.Value.ToString(), Field.Store.NO, Field.Index.ANALYZED);
+            var str = value.ToString();
+            yield return new Field(fieldName, str, Field.Store.NO, Field.Index.NOT_ANALYZED);
+            yield return new Field(fieldName, str, Field.Store.NO, Field.Index.ANALYZED);
         }
     }
 

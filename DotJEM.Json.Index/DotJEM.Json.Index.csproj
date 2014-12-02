@@ -106,6 +106,10 @@
     <Compile Include="ILuceneWriter.cs" />
     <Compile Include="Schema\IJObjectEnumarator.cs" />
     <Compile Include="Schema\JPath.cs" />
+    <Compile Include="Schema\JRootSchema.cs" />
+    <Compile Include="Schema\JSchema.cs" />
+    <Compile Include="Schema\JsonSchemaExtendedType.cs" />
+    <Compile Include="Schema\JsonSchemaExtendedTypeMapper.cs" />
     <Compile Include="Schema\JsonSchemeTypeConverter.cs" />
     <Compile Include="Schema\JsonSchemaGenerator.cs" />
     <Compile Include="LuceneExtensions.cs" />
@@ -115,6 +119,7 @@
     <Compile Include="Searching\IQueryBuilder.cs" />
     <Compile Include="Searching\ILuceneSearcher.cs" />
     <Compile Include="Searching\ISearchResult.cs" />
+    <Compile Include="Searching\MultiFieldQueryParser.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

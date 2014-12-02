@@ -7,7 +7,6 @@ using System.Security.Cryptography;
 using System.Text;
 using Lucene.Net.QueryParsers;
 using Lucene.Net.Util;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Schema;
 
@@ -29,9 +28,9 @@ namespace DotJEM.Json.Index.Schema
         {
             if (json == null) return null;
 
-            JSchema schema = isRoot 
-                ? new JRootSchema(JsonSchemaType.Object) 
-                : new JSchema(JsonSchemaType.Object);
+            JSchema schema = isRoot
+                ? new JRootSchema(JsonSchemaType.Object, JsonSchemaExtendedType.Object) 
+                : new JSchema(JsonSchemaType.Object, JsonSchemaExtendedType.Object);
 
             schema.Id = path.ToString("/");
             schema.Field = path.ToString(".");
@@ -58,7 +57,7 @@ namespace DotJEM.Json.Index.Schema
         {
             if (json == null) return null;
 
-            var schema = new JSchema(json.Type.ToSchemaType());
+            var schema = new JSchema(json.Type.ToSchemaType(), json.Type.ToSchemaExtendedType());
             schema.Id = path.ToString("/");
             schema.Field = path.ToString(".");
             return schema;
@@ -68,122 +67,22 @@ namespace DotJEM.Json.Index.Schema
         {
             if (json == null) return null;
 
-            return new JSchema(JsonSchemaType.Array)
+            return new JSchema(JsonSchemaType.Array, JsonSchemaExtendedType.Array)
             {
                 Id = path.ToString("/"),
                 Field = path.ToString("."),
                 Items = json.Aggregate(
-                    new JSchema(JsonSchemaType.None), 
+                    new JSchema(JsonSchemaType.None, JsonSchemaExtendedType.None), 
                     (schema, token) => schema.Merge(InternalGenerate(token as JObject, path))
                     )
             };
         }
     }
 
-    [JsonConverter(typeof(JSchemeConverter))]
-    public class JSchema
-    {
-        public string Id { get; set; }
-        public string Title { get; set; }
-        public string Description { get; set; }
-
-        public bool Required { get; set; }
-
-        public JsonSchemaType Type { get; set; }
-        public JSchema Items { get; set; }
-        public IDictionary<string, JSchema> Properties { get; set; }
-
-        //NOTE: Custom fields
-        public string Field { get; set; }
-        public bool Indexed { get; set; }
-        public bool IsRoot { get; set; }
-
-        public JSchema(JsonSchemaType type)
-        {
-            Type = type;
-            Required = false;
-        }
-
-        public IEnumerable<JSchema> Traverse()
-        {
-            var all = Enumerable.Empty<JSchema>()
-                .Union(new[] {this});
-
-            if(Items != null)
-                all = all.Union(Items.Traverse());
-
-            if(Properties != null)
-                all = all.Union(Properties.Values.SelectMany(property => property.Traverse()));
-
-            return all;
-        }
-
-        public virtual JObject Serialize(string httpDotjemComApiSchema)
-        {
-            return JObject.FromObject(this);
-        }
-
-        public JSchema Merge(JSchema other)
-        {
-            if (other == null)
-                return this;
-
-            Type = Type | other.Type;
-            Indexed = Indexed || other.Indexed;
-            Indexed = Required || other.Required;
-
-            Description = MostQualifying(Title, other.Title);
-            Description = MostQualifying(Description, other.Description);
-
-            Items = Items != null ? Items.Merge(other.Items) : other.Items;
-
-            if (other.Properties != null)
-            {
-                if (Properties == null)
-                {
-                    Properties = other.Properties;
-                }
-                else
-                {
-                    foreach (KeyValuePair<string, JSchema> pair in other.Properties)
-                    {
-                        if (Properties.ContainsKey(pair.Key))
-                        {
-                            Properties[pair.Key] = Properties[pair.Key].Merge(pair.Value);
-                        }
-                        else
-                        {
-                            Properties.Add(pair.Key, pair.Value);
-                        }
-                    }
-                }
-            }
-            return this;
-        }
-
-        private string MostQualifying(string self, string other)
-        {
-            return string.IsNullOrEmpty(other) ? (self ?? other) : other;
-        }
-    }
-
-        //    bool Indexed { get; }
+    //    bool Indexed { get; }
         //bool IsContentType { get; }
         //string Path { get; }
         //string ContentType { get; }
         //IEnumerable<JTokenType> Types { get; }
         //void AddType(JTokenType type, bool indexed);
-
-    [JsonConverter(typeof(JSchemeConverter))]
-    public class JRootSchema : JSchema
-    {
-
-        public string Schema { get; set; }
-
-        public JRootSchema(JsonSchemaType type) : base(type)
-        {
-            Schema = "kk";
-        }
-    }
-
 }

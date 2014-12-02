@@ -9,6 +9,7 @@ namespace DotJEM.Json.Index.Schema
         IEnumerable<string> ContentTypes { get; }
         JSchema this[string contentType] { get; set; }
 
+        JsonSchemaExtendedType ExtendedType(string field);
         IEnumerable<string> AllFields();
         IEnumerable<string> Fields(string contentType);
 
@@ -41,12 +42,19 @@ namespace DotJEM.Json.Index.Schema
                 .Distinct();
         }
 
+        public JsonSchemaExtendedType ExtendedType(string field)
+        {
+            return schemas.Aggregate(JsonSchemaExtendedType.None,
+                (workingSchema, next) => next.Value.Properties[field].ExtendedType | workingSchema
+                );
+        }
+
         public IEnumerable<string> Fields(string contentType)
         {
             JSchema schema = this[contentType];
 
-            return schema == null 
-                ? Enumerable.Empty<string>() 
+            return schema == null
+                ? Enumerable.Empty<string>()
                 : schema.Traverse().Select(s => s.Field).Where(f => !string.IsNullOrEmpty(f));
         }
     }

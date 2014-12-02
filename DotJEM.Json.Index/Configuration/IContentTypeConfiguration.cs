@@ -44,7 +44,7 @@ namespace DotJEM.Json.Index.Configuration
 
         public IContentTypeConfiguration SetIdentity(string field)
         {
-            return SetIdentity(new FieldIdentityStrategy(field))
+            return SetIdentity(new GuidIdentity(field))
                 .Index(field, As.Stored().Analyzed(Field.Index.NOT_ANALYZED))
                 .Query(field, Using.Term().When.Specified());
         }

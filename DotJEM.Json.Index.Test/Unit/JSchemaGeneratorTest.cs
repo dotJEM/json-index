@@ -24,8 +24,6 @@ namespace DotJEM.Json.Index.Test.Unit
             {
                 Console.WriteLine(path);
             }
-            
-
 
         }
     }
