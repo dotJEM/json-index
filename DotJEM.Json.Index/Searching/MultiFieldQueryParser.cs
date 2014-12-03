@@ -16,10 +16,10 @@ namespace DotJEM.Json.Index.Searching
         private readonly string[] fields;
         private readonly IStorageIndex index;
 
-        public MultiFieldQueryParser(Version matchVersion, string[] fields, Analyzer analyzer, IStorageIndex index)
+        public MultiFieldQueryParser(Version matchVersion, Analyzer analyzer, IStorageIndex index)
             : base(matchVersion, null, analyzer)
         {
-            this.fields = fields;
+            this.fields = index.Schemas.AllFields().ToArray();
             this.index = index;
         }
 
@@ -93,7 +93,6 @@ namespace DotJEM.Json.Index.Searching
 
         protected override Query GetRangeQuery(string field, string part1, string part2, bool inclusive)
         {
-
             if (field == null)
             {
                 return GetBooleanQuery(fields.Select(t => new BooleanClause(GetRangeQuery(t, part1, part2, inclusive), Occur.SHOULD))
@@ -110,15 +109,15 @@ namespace DotJEM.Json.Index.Searching
                     clauses.Add(
                         new BooleanClause(
                             NumericRangeQuery.NewLongRange(field,
-                            DateTime.Parse(part1, CultureInfo.InvariantCulture).Ticks,
+                            DateTime.Parse(part2, CultureInfo.InvariantCulture).Ticks,
                             DateTime.Parse(part2, CultureInfo.InvariantCulture).Ticks, true,
                             true), Occur.SHOULD));
                 }
-                catch (FormatException)
+                catch (FormatException ex)
                 {
                     if (extendedType == JsonSchemaExtendedType.Date)
                     {
-                        throw new ParseException();
+                        throw new ParseException("TODO: Message", ex);
                     }                    
                 }
             }

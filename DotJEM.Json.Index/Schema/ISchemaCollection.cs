@@ -1,5 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Remoting.Messaging;
+using Lucene.Net.Documents;
+using Lucene.Net.QueryParsers;
 using Newtonsoft.Json.Linq;
 
 namespace DotJEM.Json.Index.Schema
@@ -45,8 +49,7 @@ namespace DotJEM.Json.Index.Schema
         public JsonSchemaExtendedType ExtendedType(string field)
         {
             return schemas.Aggregate(JsonSchemaExtendedType.None,
-                (workingSchema, next) => next.Value.Properties[field].ExtendedType | workingSchema
-                );
+                (types, next) => next.Value.LookupExtentedType(field) | types);
         }
 
         public IEnumerable<string> Fields(string contentType)

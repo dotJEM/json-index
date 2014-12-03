@@ -94,5 +94,24 @@ namespace DotJEM.Json.Index.Schema
         {
             return string.IsNullOrEmpty(other) ? (self ?? other) : other;
         }
+
+        public JsonSchemaExtendedType LookupExtentedType(string field)
+        {
+            if (!field.StartsWith(this.Field))
+                return JsonSchemaExtendedType.None;
+
+            if (this.Field == field)
+                return this.ExtendedType;
+
+            var extendedTypes = Items != null ? Items.LookupExtentedType(field) : JsonSchemaExtendedType.None;
+
+            if (Properties != null)
+            {
+                extendedTypes = extendedTypes | Properties.Aggregate(JsonSchemaExtendedType.None,
+                    (types, next) => next.Value.LookupExtentedType(field) | types);
+            }
+
+            return extendedTypes;
+        }
     }
 }

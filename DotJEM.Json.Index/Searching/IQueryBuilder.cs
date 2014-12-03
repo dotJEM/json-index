@@ -38,7 +38,7 @@ namespace DotJEM.Json.Index.Searching
 
         public Query Build(string querytext)
         {
-            QueryParser parser = new MultiFieldQueryParser(Version.LUCENE_30, index.Schemas.AllFields().ToArray(), new StandardAnalyzer(Version.LUCENE_30), this.index);
+            QueryParser parser = new MultiFieldQueryParser(Version.LUCENE_30, new StandardAnalyzer(Version.LUCENE_30), index);
             parser.AllowLeadingWildcard = true;
             parser.DefaultOperator = QueryParser.Operator.AND;
 
