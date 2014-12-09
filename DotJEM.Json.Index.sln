@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.30324.0
+VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotJEM.Json.Index", "DotJEM.Json.Index\DotJEM.Json.Index.csproj", "{61EA751B-691B-4F68-87C5-46D115D51CC3}"
 EndProject
@@ -13,6 +13,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{1D3ED8
 		.nuget\NuGet.exe = .nuget\NuGet.exe
 		.nuget\NuGet.targets = .nuget\NuGet.targets
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotJEM.Json.Index.Benchmarks", "DotJEM.Json.Index.Benchmarks\DotJEM.Json.Index.Benchmarks.csproj", "{6351B6F6-E877-4368-B2F8-0178FC9E92DB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -28,6 +30,10 @@ Global
 		{2D9240E0-B1C6-4C9E-BB33-CCB0FD3FF2C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2D9240E0-B1C6-4C9E-BB33-CCB0FD3FF2C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2D9240E0-B1C6-4C9E-BB33-CCB0FD3FF2C1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6351B6F6-E877-4368-B2F8-0178FC9E92DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6351B6F6-E877-4368-B2F8-0178FC9E92DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6351B6F6-E877-4368-B2F8-0178FC9E92DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6351B6F6-E877-4368-B2F8-0178FC9E92DB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

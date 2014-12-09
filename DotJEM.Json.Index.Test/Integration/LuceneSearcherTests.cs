@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Linq;
+using DotJEM.Json.Index.Test.Util;
 using Lucene.Net.Index;
 using Lucene.Net.Search;
 using Lucene.Net.Util;
@@ -9,104 +10,6 @@ using NUnit.Framework;
 
 namespace DotJEM.Json.Index.Test.Integration
 {
-    public class TestIndexBuilder
-    {
-        private readonly IStorageIndex index;
-        private int count;
-
-        public TestIndexBuilder() : this(new LuceneStorageIndex())
-        {
-        }
-
-        public TestIndexBuilder(IStorageIndex index)
-        {
-            this.index = index;
-            index.Configuration.SetTypeResolver("contentType").ForAll().SetIdentity("id");
-        }
-
-        public TestIndexBuilder Document(Func<TestDocumentBuilder, TestDocumentBuilder> build)
-        {
-            return Document("Document", build);
-        }
-
-        public TestIndexBuilder Document(string contentType, Func<TestDocumentBuilder, TestDocumentBuilder> build)
-        {
-            index.Write(build(new TestDocumentBuilder(contentType, ToGuid(count++))).Build());
-            return this;
-        }
-
-        public static Guid ToGuid(long value)
-        {
-            byte[] guidData = new byte[16];
-            Array.Copy(BitConverter.GetBytes(value), guidData, 8);
-            return new Guid(guidData);
-        }
-
-        public static long ToLong(Guid guid)
-        {
-            if (BitConverter.ToInt64(guid.ToByteArray(), 8) != 0)
-                throw new OverflowException("Value was either too large or too small for an Int64.");
-            return BitConverter.ToInt64(guid.ToByteArray(), 0);
-        }
-
-        public TestIndexBuilder Insert(TestDocumentBuilder testDocumentBuilder, JObject json)
-        {
-            return this;
-        }
-
-        public IStorageIndex Build()
-        {
-            return index;
-        }
-    }
-
-    public class TestDocumentBuilder
-    {
-        private readonly JObject json = new JObject();
-
-        private string contentType;
-        private Guid id;
-
-        public Guid Id
-        {
-            get { return id; }
-            set
-            {
-                id = value;
-                json["id"] = value;
-            }
-        }
-
-        public string ContentType
-        {
-            get { return contentType; }
-            set
-            {
-                contentType = value;
-                json["contentType"] = value;
-            }
-        }
-
-        public TestDocumentBuilder(string contentType, Guid id)
-        {
-            //TODO: Dummy Data based on ContentType
-
-            ContentType = contentType;
-            Id = id;
-        }
-
-        public TestDocumentBuilder Set(string key, dynamic obj)
-        {
-            json[key] = obj;
-            return this;
-        }
-
-        public JObject Build()
-        {
-            return json;
-        }
-    }
-
     [TestFixture]
     public class LuceneSearcherTests
     {
