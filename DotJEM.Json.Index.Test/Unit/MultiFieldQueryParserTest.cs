@@ -5,7 +5,6 @@ using System.Linq;
 using DotJEM.Json.Index.Schema;
 using Lucene.Net.Analysis.Standard;
 using Lucene.Net.QueryParsers;
-using Lucene.Net.Search;
 using Moq;
 using Moq.AutoMock;
 using NUnit.Framework;

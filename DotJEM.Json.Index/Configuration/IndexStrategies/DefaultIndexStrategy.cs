@@ -39,7 +39,7 @@ namespace DotJEM.Json.Index.Configuration.IndexStrategies
                     yield return new NumericField(fieldName, FieldStore, FieldIndex != Field.Index.NO)
                         .SetDoubleValue(value.Value<double>());
                     break;
-                
+
                 case JTokenType.Date:
                     yield return new NumericField(fieldName, FieldStore, FieldIndex != Field.Index.NO)
                         .SetLongValue(value.Value<DateTime>().Ticks);
@@ -56,7 +56,21 @@ namespace DotJEM.Json.Index.Configuration.IndexStrategies
                     yield break;
 
                 case JTokenType.Bytes:
+                case JTokenType.None:
+                case JTokenType.Object:
+                case JTokenType.Array:
+                case JTokenType.Constructor:
+                case JTokenType.Property:
+                case JTokenType.Comment:
+                case JTokenType.Raw:
                     yield break;
+
+                //Note: Let these fall thought to the standard tostring handler.
+                case JTokenType.String:
+                case JTokenType.Boolean:
+                case JTokenType.Guid:
+                case JTokenType.Uri:
+                    break;
             }
             //NOTE: Always add as string.
             var str = value.ToString();
