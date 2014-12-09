@@ -95,8 +95,9 @@ namespace DotJEM.Json.Index.Searching
         {
             if (field == null)
             {
-                return GetBooleanQuery(fields.Select(t => new BooleanClause(GetRangeQuery(t, part1, part2, inclusive), Occur.SHOULD))
+                var hmm = GetBooleanQuery(fields.Select(t => new BooleanClause(GetRangeQuery(t, part1, part2, inclusive), Occur.SHOULD))
                         .ToList(), true);
+                return hmm;
             }
 
             var extendedType = index.Schemas.ExtendedType(field);
@@ -109,15 +110,15 @@ namespace DotJEM.Json.Index.Searching
                     clauses.Add(
                         new BooleanClause(
                             NumericRangeQuery.NewLongRange(field,
-                            DateTime.Parse(part2, CultureInfo.InvariantCulture).Ticks,
-                            DateTime.Parse(part2, CultureInfo.InvariantCulture).Ticks, true,
-                            true), Occur.SHOULD));
+                            DateTime.Parse(part1, CultureInfo.InvariantCulture).Ticks,
+                            DateTime.Parse(part2, CultureInfo.InvariantCulture).Ticks, inclusive,
+                            inclusive), Occur.SHOULD));
                 }
                 catch (FormatException ex)
                 {
                     if (extendedType == JsonSchemaExtendedType.Date)
                     {
-                        throw new ParseException("TODO: Message", ex);
+                        throw new ParseException("Invalid DateTime format", ex);
                     }                    
                 }
             }

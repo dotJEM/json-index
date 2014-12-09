@@ -1,6 +1,15 @@
-﻿using Lucene.Net.QueryParsers;
+﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using DotJEM.Json.Index.Schema;
+using Lucene.Net.Analysis.Standard;
+using Lucene.Net.QueryParsers;
+using Moq;
 using Moq.AutoMock;
 using NUnit.Framework;
+using MultiFieldQueryParser = DotJEM.Json.Index.Searching.MultiFieldQueryParser;
+using Version = Lucene.Net.Util.Version;
 
 namespace DotJEM.Json.Index.Test.Unit
 {
@@ -8,20 +17,85 @@ namespace DotJEM.Json.Index.Test.Unit
     public class MultiFieldQueryParserTest
     {
         [Test]
-        public void GetRangeQuery_FieldIsNull_ReturnDefaultQuery()
+        public void GetRangeQuery_FieldIsNull_ReturnCorrectBooleanQuery()
+        {
+            IEnumerable<string> allFields = new string[]{"field1, field2, field3"};
+            var mocker = new AutoMocker();
+            mocker.Setup<IStorageIndex>(mock => mock.Schemas).Returns(mocker.GetMock<ISchemaCollection>().Object);
+            mocker.GetMock<ISchemaCollection>().Setup(mock => mock.AllFields()).Returns(allFields);
+
+            var queryParser = new MultiFieldQueryParser(Version.LUCENE_30, new StandardAnalyzer(Version.LUCENE_30),
+                mocker.GetMock<IStorageIndex>().Object);
+
+            const string queryString = "[2014-09-10T11:00 TO 2014-09-10T13:00]";
+
+            Assert.That(queryParser.Parse(queryString).ToString(), Is.EqualTo("(field1, field2, field3:[2014-09-10t11:00 TO 2014-09-10t13:00])"));
+        }
+
+        [Test]
+        public void GetRangeQuery_ExtendedTypeHasOnlyDateFlagAndValidDates_ReturnCorrectBooleanQuery()
         {
             var mocker = new AutoMocker();
+            mocker.Setup<IStorageIndex>(mock => mock.Schemas).Returns(mocker.GetMock<ISchemaCollection>().Object);
+            mocker.GetMock<ISchemaCollection>().Setup(mock => mock.ExtendedType(It.IsAny<string>())).Returns(JsonSchemaExtendedType.Date);
+            mocker.GetMock<ISchemaCollection>().Setup(mock => mock.AllFields()).Returns(Enumerable.Empty<string>());
 
-            //mocker.Setup<QueryParser>(mock => mock.GetBooleanQuery).Returns("fubar\\bob");
+            var queryParser = new MultiFieldQueryParser(Version.LUCENE_30, new StandardAnalyzer(Version.LUCENE_30),
+                mocker.GetMock<IStorageIndex>().Object);
 
+            const string queryString = "Created: [2014-09-10T11:00 TO 2014-09-10T13:00]";
 
-            //var contentService = new Mock<IContentService>();
-            //container.Setup<IServiceProvider<IContentService>>(provider => provider.Create(It.IsAny<string>(), It.IsAny<ApiController>())).Returns(contentService.Object);
+            Assert.That(queryParser.Parse(queryString).ToString(), Is.EqualTo("Created:[635459436000000000 TO 635459508000000000]"));
+        }
 
-            //container.CreateInstance<ContentController>().Get("myType");
+        [Test]
+        public void GetRangeQuery_ExtendedTypeHasOnlyDateFlagAndInValidDates_ThrowParseException()
+        {
+            var mocker = new AutoMocker();
+            mocker.Setup<IStorageIndex>(mock => mock.Schemas).Returns(mocker.GetMock<ISchemaCollection>().Object);
+            mocker.GetMock<ISchemaCollection>().Setup(mock => mock.ExtendedType(It.IsAny<string>())).Returns(JsonSchemaExtendedType.Date);
+            mocker.GetMock<ISchemaCollection>().Setup(mock => mock.AllFields()).Returns(Enumerable.Empty<string>());
 
-            //container.Verify<IAccessControlService>(i => i.Demand(ContentAccess.Read, "myType"), Times.Once());
+            var queryParser = new MultiFieldQueryParser(Version.LUCENE_30, new StandardAnalyzer(Version.LUCENE_30),
+                mocker.GetMock<IStorageIndex>().Object);
 
+            const string queryString = "Created: [2014-09-10T11:00 TO Hest]";
+
+            Assert.Throws<ParseException>(() => queryParser.Parse(queryString));
+        }
+
+        [Test]
+        public void GetRangeQuery_ExtendedTypeHasDateAndOtherFlagAndValidDates_ReturnCorrectBooleanQuery()
+        {
+            var mocker = new AutoMocker();
+            mocker.Setup<IStorageIndex>(mock => mock.Schemas).Returns(mocker.GetMock<ISchemaCollection>().Object);
+            mocker.GetMock<ISchemaCollection>().Setup(mock => mock.ExtendedType(It.IsAny<string>())).Returns(JsonSchemaExtendedType.Date | JsonSchemaExtendedType.String);
+            mocker.GetMock<ISchemaCollection>().Setup(mock => mock.AllFields()).Returns(Enumerable.Empty<string>());
+
+            var queryParser = new MultiFieldQueryParser(Version.LUCENE_30, new StandardAnalyzer(Version.LUCENE_30),
+                mocker.GetMock<IStorageIndex>().Object);
+
+            const string queryString = "Created: [2014-09-10T11:00 TO 2014-09-10T13:00]";
+
+            Assert.That(queryParser.Parse(queryString).ToString(), Is.EqualTo("Created:[635459436000000000 TO 635459508000000000] " +
+                                                                              "Created:[2014-09-10t11:00 TO 2014-09-10t13:00]"));
+        }
+
+        [Test]
+        public void GetRangeQuery_ExtendedTypeHasDateAndOtherFlagAndInValidDates_ReturnCorrectBooleanQuery()
+        {
+            var mocker = new AutoMocker();
+            mocker.Setup<IStorageIndex>(mock => mock.Schemas).Returns(mocker.GetMock<ISchemaCollection>().Object);
+            mocker.GetMock<ISchemaCollection>().Setup(mock => mock.ExtendedType(It.IsAny<string>())).Returns(JsonSchemaExtendedType.Date | JsonSchemaExtendedType.String);
+            mocker.GetMock<ISchemaCollection>().Setup(mock => mock.AllFields()).Returns(Enumerable.Empty<string>());
+
+            var queryParser = new MultiFieldQueryParser(Version.LUCENE_30, new StandardAnalyzer(Version.LUCENE_30),
+                mocker.GetMock<IStorageIndex>().Object);
+
+            const string queryString = "Created: [2014-09-10T11:00 TO Hest]";
+            var something = queryParser.Parse(queryString).ToString();
+
+            Assert.That(queryParser.Parse(queryString).ToString(), Is.EqualTo("Created:[2014-09-10t11:00 TO hest]"));
         }
     }
 }
