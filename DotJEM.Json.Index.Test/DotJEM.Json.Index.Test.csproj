@@ -98,11 +98,12 @@
     <Compile Include="Integration\LuceneSearcherComplexDataTest.cs" />
     <Compile Include="Integration\LuceneSearcherSimpleDataTest.cs" />
     <Compile Include="Integration\LuceneSearcherTests.cs" />
+    <Compile Include="Unit\Schema\JsonSchemaTypeConverter.cs" />
     <Compile Include="Util\TestDocumentBuilder.cs" />
     <Compile Include="Util\TestIndexBuilder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Unit\JObjectEnumeratorTest.cs" />
-    <Compile Include="Unit\JSchemaGeneratorTest.cs" />
+    <Compile Include="Unit\Schema\JSchemaGeneratorTest.cs" />
     <Compile Include="Unit\MultiFieldQueryParserTest.cs" />
     <Compile Include="Util\ConstraintExpressionExtensions.cs" />
     <Compile Include="Util\ReflectionExtensions.cs" />

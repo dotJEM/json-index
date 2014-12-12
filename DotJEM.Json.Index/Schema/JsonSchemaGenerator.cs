@@ -28,10 +28,8 @@ namespace DotJEM.Json.Index.Schema
         {
             if (json == null) return null;
 
-            JSchema schema = isRoot
-                ? new JRootSchema(JsonSchemaType.Object, JsonSchemaExtendedType.Object) 
-                : new JSchema(JsonSchemaType.Object, JsonSchemaExtendedType.Object);
-
+            JSchema schema = new JSchema(JsonSchemaType.Object, JsonSchemaExtendedType.Object);
+            schema.IsRoot = isRoot;
             schema.Id = path.ToString("/");
             schema.Field = path.ToString(".");
             schema.Properties = GenerateProperties(json, path);

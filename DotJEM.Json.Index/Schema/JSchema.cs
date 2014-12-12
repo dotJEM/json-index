@@ -9,6 +9,7 @@ namespace DotJEM.Json.Index.Schema
     [JsonConverter(typeof(JSchemeConverter))]
     public class JSchema
     {
+        public string Schema { get; set; }
         public string Id { get; set; }
         public string Title { get; set; }
         public string Description { get; set; }
@@ -23,6 +24,7 @@ namespace DotJEM.Json.Index.Schema
         //NOTE: Custom fields
         public string Field { get; set; }
         public bool Indexed { get; set; }
+
         public bool IsRoot { get; set; }
 
         public JSchema(JsonSchemaType type, JsonSchemaExtendedType extendedType)
