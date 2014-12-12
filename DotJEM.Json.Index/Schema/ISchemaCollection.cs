@@ -34,6 +34,10 @@ namespace DotJEM.Json.Index.Schema
 
         public JSchema Add(string contentType, JSchema schema)
         {
+            if (schemas.ContainsKey(contentType))
+            {
+                return this[contentType].Merge(schema);
+            }
             schemas.Add(contentType, schema);
             return schema;
         }

@@ -61,9 +61,9 @@ namespace DotJEM.Json.Index.Schema
             Type = Type | other.Type;
             ExtendedType = ExtendedType | other.ExtendedType;
             Indexed = Indexed || other.Indexed;
-            Indexed = Required || other.Required;
+            Required = Required || other.Required;
 
-            Description = MostQualifying(Title, other.Title);
+            Title = MostQualifying(Title, other.Title);
             Description = MostQualifying(Description, other.Description);
 
             Items = Items != null ? Items.Merge(other.Items) : other.Items;

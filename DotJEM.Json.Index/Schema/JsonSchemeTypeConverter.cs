@@ -66,6 +66,8 @@ namespace DotJEM.Json.Index.Schema
 
         private int ReadFlagsEnum<T>(JToken token)
         {
+            if (token == null) return 0;
+
             switch (token.Type)
             {
                 case JTokenType.Array:
