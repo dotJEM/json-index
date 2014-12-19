@@ -22,11 +22,12 @@ namespace DotJEM.Json.Index.Schema
             map[JTokenType.Null] = JsonSchemaExtendedType.Null;
 
             //NOTE: Unsupported types, perhaps these should be any instead?
-            map[JTokenType.Raw] = JsonSchemaExtendedType.String;
-            map[JTokenType.Bytes] = JsonSchemaExtendedType.String;
-            map[JTokenType.Guid] = JsonSchemaExtendedType.String;
-            map[JTokenType.Uri] = JsonSchemaExtendedType.String;
-            map[JTokenType.TimeSpan] = JsonSchemaExtendedType.String;
+            map[JTokenType.Raw] = JsonSchemaExtendedType.Any;
+            map[JTokenType.Bytes] = JsonSchemaExtendedType.Any;
+            map[JTokenType.Guid] = JsonSchemaExtendedType.Any;
+            map[JTokenType.Uri] = JsonSchemaExtendedType.Any;
+            map[JTokenType.TimeSpan] = JsonSchemaExtendedType.Any;
+            map[JTokenType.Undefined] = JsonSchemaExtendedType.Any;
         }
 
         public static JsonSchemaExtendedType ToSchemaExtendedType(this JTokenType self)

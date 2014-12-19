@@ -11,6 +11,17 @@ namespace DotJEM.Json.Index.Schema
 {
     public class JSchemeConverter : JsonConverter
     {
+        private readonly string url;
+
+        public JSchemeConverter() : this("")
+        {
+        }
+
+        public JSchemeConverter(string url)
+        {
+            this.url = url;
+        }
+
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
             JSchema schema = value as JSchema;
@@ -92,8 +103,7 @@ namespace DotJEM.Json.Index.Schema
             JSchema schema = new JSchema(
                 (JsonSchemaType) ReadFlagsEnum<JsonSchemaType>(json["type"]),
                 (JsonSchemaExtendedType)ReadFlagsEnum<JsonSchemaExtendedType>(json["extendedType"]));
-
-
+            
             if (json["$schema"] != null)
             {
                 schema.IsRoot = true;

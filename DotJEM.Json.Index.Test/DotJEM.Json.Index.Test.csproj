@@ -95,6 +95,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Constraints\Constraints.cs" />
+    <Compile Include="Constraints\HAS.cs" />
+    <Compile Include="Constraints\Properties\AbstractConstraint.cs" />
+    <Compile Include="Constraints\Properties\EnumerableEqualsConstraint.cs" />
+    <Compile Include="Constraints\Properties\IPropertiesConstraintsFactory.cs" />
+    <Compile Include="Constraints\Properties\ObjectPropertiesEqualsConstraint.cs" />
+    <Compile Include="Constraints\Properties\ObjectPropertiesNotEqualsConstraint.cs" />
+    <Compile Include="Constraints\Properties\PrivateMembersHelper.cs" />
     <Compile Include="Integration\LuceneSearcherComplexDataTest.cs" />
     <Compile Include="Integration\LuceneSearcherSimpleDataTest.cs" />
     <Compile Include="Integration\LuceneSearcherTests.cs" />

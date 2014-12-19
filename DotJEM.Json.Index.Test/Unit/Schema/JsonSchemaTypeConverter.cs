@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using DotJEM.Json.Index.Configuration;
 using DotJEM.Json.Index.Schema;
+using DotJEM.Json.Index.Test.Constraints;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Schema;
@@ -41,22 +43,23 @@ namespace DotJEM.Json.Index.Test.Unit.Schema
                 Has.Property("IsRoot").EqualTo(schema.IsRoot)
                 & Has.Property("Schema").EqualTo(schema.Schema));
         }
-
-        [Test, TestCaseSource("JSchemaTestObjects")]
-        public void SerializeDeserialize_GeneratedSchemas_SchemasAreKeept(JSchema schema)
+        
+        [TestCase("{ Foo: 42 }")]
+        [TestCase("{ Foo: 42, Bar: { Foo: 'Test this' } }")]
+        [TestCase("{ Foo: 42, Bar: { Foo: ['Test this', 42] } }")]
+        [TestCase("{ Foo: [ 42 ], Bar: { Foo: ['Test this', 42] } }")]
+        [TestCase("{ Foo: '42', Bar: { Foo: ['Test this', 42] } }")]
+        [TestCase("{ Foo: null, Bar: { Foo: ['Test this', 42] } }")]
+        [TestCase("{ Foo: undefined, Bar: { Foo: ['Test this', 42] } }")]
+        [TestCase("{ Foo: '42', Bar: { Foo: ['Test this', 42, { Test: 'hest' }] } }")]
+        [TestCase("{ Foo: '42', Bar: { Foo: [ ['Test this', 42], { Test: 'hest' }] } }")]
+        public void SerializeDeserialize_FromGeneratedSchemas_SchemasAreKeept(string json)
         {
+            JSchema schema = new JSchemaGenerator().Generate(JObject.Parse(json));
             JSchema deserialized = JsonConvert.DeserializeObject<JSchema>(JsonConvert.SerializeObject(schema));
 
-            //TODO: Property Equals.
-
-            Assert.That(deserialized, Has.Property("Properties").Not.Empty);
+            Assert.That(deserialized, HAS.Properties.EqualTo(schema));
         }
 
-        public static IEnumerable<JSchema> JSchemaTestObjects()
-        {
-            JSchemaGenerator generator = new JSchemaGenerator();
-
-            yield return generator.Generate(JObject.Parse("{ Foo: 42 }"));
-        }
     }
 }

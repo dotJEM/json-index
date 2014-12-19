@@ -50,7 +50,9 @@ namespace DotJEM.Json.Index.Schema
 
         public virtual JObject Serialize(string httpDotjemComApiSchema)
         {
-            return JObject.FromObject(this);
+            JsonSerializer serializer = new JsonSerializer();
+            serializer.Converters.Add(new JSchemeConverter("http://dotjem.com/api/schema"));
+            return JObject.FromObject(this, serializer);
         }
 
         public JSchema Merge(JSchema other)
@@ -68,25 +70,24 @@ namespace DotJEM.Json.Index.Schema
 
             Items = Items != null ? Items.Merge(other.Items) : other.Items;
 
-            if (other.Properties != null)
+            if (other.Properties == null)
+                return this;
+            
+            if (Properties == null)
             {
-                if (Properties == null)
+                Properties = other.Properties;
+                return this;
+            }
+            
+            foreach (KeyValuePair<string, JSchema> pair in other.Properties)
+            {
+                if (Properties.ContainsKey(pair.Key))
                 {
-                    Properties = other.Properties;
+                    Properties[pair.Key] = Properties[pair.Key].Merge(pair.Value);
                 }
                 else
                 {
-                    foreach (KeyValuePair<string, JSchema> pair in other.Properties)
-                    {
-                        if (Properties.ContainsKey(pair.Key))
-                        {
-                            Properties[pair.Key] = Properties[pair.Key].Merge(pair.Value);
-                        }
-                        else
-                        {
-                            Properties.Add(pair.Key, pair.Value);
-                        }
-                    }
+                    Properties.Add(pair.Key, pair.Value);
                 }
             }
             return this;
@@ -114,6 +115,11 @@ namespace DotJEM.Json.Index.Schema
             }
 
             return extendedTypes;
+        }
+
+        public override string ToString()
+        {
+            return JsonConvert.SerializeObject(this, Formatting.Indented);
         }
     }
 }

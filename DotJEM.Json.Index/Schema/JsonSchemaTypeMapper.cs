@@ -21,12 +21,13 @@ namespace DotJEM.Json.Index.Schema
             map[JTokenType.Null] = JsonSchemaType.Null;
 
             //NOTE: Unsupported types, perhaps these should be any instead?
-            map[JTokenType.Date] = JsonSchemaType.String;
-            map[JTokenType.Raw] = JsonSchemaType.String;
-            map[JTokenType.Bytes] = JsonSchemaType.String;
-            map[JTokenType.Guid] = JsonSchemaType.String;
-            map[JTokenType.Uri] = JsonSchemaType.String;
-            map[JTokenType.TimeSpan] = JsonSchemaType.String;
+            map[JTokenType.Date] = JsonSchemaType.Any;
+            map[JTokenType.Raw] = JsonSchemaType.Any;
+            map[JTokenType.Bytes] = JsonSchemaType.Any;
+            map[JTokenType.Guid] = JsonSchemaType.Any;
+            map[JTokenType.Uri] = JsonSchemaType.Any;
+            map[JTokenType.TimeSpan] = JsonSchemaType.Any;
+            map[JTokenType.Undefined] = JsonSchemaType.Any;
 
             //NOTE: We should not be meeting these:
             //typeMapping[JTokenType.Constructor] = JsonSchemaType.None;
