@@ -106,6 +106,7 @@
     <Compile Include="Integration\LuceneSearcherSimpleDataTest.cs" />
     <Compile Include="Integration\LuceneSearcherTests.cs" />
     <Compile Include="Unit\Schema\JsonSchemaTypeConverter.cs" />
+    <Compile Include="Unit\Storage\CashedLocksTests.cs" />
     <Compile Include="Util\TestDocumentBuilder.cs" />
     <Compile Include="Util\TestIndexBuilder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -125,6 +126,7 @@
       <Name>DotJEM.Json.Index</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

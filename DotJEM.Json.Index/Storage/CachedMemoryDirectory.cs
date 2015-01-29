@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Lucene.Net.Store;
@@ -31,6 +32,7 @@ namespace DotJEM.Json.Index.Storage
         {
             lock (padLock)
             {
+                Debug.WriteLine("bool FileExists(" + name + ")");
                 return files.ContainsKey(name);
             }
         }
@@ -39,7 +41,9 @@ namespace DotJEM.Json.Index.Storage
         {
             lock (padLock)
             {
-                return GetFile(name).LastModified;
+                CachedMemoryFile file = GetFile(name);
+                Debug.WriteLine("long FileModified(" + name + ") = " + file.LastModified);
+                return file.LastModified;
             }
         }
 
@@ -47,6 +51,7 @@ namespace DotJEM.Json.Index.Storage
         {
             lock (padLock)
             {
+                Debug.WriteLine("void TouchFile(" + name + ")");
                 CachedMemoryFile file = GetFile(name);
                 file.Touch();
             }
@@ -56,6 +61,7 @@ namespace DotJEM.Json.Index.Storage
         {
             lock (padLock)
             {
+                Debug.WriteLine("void DeleteFile(" + name + ")");
                 CachedMemoryFile file = GetFile(name);
                 file.Delete();
                 files.Remove(name);
@@ -65,6 +71,7 @@ namespace DotJEM.Json.Index.Storage
         public override long FileLength(string name)
         {
             CachedMemoryFile file = GetFile(name);
+            Debug.WriteLine("long FileLength(" + name + ") = " + file.Length);
             return file.Length;
         }
 
@@ -73,6 +80,8 @@ namespace DotJEM.Json.Index.Storage
             CachedMemoryFile file = new CachedMemoryFile();
             lock (padLock)
             {
+                Debug.WriteLine("IndexOutput CreateOutput(" + name + ")");
+
                 CachedMemoryFile existing;
                 if (files.TryGetValue(name, out existing))
                     existing.Delete();
@@ -84,6 +93,8 @@ namespace DotJEM.Json.Index.Storage
 
         public override IndexInput OpenInput(string name)
         {
+            Debug.WriteLine("IndexInput CreateOutput(" + name + ")");
+
             CachedMemoryFile file = GetFile(name);
             return new CachedMemoryFileInputStream(file);
         }

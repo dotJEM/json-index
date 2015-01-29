@@ -16,7 +16,7 @@ namespace DotJEM.Json.Index.Test.Integration
     [TestFixture]
     public class LuceneSearcherComplexDataTest
     {
-        private readonly IStorageIndex index = new LuceneStorageIndex();
+        private readonly IStorageIndex index = new LuceneStorageIndex("C:\\temp\\test-index");
 
         private readonly DateTime now = DateTime.Now;
 

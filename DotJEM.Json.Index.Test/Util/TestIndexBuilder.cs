@@ -26,7 +26,7 @@ namespace DotJEM.Json.Index.Test.Util
         private readonly IStorageIndex index;
         private long count;
 
-        private List<JObject> buffer = new List<JObject>();   
+        private readonly List<JObject> buffer = new List<JObject>();   
 
         public TestIndexBuilder() : this(new LuceneStorageIndex())
         {
@@ -72,6 +72,7 @@ namespace DotJEM.Json.Index.Test.Util
 
         public IStorageIndex Build()
         {
+            Flush();
             return index;
         }
     }
