@@ -15,17 +15,15 @@ namespace DotJEM.Json.Index
 
     internal class LuceneWriter : ILuceneWriter
     {
-        private readonly IStorageIndex index;
         private readonly IDocumentFactory factory;
+        private readonly LuceneStorageIndex index;
 
-        private readonly StandardAnalyzer analyzer = new StandardAnalyzer(Version.LUCENE_30);
-
-        public LuceneWriter(IStorageIndex index) 
+        public LuceneWriter(LuceneStorageIndex index) 
             : this(index, new LuceneDocumentFactory(index))
         {
         }
 
-        public LuceneWriter(IStorageIndex index, IDocumentFactory factory)
+        public LuceneWriter(LuceneStorageIndex index, IDocumentFactory factory)
         {
             this.index = index;
             this.factory = factory;
@@ -34,7 +32,7 @@ namespace DotJEM.Json.Index
         public void Write(JObject entity)
         {
             //TODO: Try Finaly Release Writer, it also doesn't make sense to keep the analyzer here and pass it each time.
-            IndexWriter writer = index.Storage.GetWriter(analyzer);
+            IndexWriter writer = index.Storage.GetWriter(index.Analyzer);
             InternalWrite(writer, entity);
             writer.Commit();
             //TODO: Optimize after a number of additions. Should be an option, we should also kick off that optimization on a different thread.
@@ -43,7 +41,7 @@ namespace DotJEM.Json.Index
 
         public void WriteAll(IEnumerable<JObject> entities)
         {
-            IndexWriter writer = index.Storage.GetWriter(analyzer);
+            IndexWriter writer = index.Storage.GetWriter(index.Analyzer);
             //writer.MergeFactor = 10000;
             foreach (JObject entity in entities)
             {
@@ -56,7 +54,7 @@ namespace DotJEM.Json.Index
 
         public void Delete(JObject entity)
         {
-            IndexWriter writer = index.Storage.GetWriter(analyzer);
+            IndexWriter writer = index.Storage.GetWriter(index.Analyzer);
             writer.DeleteDocuments(CreateTerm(entity));
             writer.Commit();
             //writer.Optimize();

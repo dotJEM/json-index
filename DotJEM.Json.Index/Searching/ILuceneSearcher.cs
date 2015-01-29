@@ -35,7 +35,8 @@ namespace DotJEM.Json.Index.Searching
 
         public ISearchResult Search(Query query)
         {
-            return new SearchResultCollector(query, index);
+            var something = new SearchResultCollector(query, index);
+            return something;
         }
 
         public ISearchResult Search(string value)

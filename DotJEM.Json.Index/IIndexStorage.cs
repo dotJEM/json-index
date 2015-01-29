@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Linq;
+using DotJEM.Json.Index.Storage;
 using Lucene.Net.Analysis;
 using Lucene.Net.Index;
 using Lucene.Net.Store;
@@ -51,7 +52,17 @@ namespace DotJEM.Json.Index
         public LuceneFileIndexStorage(string path)
             : base(FSDirectory.Open(path))
         {
-            //Note: Ensure directory.
+            //Note: Ensure cacheDirectory.
+            System.IO.Directory.CreateDirectory(path);
+        }
+    }
+
+    public class LuceneCachedMemmoryIndexStorage : AbstractLuceneIndexStorage
+    {
+        public LuceneCachedMemmoryIndexStorage(string path)
+            : base(new CachedMemoryDirectory(new DirectoryInfo(path)))
+        {
+            //Note: Ensure cacheDirectory.
             System.IO.Directory.CreateDirectory(path);
         }
     }
@@ -61,7 +72,7 @@ namespace DotJEM.Json.Index
         public LuceneMemmoryMappedFileIndexStorage(string path)
             : base(new MMapDirectory(new DirectoryInfo(path)))
         {
-            //Note: Ensure directory.
+            //Note: Ensure cacheDirectory.
             System.IO.Directory.CreateDirectory(path);
         }
     }

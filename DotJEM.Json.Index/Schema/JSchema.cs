@@ -67,6 +67,7 @@ namespace DotJEM.Json.Index.Schema
 
             Title = MostQualifying(Title, other.Title);
             Description = MostQualifying(Description, other.Description);
+            Description = MostQualifying(Field, other.Field);
 
             Items = Items != null ? Items.Merge(other.Items) : other.Items;
 
@@ -100,11 +101,11 @@ namespace DotJEM.Json.Index.Schema
 
         public JsonSchemaExtendedType LookupExtentedType(string field)
         {
-            if (!field.StartsWith(this.Field))
+            if (!field.StartsWith(Field))
                 return JsonSchemaExtendedType.None;
 
-            if (this.Field == field)
-                return this.ExtendedType;
+            if (Field == field)
+                return ExtendedType;
 
             var extendedTypes = Items != null ? Items.LookupExtentedType(field) : JsonSchemaExtendedType.None;
 

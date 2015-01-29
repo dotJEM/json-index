@@ -19,18 +19,16 @@ namespace DotJEM.Json.Index
 
         ILuceneWriter Writer { get; }
         ILuceneSearcher Searcher { get; }
-
-        ISearchResult Search(string query);
-        ISearchResult Search(Query query);
-
-        ISearchResult Search(object query);
-        ISearchResult Search(JObject query);
-
-
+        
         IStorageIndex Write(JObject entity);
         IStorageIndex WriteAll(IEnumerable<JObject> entities);
         IStorageIndex Delete(JObject entity);
-        
+
+        ISearchResult Search(string query);
+        ISearchResult Search(Query query);
+        ISearchResult Search(object query);
+        ISearchResult Search(JObject query);
+
         IEnumerable<string> Terms(string field);
     }
 
@@ -44,30 +42,44 @@ namespace DotJEM.Json.Index
 
         #region Constructor Overloads
         public LuceneStorageIndex()
-            : this(new IndexConfiguration(), new LuceneMemmoryIndexStorage())
+            : this(new IndexConfiguration(), new LuceneMemmoryIndexStorage(), new StandardAnalyzer(Version.LUCENE_30))
         {
         }
 
         public LuceneStorageIndex(string path)
-            : this(new IndexConfiguration(), new LuceneFileIndexStorage(path))
+            : this(new IndexConfiguration(), new LuceneCachedMemmoryIndexStorage(path), new StandardAnalyzer(Version.LUCENE_30))
         {
         }
 
         public LuceneStorageIndex(IIndexStorage storage)
-            : this(new IndexConfiguration(), storage)
+            : this(new IndexConfiguration(), storage, new StandardAnalyzer(Version.LUCENE_30))
+        {
+        }
+
+        public LuceneStorageIndex(IIndexStorage storage, Analyzer analyzer)
+            : this(new IndexConfiguration(), storage, analyzer)
         {
         }
 
         public LuceneStorageIndex(IIndexConfiguration configuration)
-            : this(configuration, new LuceneMemmoryIndexStorage())
+            : this(configuration, new LuceneMemmoryIndexStorage(), new StandardAnalyzer(Version.LUCENE_30))
+        {
+        }
+
+        public LuceneStorageIndex(IIndexConfiguration configuration, IIndexStorage storage)
+            : this(configuration, storage, new StandardAnalyzer(Version.LUCENE_30))
         {
         }
         #endregion
 
-        public LuceneStorageIndex(IIndexConfiguration configuration, IIndexStorage storage)
+        public LuceneStorageIndex(IIndexConfiguration configuration, IIndexStorage storage, Analyzer analyzer)
         {
+            if (configuration == null) throw new ArgumentNullException("configuration");
+            if (storage == null) throw new ArgumentNullException("storage");
+            if (analyzer == null) throw new ArgumentNullException("analyzer");
+
             Schemas = new SchemaCollection();
-            Analyzer = new StandardAnalyzer(Version.LUCENE_30);
+            Analyzer = analyzer;
 
             Storage = storage;
             Configuration = configuration;
@@ -82,6 +94,8 @@ namespace DotJEM.Json.Index
 
         public ILuceneWriter Writer { get { return writer.Value; } }
         public ILuceneSearcher Searcher { get { return searcher.Value; } }
+
+        #region Short hand helpers
 
         public ISearchResult Search(string query)
         {
@@ -133,5 +147,7 @@ namespace DotJEM.Json.Index
         {
             return Searcher.Terms(field);
         }
+
+        #endregion
     }
 }

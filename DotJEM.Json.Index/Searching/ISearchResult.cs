@@ -68,6 +68,12 @@ namespace DotJEM.Json.Index.Searching
             return this;
         }
 
+        //public ISearchResult Filter(ChainedFilter value)
+        //{
+        //    filtering = value;
+        //    return this;
+        //}
+
         public ISearchResult Sort(Sort value)
         {
             sorting = value;
