@@ -3,12 +3,12 @@ using Lucene.Net.Store;
 
 namespace DotJEM.Json.Index.Storage
 {
-    public class CachedMemoryLock : Lock
+    public class MemoryCashedLock : Lock
     {
         private readonly string name;
         private readonly HashSet<string> locks;
 
-        public CachedMemoryLock(HashSet<string> locks, string name)
+        public MemoryCashedLock(HashSet<string> locks, string name)
         {
             this.locks = locks;
             this.name = name;

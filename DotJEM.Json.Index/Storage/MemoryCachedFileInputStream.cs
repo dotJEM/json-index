@@ -4,7 +4,7 @@ using Lucene.Net.Store;
 
 namespace DotJEM.Json.Index.Storage
 {
-    public class CachedMemoryFileInputStream : IndexInput
+    public class MemoryCachedFileInputStream : IndexInput
     {
         private readonly MemoryCachedFile file;
 
@@ -27,11 +27,11 @@ namespace DotJEM.Json.Index.Storage
             }
         }
 
-        static CachedMemoryFileInputStream()
+        static MemoryCachedFileInputStream()
         {
         }
 
-        public CachedMemoryFileInputStream(MemoryCachedFile f)
+        public MemoryCachedFileInputStream(MemoryCachedFile f)
         {
             file = f;
             length = file.Length;

@@ -18,7 +18,7 @@ namespace DotJEM.Json.Index.Storage
 
         public override Lock MakeLock(string lockName)
         {
-            return new CachedMemoryLock(locks, lockName);
+            return new MemoryCashedLock(locks, lockName);
         }
 
         public override void ClearLock(string lockName)

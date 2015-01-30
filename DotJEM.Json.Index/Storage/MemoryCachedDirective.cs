@@ -88,7 +88,7 @@ namespace DotJEM.Json.Index.Storage
 
                 files[name] = file;
             }
-            return new CachedMemoryFileOutputStream(file);
+            return new MemoryCachedFileOutputStream(file);
         }
 
         public override IndexInput OpenInput(string name)
@@ -96,7 +96,7 @@ namespace DotJEM.Json.Index.Storage
             Debug.WriteLine("IndexInput CreateOutput(" + name + ")");
 
             MemoryCachedFile file = GetFile(name);
-            return new CachedMemoryFileInputStream(file);
+            return new MemoryCachedFileInputStream(file);
         }
 
         protected override void Dispose(bool disposing)
