@@ -6,12 +6,12 @@ using Lucene.Net.Store;
 namespace DotJEM.Json.Index.Storage
 {
     //NOTE: This is taken directly from LUCENE as of now. (Classes was internal so could not reuse directly)
-    public class CachedMemoryLockFactory : LockFactory
+    public class MemoryCashedLockFactory : LockFactory
     {
         private readonly DirectoryInfo cache;
         private readonly HashSet<string> locks = new HashSet<string>();
 
-        public CachedMemoryLockFactory(DirectoryInfo cache)
+        public MemoryCashedLockFactory(DirectoryInfo cache)
         {
             this.cache = cache;
         }

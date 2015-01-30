@@ -7,13 +7,13 @@ using Directory = Lucene.Net.Store.Directory;
 
 namespace DotJEM.Json.Index.Storage
 {
-    public sealed class CachedMemoryDirectory : Directory
+    public sealed class MemoryCachedDirective : Directory
     {
         private readonly DirectoryInfo cache;
-        private readonly Dictionary<string, CachedMemoryFile> files = new Dictionary<string, CachedMemoryFile>();
+        private readonly Dictionary<string, MemoryCachedFile> files = new Dictionary<string, MemoryCachedFile>();
         private readonly object padLock = new object();
 
-        public CachedMemoryDirectory(DirectoryInfo cache)
+        public MemoryCachedDirective(DirectoryInfo cache)
         {
             this.cache = cache;
             SetLockFactory(new CachedMemoryLockFactory(cache));
@@ -41,7 +41,7 @@ namespace DotJEM.Json.Index.Storage
         {
             lock (padLock)
             {
-                CachedMemoryFile file = GetFile(name);
+                MemoryCachedFile file = GetFile(name);
                 Debug.WriteLine("long FileModified(" + name + ") = " + file.LastModified);
                 return file.LastModified;
             }
@@ -52,7 +52,7 @@ namespace DotJEM.Json.Index.Storage
             lock (padLock)
             {
                 Debug.WriteLine("void TouchFile(" + name + ")");
-                CachedMemoryFile file = GetFile(name);
+                MemoryCachedFile file = GetFile(name);
                 file.Touch();
             }
         }
@@ -62,7 +62,7 @@ namespace DotJEM.Json.Index.Storage
             lock (padLock)
             {
                 Debug.WriteLine("void DeleteFile(" + name + ")");
-                CachedMemoryFile file = GetFile(name);
+                MemoryCachedFile file = GetFile(name);
                 file.Delete();
                 files.Remove(name);
             }
@@ -70,19 +70,19 @@ namespace DotJEM.Json.Index.Storage
         
         public override long FileLength(string name)
         {
-            CachedMemoryFile file = GetFile(name);
+            MemoryCachedFile file = GetFile(name);
             Debug.WriteLine("long FileLength(" + name + ") = " + file.Length);
             return file.Length;
         }
 
         public override IndexOutput CreateOutput(string name)
         {
-            CachedMemoryFile file = new CachedMemoryFile();
+            MemoryCachedFile file = new MemoryCachedFile();
             lock (padLock)
             {
                 Debug.WriteLine("IndexOutput CreateOutput(" + name + ")");
 
-                CachedMemoryFile existing;
+                MemoryCachedFile existing;
                 if (files.TryGetValue(name, out existing))
                     existing.Delete();
 
@@ -95,7 +95,7 @@ namespace DotJEM.Json.Index.Storage
         {
             Debug.WriteLine("IndexInput CreateOutput(" + name + ")");
 
-            CachedMemoryFile file = GetFile(name);
+            MemoryCachedFile file = GetFile(name);
             return new CachedMemoryFileInputStream(file);
         }
 
@@ -104,7 +104,7 @@ namespace DotJEM.Json.Index.Storage
             isOpen = false;
         }
 
-        private CachedMemoryFile GetFile(string name)
+        private MemoryCachedFile GetFile(string name)
         {
             EnsureOpen();
             try

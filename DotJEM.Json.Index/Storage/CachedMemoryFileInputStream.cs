@@ -6,7 +6,7 @@ namespace DotJEM.Json.Index.Storage
 {
     public class CachedMemoryFileInputStream : IndexInput
     {
-        private readonly CachedMemoryFile file;
+        private readonly MemoryCachedFile file;
 
         internal static readonly int BUFFER_SIZE = 1024;
         private long length;
@@ -31,7 +31,7 @@ namespace DotJEM.Json.Index.Storage
         {
         }
 
-        public CachedMemoryFileInputStream(CachedMemoryFile f)
+        public CachedMemoryFileInputStream(MemoryCachedFile f)
         {
             file = f;
             length = file.Length;

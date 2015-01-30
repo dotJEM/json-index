@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 namespace DotJEM.Json.Index.Storage
 {
-    public class CachedMemoryFile
+    public class MemoryCachedFile
     {
         private readonly List<byte[]> buffers = new List<byte[]>();
 
@@ -13,7 +13,7 @@ namespace DotJEM.Json.Index.Storage
         public long LastModified { get; set; }
         public long SizeInBytes { get; private set; }
 
-        public CachedMemoryFile()
+        public MemoryCachedFile()
         {
             LastModified = Stopwatch.GetTimestamp();
         }

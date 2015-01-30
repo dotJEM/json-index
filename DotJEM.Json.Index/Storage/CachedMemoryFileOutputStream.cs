@@ -5,7 +5,7 @@ namespace DotJEM.Json.Index.Storage
 {
     public class CachedMemoryFileOutputStream : IndexOutput
     {
-        private readonly CachedMemoryFile file;
+        private readonly MemoryCachedFile file;
         
         internal const int BUFFER_SIZE = 1024;
         private byte[] currentBuffer;
@@ -38,11 +38,11 @@ namespace DotJEM.Json.Index.Storage
         /// Construct an empty output buffer.
         /// </summary>
         public CachedMemoryFileOutputStream()
-            : this(new CachedMemoryFile())
+            : this(new MemoryCachedFile())
         {
         }
 
-        internal CachedMemoryFileOutputStream(CachedMemoryFile file)
+        internal CachedMemoryFileOutputStream(MemoryCachedFile file)
         {
             this.file = file;
             currentBufferIndex = -1;
