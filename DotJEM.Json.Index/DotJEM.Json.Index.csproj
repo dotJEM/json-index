@@ -126,6 +126,8 @@
     <Compile Include="Storage\MemoryCachedDirective.cs" />
     <Compile Include="Storage\MemoryCachedFile.cs" />
     <Compile Include="Storage\MemoryCashedLockFactory.cs" />
+    <Compile Include="Storage\MemoryImpl.cs" />
+    <Compile Include="Storage\MemoryTributary.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

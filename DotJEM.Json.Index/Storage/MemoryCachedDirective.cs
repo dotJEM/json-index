@@ -16,7 +16,7 @@ namespace DotJEM.Json.Index.Storage
         public MemoryCachedDirective(DirectoryInfo cache)
         {
             this.cache = cache;
-            SetLockFactory(new CachedMemoryLockFactory(cache));
+            SetLockFactory(new MemoryCashedLockFactory(cache));
         }
 
         public override string[] ListAll()

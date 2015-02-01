@@ -60,7 +60,7 @@ namespace DotJEM.Json.Index
     public class LuceneCachedMemmoryIndexStorage : AbstractLuceneIndexStorage
     {
         public LuceneCachedMemmoryIndexStorage(string path)
-            : base(new CachedMemoryDirectory(new DirectoryInfo(path)))
+            : base(new MemoryCachedDirective(new DirectoryInfo(path)))
         {
             //Note: Ensure cacheDirectory.
             System.IO.Directory.CreateDirectory(path);
