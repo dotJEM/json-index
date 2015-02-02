@@ -4,9 +4,9 @@ using Lucene.Net.Store;
 
 namespace DotJEM.Json.Index.Storage
 {
-    public class MemoryCachedFileInputStream : IndexInput
+    public class RamInputStream : IndexInput
     {
-        private readonly MemoryCachedFile file;
+        private readonly RamFile file;
 
         internal static readonly int BUFFER_SIZE = 1024;
         private long length;
@@ -22,16 +22,15 @@ namespace DotJEM.Json.Index.Storage
             {
                 if (currentBufferIndex >= 0)
                     return bufferStart + bufferPosition;
-                else
-                    return 0L;
+                return 0L;
             }
         }
 
-        static MemoryCachedFileInputStream()
+        static RamInputStream()
         {
         }
 
-        public MemoryCachedFileInputStream(MemoryCachedFile f)
+        public RamInputStream(RamFile f)
         {
             file = f;
             length = file.Length;

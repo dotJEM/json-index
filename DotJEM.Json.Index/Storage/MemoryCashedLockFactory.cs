@@ -8,12 +8,12 @@ namespace DotJEM.Json.Index.Storage
     //NOTE: This is taken directly from LUCENE as of now. (Classes was internal so could not reuse directly)
     public class MemoryCashedLockFactory : LockFactory
     {
-        private readonly DirectoryInfo cache;
+        private readonly string cacheDirectory;
         private readonly HashSet<string> locks = new HashSet<string>();
 
-        public MemoryCashedLockFactory(DirectoryInfo cache)
+        public MemoryCashedLockFactory(string cacheDirectory)
         {
-            this.cache = cache;
+            this.cacheDirectory = cacheDirectory;
         }
 
         public override Lock MakeLock(string lockName)

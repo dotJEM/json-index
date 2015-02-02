@@ -30,6 +30,8 @@ namespace DotJEM.Json.Index
         ISearchResult Search(JObject query);
 
         IEnumerable<string> Terms(string field);
+
+        void Close();
     }
 
     public class LuceneStorageIndex : IStorageIndex
@@ -91,6 +93,11 @@ namespace DotJEM.Json.Index
         //TODO: Do we need to be able to release these?
         private readonly Lazy<ILuceneWriter> writer;
         private readonly Lazy<ILuceneSearcher> searcher;
+
+        public void Close()
+        {
+            Storage.Close();
+        }
 
         public ILuceneWriter Writer { get { return writer.Value; } }
         public ILuceneSearcher Searcher { get { return searcher.Value; } }

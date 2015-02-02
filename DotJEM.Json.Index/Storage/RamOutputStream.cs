@@ -3,9 +3,9 @@ using Lucene.Net.Store;
 
 namespace DotJEM.Json.Index.Storage
 {
-    public class MemoryCachedFileOutputStream : IndexOutput
+    public class RamOutputStream : IndexOutput
     {
-        private readonly MemoryCachedFile file;
+        private readonly RamFile file;
         
         internal const int BUFFER_SIZE = 1024;
         private byte[] currentBuffer;
@@ -37,12 +37,12 @@ namespace DotJEM.Json.Index.Storage
         /// <summary>
         /// Construct an empty output buffer.
         /// </summary>
-        public MemoryCachedFileOutputStream()
-            : this(new MemoryCachedFile())
+        public RamOutputStream()
+            : this(new RamFile())
         {
         }
 
-        internal MemoryCachedFileOutputStream(MemoryCachedFile file)
+        internal RamOutputStream(RamFile file)
         {
             this.file = file;
             currentBufferIndex = -1;

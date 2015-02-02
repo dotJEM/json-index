@@ -13,6 +13,7 @@ namespace DotJEM.Json.Index
         IndexReader OpenReader();
         IndexWriter GetWriter(Analyzer analyzer);
         bool Exists { get; }
+        void Close();
     }
 
     public abstract class AbstractLuceneIndexStorage : IIndexStorage
@@ -37,6 +38,15 @@ namespace DotJEM.Json.Index
         {
             return Exists ? IndexReader.Open(Directory, true) : null;
         }
+
+        public void Close()
+        {
+            if (writer != null)
+            {
+                writer.Dispose();
+                writer = null;
+            }
+        }
     }
 
     public class LuceneMemmoryIndexStorage : AbstractLuceneIndexStorage
@@ -60,7 +70,7 @@ namespace DotJEM.Json.Index
     public class LuceneCachedMemmoryIndexStorage : AbstractLuceneIndexStorage
     {
         public LuceneCachedMemmoryIndexStorage(string path)
-            : base(new MemoryCachedDirective(new DirectoryInfo(path)))
+            : base(new MemoryCachedDirective(path))
         {
             //Note: Ensure cacheDirectory.
             System.IO.Directory.CreateDirectory(path);

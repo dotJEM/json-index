@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Lucene.Net.Analysis.Standard;
 using Lucene.Net.Index;
 using Newtonsoft.Json.Linq;

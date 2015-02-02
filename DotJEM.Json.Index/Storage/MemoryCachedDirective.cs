@@ -3,20 +3,30 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Lucene.Net.Store;
+using Lucene.Net.Util.Cache;
 using Directory = Lucene.Net.Store.Directory;
 
 namespace DotJEM.Json.Index.Storage
 {
     public sealed class MemoryCachedDirective : Directory
     {
-        private readonly DirectoryInfo cache;
-        private readonly Dictionary<string, MemoryCachedFile> files = new Dictionary<string, MemoryCachedFile>();
+        private readonly string cacheDirectory;
+        private readonly Dictionary<string, ILuceneFile> files = new Dictionary<string, ILuceneFile>();
         private readonly object padLock = new object();
 
-        public MemoryCachedDirective(DirectoryInfo cache)
+        //private IDirectoryStrategy strategy = new MemoryCashedDirectoryStrategy();
+        private readonly IDirectoryStrategy strategy = new MemoryDirectoryStrategy();
+        
+        public MemoryCachedDirective(string cacheDirectory)
         {
-            this.cache = cache;
-            SetLockFactory(new MemoryCashedLockFactory(cache));
+            this.cacheDirectory = cacheDirectory;
+            SetLockFactory(new MemoryCashedLockFactory(cacheDirectory));
+
+            System.IO.Directory.CreateDirectory(cacheDirectory);
+            foreach (string file in System.IO.Directory.GetFiles(cacheDirectory).Select(Path.GetFileName))
+            {
+                files.Add(file, new MemoryCachedFile(file));
+            }
         }
 
         public override string[] ListAll()
@@ -32,7 +42,6 @@ namespace DotJEM.Json.Index.Storage
         {
             lock (padLock)
             {
-                Debug.WriteLine("bool FileExists(" + name + ")");
                 return files.ContainsKey(name);
             }
         }
@@ -41,8 +50,7 @@ namespace DotJEM.Json.Index.Storage
         {
             lock (padLock)
             {
-                MemoryCachedFile file = GetFile(name);
-                Debug.WriteLine("long FileModified(" + name + ") = " + file.LastModified);
+                ILuceneFile file = GetFile(name);
                 return file.LastModified;
             }
         }
@@ -51,8 +59,7 @@ namespace DotJEM.Json.Index.Storage
         {
             lock (padLock)
             {
-                Debug.WriteLine("void TouchFile(" + name + ")");
-                MemoryCachedFile file = GetFile(name);
+                ILuceneFile file = GetFile(name);
                 file.Touch();
             }
         }
@@ -61,8 +68,7 @@ namespace DotJEM.Json.Index.Storage
         {
             lock (padLock)
             {
-                Debug.WriteLine("void DeleteFile(" + name + ")");
-                MemoryCachedFile file = GetFile(name);
+                ILuceneFile file = GetFile(name);
                 file.Delete();
                 files.Remove(name);
             }
@@ -70,33 +76,30 @@ namespace DotJEM.Json.Index.Storage
         
         public override long FileLength(string name)
         {
-            MemoryCachedFile file = GetFile(name);
-            Debug.WriteLine("long FileLength(" + name + ") = " + file.Length);
+            ILuceneFile file = GetFile(name);
             return file.Length;
         }
 
         public override IndexOutput CreateOutput(string name)
         {
-            MemoryCachedFile file = new MemoryCachedFile();
+            ILuceneFile file = strategy.CreateFile(Path.Combine(cacheDirectory, name));
             lock (padLock)
             {
-                Debug.WriteLine("IndexOutput CreateOutput(" + name + ")");
-
-                MemoryCachedFile existing;
+                ILuceneFile existing;
                 if (files.TryGetValue(name, out existing))
+                {
                     existing.Delete();
+                }
 
                 files[name] = file;
             }
-            return new MemoryCachedFileOutputStream(file);
+            return strategy.CreateOutput(file);
         }
 
         public override IndexInput OpenInput(string name)
         {
-            Debug.WriteLine("IndexInput CreateOutput(" + name + ")");
-
-            MemoryCachedFile file = GetFile(name);
-            return new MemoryCachedFileInputStream(file);
+            ILuceneFile file = GetFile(name);
+            return strategy.CreateInput(file);
         }
 
         protected override void Dispose(bool disposing)
@@ -104,7 +107,7 @@ namespace DotJEM.Json.Index.Storage
             isOpen = false;
         }
 
-        private MemoryCachedFile GetFile(string name)
+        private ILuceneFile GetFile(string name)
         {
             EnsureOpen();
             try
@@ -116,5 +119,57 @@ namespace DotJEM.Json.Index.Storage
                 throw new FileNotFoundException("Could not find the specified file.", name);
             }
         }
+    }
+
+    public interface IDirectoryStrategy
+    {
+        IndexInput CreateInput(ILuceneFile file);
+        IndexOutput CreateOutput(ILuceneFile file);
+
+        ILuceneFile CreateFile(string cache);
+    }
+
+    class MemoryCashedDirectoryStrategy : IDirectoryStrategy
+    {
+        public IndexInput CreateInput(ILuceneFile file)
+        {
+            return new RamInputStream((RamFile)file);
+        }
+
+        public IndexOutput CreateOutput(ILuceneFile file)
+        {
+            return new RamOutputStream((RamFile)file);
+        }
+
+        public ILuceneFile CreateFile(string cache)
+        {
+            return new RamFile();
+        }
+    }
+
+    class MemoryDirectoryStrategy : IDirectoryStrategy
+    {
+        public IndexInput CreateInput(ILuceneFile file)
+        {
+            return new MemoryInputStream((MemoryCachedFile)file);
+        }
+
+        public IndexOutput CreateOutput(ILuceneFile file)
+        {
+            return new MemoryOutputStream((MemoryCachedFile)file);
+        }
+
+        public ILuceneFile CreateFile(string cache)
+        {
+            return new MemoryCachedFile(cache);
+        }
+    }
+
+    public interface ILuceneFile
+    {
+        long LastModified { get; }
+        long Length { get; }
+        long Touch();
+        void Delete();
     }
 }
