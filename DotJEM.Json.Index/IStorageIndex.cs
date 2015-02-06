@@ -11,6 +11,8 @@ using Version = Lucene.Net.Util.Version;
 
 namespace DotJEM.Json.Index
 {
+
+    //TODO: -> IIndexContext to align to IStorageContext, then allow for multiple indexes.
     public interface IStorageIndex
     {
         ISchemaCollection Schemas { get; }
