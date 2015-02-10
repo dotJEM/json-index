@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Lucene.Net.Analysis.Standard;
 using Lucene.Net.Index;
 using Newtonsoft.Json.Linq;
@@ -12,6 +13,7 @@ namespace DotJEM.Json.Index
         void Write(JObject entity);
         void WriteAll(IEnumerable<JObject> entities);
         void Delete(JObject entity);
+        void DeleteAll(IEnumerable<JObject> entities);
     }
 
     internal class LuceneWriter : ILuceneWriter
@@ -32,25 +34,17 @@ namespace DotJEM.Json.Index
 
         public void Write(JObject entity)
         {
-            //TODO: Try Finaly Release Writer, it also doesn't make sense to keep the analyzer here and pass it each time.
             IndexWriter writer = index.Storage.GetWriter(index.Analyzer);
-            InternalWrite(writer, entity);
+            writer.UpdateDocument(CreateTerm(entity), factory.Create(entity));
             writer.Commit();
-            //TODO: Optimize after a number of additions. Should be an option, we should also kick off that optimization on a different thread.
-            //writer.Optimize();
         }
 
         public void WriteAll(IEnumerable<JObject> entities)
         {
             IndexWriter writer = index.Storage.GetWriter(index.Analyzer);
-            //writer.MergeFactor = 10000;
             foreach (JObject entity in entities)
-            {
-                InternalWrite(writer, entity);
-            }
+                writer.UpdateDocument(CreateTerm(entity), factory.Create(entity));
             writer.Commit();
-            //TODO: Remove Optimize and make it explicit instead.
-            //writer.Optimize();
         }
 
         public void Delete(JObject entity)
@@ -58,12 +52,18 @@ namespace DotJEM.Json.Index
             IndexWriter writer = index.Storage.GetWriter(index.Analyzer);
             writer.DeleteDocuments(CreateTerm(entity));
             writer.Commit();
-            //writer.Optimize();
         }
 
-        private void InternalWrite(IndexWriter writer, JObject entity)
+        public void DeleteAll(IEnumerable<JObject> entities)
         {
-            writer.UpdateDocument(CreateTerm(entity), factory.Create(entity));
+            IndexWriter writer = index.Storage.GetWriter(index.Analyzer);
+            writer.DeleteDocuments(entities.Select(CreateTerm).ToArray());
+            writer.Commit();
+        }
+
+        public void Optimize()
+        {
+            index.Storage.GetWriter(index.Analyzer).Optimize();
         }
 
         private Term CreateTerm(JObject entity)

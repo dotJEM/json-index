@@ -41,6 +41,7 @@ namespace DotJEM.Json.Index.Schema
             schemas.Add(contentType, schema);
             return schema;
         }
+
         public IEnumerable<string> AllFields()
         {
             return schemas.Values
