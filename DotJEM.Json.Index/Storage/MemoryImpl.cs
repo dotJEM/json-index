@@ -33,7 +33,7 @@ namespace DotJEM.Json.Index.Storage
     public class MemoryCachedFile : ILuceneFile
     {
         //4096 = 4KB, 16384 = 16KB, 32768 = 32KB, 65536 = 64KB
-        private const int BLOCK_SIZE = 32768; //85000 Bytes and above goes to the Large Object Heap... We wan't to avoid that.
+        private const int BLOCK_SIZE = 16384; //85000 Bytes and above goes to the Large Object Heap... We wan't to avoid that.
 
         private readonly List<byte[]> blocks = new List<byte[]>();
 
@@ -43,16 +43,21 @@ namespace DotJEM.Json.Index.Storage
 
         private readonly string cacheFile;
         private readonly object padlock = new object();
-        private bool initialized = false;
 
         public MemoryCachedFile(string cacheFile)
         {
             this.cacheFile = cacheFile;
         }
 
+        public MemoryCachedFile(string cacheFile, byte[] buffer)
+            : this(cacheFile)
+        {
+            WriteBytes(0, buffer, 0, buffer.Length);
+        }
+
         public void Flush()
         {
-            using (FileStream stream = File.Open(cacheFile, FileMode.Create, FileAccess.ReadWrite,FileShare.Read))
+            using (FileStream stream = File.Open(cacheFile, FileMode.Create, FileAccess.ReadWrite, FileShare.Read))
             {
                 int count = BLOCK_SIZE;
                 foreach (byte[] block in blocks)
@@ -82,12 +87,9 @@ namespace DotJEM.Json.Index.Storage
             if (count == 0)
                 return;
 
-            EnsureInitialized();
-
-            using (Lock(pos, count))
+            lock (padlock)
             {
                 Length = Math.Max(Length, EnsureCapacity(pos + count));
-
                 do
                 {
                     int blockOffset = (int)(pos % BLOCK_SIZE);
@@ -106,14 +108,11 @@ namespace DotJEM.Json.Index.Storage
 
         public int ReadBytes(long pos, byte[] buffer, int offset, int count)
         {
-            EnsureInitialized();
-
             if (Length == 0)
                 return 0;
 
-            using (Lock(pos, count))
+            lock(padlock)
             {
-
                 count = (int)Math.Min(Length - pos, count);
 
                 int read = 0;
@@ -135,55 +134,15 @@ namespace DotJEM.Json.Index.Storage
             }
         }
 
-        private void EnsureInitialized()
-        {
-            if (initialized)
-                return;
-
-            lock (padlock)
-            {
-                if(!File.Exists(cacheFile))
-                    return;
-                
-                using (FileStream stream = File.Open(cacheFile, FileMode.Open, FileAccess.Read, FileShare.Read))
-                {
-                    if(stream.Length == 0)
-                        return;
-                    
-                    do
-                    {
-                        byte[] block = new byte[BLOCK_SIZE];
-                        Length += stream.Read(block, 0, BLOCK_SIZE);
-                        blocks.Add(block);
-                    } while (stream.Position < stream.Length);
-                    Capacity = BLOCK_SIZE * blocks.Count;
-                }
-            }
-
-            initialized = true;
-        }
-
         private long EnsureCapacity(long length)
         {
             if (Capacity > length)
                 return length;
 
-            int growth = (int)(((length - Capacity) / BLOCK_SIZE) + 1);
+            int growth = (int)((length - Capacity) / BLOCK_SIZE)+1;
             blocks.AddRange(Enumerable.Range(0, growth).Select(index => new byte[BLOCK_SIZE]).ToArray());
             Capacity = BLOCK_SIZE * blocks.Count;
             return length;
-        }
-
-        private ILock Lock(long start, int count)
-        {
-            //int first = (int) (start%BLOCK_SIZE);
-            //int last = (int) ((start + count)%BLOCK_SIZE);
-
-            //TODO: Inteligent locking - We only need to lock an area of an file... (pos + length)
-            //      Note - Since we are binding this to the file system, we can also use fileStream.Lock and fileStream.UnLock in addition
-            //             hoever, those throws exceptions and we would wan't a wait pattern.
-
-            return new RangeLock(padlock);
         }
     }
 

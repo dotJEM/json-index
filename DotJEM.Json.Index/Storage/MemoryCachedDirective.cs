@@ -23,9 +23,9 @@ namespace DotJEM.Json.Index.Storage
             SetLockFactory(new MemoryCashedLockFactory(cacheDirectory));
 
             System.IO.Directory.CreateDirectory(cacheDirectory);
-            foreach (string file in System.IO.Directory.GetFiles(cacheDirectory).Select(Path.GetFileName))
+            foreach (string file in System.IO.Directory.GetFiles(cacheDirectory))
             {
-                files.Add(file, new MemoryCachedFile(file));
+                files.Add(Path.GetFileName(file), new MemoryCachedFile(file, File.ReadAllBytes(file)));
             }
         }
 

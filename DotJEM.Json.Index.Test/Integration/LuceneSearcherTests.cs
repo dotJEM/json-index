@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using DotJEM.Json.Index.Test.Util;
 using Lucene.Net.Index;
@@ -13,12 +14,16 @@ namespace DotJEM.Json.Index.Test.Integration
     [TestFixture]
     public class LuceneSearcherTests
     {
-        private readonly IStorageIndex index = new LuceneStorageIndex("C:\\temp\\test-index");
+        private string tempPath;
+        private IStorageIndex index;
         //private readonly IStorageIndex index = new LuceneStorageIndex();
 
         [TestFixtureSetUp]
         public void TestFixtureSetUp()
         {
+            //Guid.NewGuid().ToString("N").Substring(0,8)
+            tempPath = Path.Combine(Path.GetTempPath(), "LoadFromDisk");
+            index = new LuceneStorageIndex(tempPath);
             TestIndexBuilder builder = new TestIndexBuilder(index);
             builder
                 .Document(db => db.Set("date", new DateTime(2014, 9, 10, 12, 0, 0)))
@@ -26,6 +31,12 @@ namespace DotJEM.Json.Index.Test.Integration
                 .Document(db => db.Set("date", new DateTime(2014, 9, 12, 12, 0, 0)))
                 .Document(db => db.Set("date", new DateTime(2014, 9, 13, 12, 0, 0)))
                 .Build();
+        }
+
+        [TestFixtureTearDown]
+        public void TestFixtureTearDown()
+        {
+            //Directory.Delete(tempPath, true);
         }
 
         [TestCase("2014-09-10 11:00", "2014-09-10 13:00", 1)]
