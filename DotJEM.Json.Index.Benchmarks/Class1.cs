@@ -23,11 +23,11 @@ namespace DotJEM.Json.Index.Benchmarks
             builder = new TestIndexBuilder(index);
         }
 
-        [TestCase("batch 1", 500000), TestCase("batch 2", 500000)]
-        [TestCase("batch 3", 500000), TestCase("batch 4", 500000)]
-        [TestCase("batch 5", 500000), TestCase("batch 6", 500000)]
-        [TestCase("batch 7", 500000), TestCase("batch 8", 500000)]
-        [TestCase("batch 9", 500000), TestCase("batch 0", 500000)]
+        [TestCase("batch 1", 50000), TestCase("batch 2", 50000)]
+        //[TestCase("batch 3", 500000), TestCase("batch 4", 500000)]
+        //[TestCase("batch 5", 500000), TestCase("batch 6", 500000)]
+        //[TestCase("batch 7", 500000), TestCase("batch 8", 500000)]
+        //[TestCase("batch 9", 500000), TestCase("batch 0", 500000)]
         public void _Benchmark_GenerateTestData(string batch, int count)
         {
             foreach (Document document in new TestObjectGenerator(count, generator))
@@ -58,14 +58,15 @@ namespace DotJEM.Json.Index.Benchmarks
         [Test,Repeat(500)]
         public void Benchmark_RandomText()
         {
-            string word = generator.Word(generator.RandomText());
+            string text = generator.RandomText();
+            string word = generator.Word(text);
 
-            BenchmarkResult result = BenchmarkQuery(string.Format("content: {0}", word));
+            BenchmarkResult result = BenchmarkQuery(string.Format("content: {0}*", word));
 
             Assert.That(result,
                 Has.Property("Count").GreaterThan(0)
                 & Has.Property("AverageDelay").LessThan(500)
-                & Has.Property("CountPass").True);
+                & Has.Property("CountPass").True, "Search for '" + word + "' from '" + text + "' failed");
         }
 
         [TestCase("Childharold","order", 500)]
@@ -109,7 +110,7 @@ namespace DotJEM.Json.Index.Benchmarks
         public void Benchmark_ByTextAndContentType(string text, string contentType, long boundary)
         {
             string word = generator.Word(generator.RandomText());
-            BenchmarkResult result = BenchmarkQuery(string.Format("contentType: {0} AND content: {1}", contentType, word));
+            BenchmarkResult result = BenchmarkQuery(string.Format("contentType: {0} AND content: {1}*", contentType, word));
 
             Assert.That(result,
                 Has.Property("AverageDelay").LessThan(boundary)
@@ -119,7 +120,7 @@ namespace DotJEM.Json.Index.Benchmarks
         public void Benchmark_ParalelExecution(string text, string contentType, long boundary)
         {
             string word = generator.Word(generator.RandomText());
-            BenchmarkResult result = BenchmarkQuery(string.Format("contentType: {0} AND content: {1}", contentType, word));
+            BenchmarkResult result = BenchmarkQuery(string.Format("contentType: {0} AND content: {1}*", contentType, word));
 
             Assert.That(result,
                 Has.Property("Count").GreaterThan(0)
@@ -133,7 +134,7 @@ namespace DotJEM.Json.Index.Benchmarks
             for (int i = 0; i < 10; i++)
             {
                 Stopwatch timer = Stopwatch.StartNew();
-                ISearchResult test = index.Search(query).Take(10).Skip(skip);
+                ISearchResult test = index.Search(query).Take(take).Skip(skip);
                 test.ToList();
                 timer.Stop();
                 result.Record(timer.ElapsedMilliseconds, test.TotalCount);
@@ -215,7 +216,7 @@ namespace DotJEM.Json.Index.Benchmarks
 
     public static class RandomHelper
     {
-        private static readonly Random rand = new Random(42);
+        private static readonly Random rand = new Random();
 
         public static T RandomItem<T>(this IEnumerable<T> items)
         {
