@@ -81,6 +81,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Analyzation\DotJemAnalyzer.cs" />
     <Compile Include="Configuration\As.cs" />
     <Compile Include="Configuration\IContentTypeConfiguration.cs" />
     <Compile Include="Configuration\IContentTypeResolver.cs" />
