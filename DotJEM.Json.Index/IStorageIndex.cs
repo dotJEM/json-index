@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using DotJEM.Json.Index.Analyzation;
 using DotJEM.Json.Index.Configuration;
 using DotJEM.Json.Index.Schema;
 using DotJEM.Json.Index.Searching;
@@ -47,17 +48,17 @@ namespace DotJEM.Json.Index
 
         #region Constructor Overloads
         public LuceneStorageIndex()
-            : this(new IndexConfiguration(), new LuceneMemmoryIndexStorage(), new StandardAnalyzer(Version.LUCENE_30))
+            : this(new IndexConfiguration(), new LuceneMemmoryIndexStorage(), new DotJemAnalyzer(Version.LUCENE_30))
         {
         }
 
         public LuceneStorageIndex(string path)
-            : this(new IndexConfiguration(), new LuceneCachedMemmoryIndexStorage(path), new StandardAnalyzer(Version.LUCENE_30))
+            : this(new IndexConfiguration(), new LuceneCachedMemmoryIndexStorage(path), new DotJemAnalyzer(Version.LUCENE_30))
         {
         }
 
         public LuceneStorageIndex(IIndexStorage storage)
-            : this(new IndexConfiguration(), storage, new StandardAnalyzer(Version.LUCENE_30))
+            : this(new IndexConfiguration(), storage, new DotJemAnalyzer(Version.LUCENE_30))
         {
         }
 
@@ -67,12 +68,12 @@ namespace DotJEM.Json.Index
         }
 
         public LuceneStorageIndex(IIndexConfiguration configuration)
-            : this(configuration, new LuceneMemmoryIndexStorage(), new StandardAnalyzer(Version.LUCENE_30))
+            : this(configuration, new LuceneMemmoryIndexStorage(), new DotJemAnalyzer(Version.LUCENE_30))
         {
         }
 
         public LuceneStorageIndex(IIndexConfiguration configuration, IIndexStorage storage)
-            : this(configuration, storage, new StandardAnalyzer(Version.LUCENE_30))
+            : this(configuration, storage, new DotJemAnalyzer(Version.LUCENE_30))
         {
         }
         #endregion

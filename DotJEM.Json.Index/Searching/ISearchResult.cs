@@ -44,10 +44,7 @@ namespace DotJEM.Json.Index.Searching
         
         private JObject ResolveJObject(IHit hit)
         {
-            Document document = searcher.Doc(hit.Doc);
-            dynamic json = JObject.Parse(document.GetField(index.Configuration.RawField).StringValue);
-            json[index.Configuration.ScoreField] = hit.Score;
-            return json;
+            return JObject.Parse(searcher.Doc(hit.Doc).GetField(index.Configuration.RawField).StringValue);
         }
 
         public ISearchResult Take(int count)
