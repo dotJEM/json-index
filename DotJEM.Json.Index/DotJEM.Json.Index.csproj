@@ -82,6 +82,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Configuration\As.cs" />
+    <Compile Include="Configuration\FieldStrategy\IFieldStrategy.cs" />
     <Compile Include="Configuration\IContentTypeConfiguration.cs" />
     <Compile Include="Configuration\IContentTypeResolver.cs" />
     <Compile Include="Configuration\IdentityStrategies\DefaultIdentityStrategy.cs" />
