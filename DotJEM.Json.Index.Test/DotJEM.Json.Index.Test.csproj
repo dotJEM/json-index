@@ -105,6 +105,7 @@
     <Compile Include="Integration\LuceneSearcherComplexDataTest.cs" />
     <Compile Include="Integration\LuceneSearcherSimpleDataTest.cs" />
     <Compile Include="Integration\LuceneSearcherTests.cs" />
+    <Compile Include="Unit\Schema\JSchemaCollectionTest.cs" />
     <Compile Include="Unit\Schema\JsonSchemaTypeConverter.cs" />
     <Compile Include="Unit\Storage\CashedLocksTests.cs" />
     <Compile Include="Util\TestDocumentBuilder.cs" />

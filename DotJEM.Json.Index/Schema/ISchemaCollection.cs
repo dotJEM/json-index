@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.Remoting.Messaging;
 using Lucene.Net.Documents;
@@ -29,11 +30,21 @@ namespace DotJEM.Json.Index.Schema
         public JSchema this[string contentType]
         {
             get { return schemas.ContainsKey(contentType) ? schemas[contentType] : null; }
-            set { schemas[contentType] = value; }
+            set
+            {
+                if (String.IsNullOrWhiteSpace(contentType))
+                    throw new ArgumentNullException("contentType");
+                if (value == null) throw new ArgumentNullException("value");
+
+                schemas[contentType] = value;
+            }
         }
 
         public JSchema Add(string contentType, JSchema schema)
         {
+            if (contentType == null) throw new ArgumentNullException("contentType");
+            if (schema == null) throw new ArgumentNullException("schema");
+
             if (schemas.ContainsKey(contentType))
             {
                 return this[contentType].Merge(schema);
