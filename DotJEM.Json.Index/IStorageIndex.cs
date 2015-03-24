@@ -16,6 +16,8 @@ namespace DotJEM.Json.Index
     //TODO: -> IIndexContext to align to IStorageContext, then allow for multiple indexes.
     public interface IStorageIndex
     {
+        Analyzer Analyzer { get; }
+
         ISchemaCollection Schemas { get; }
         IIndexStorage Storage { get; }
         IIndexConfiguration Configuration { get; }
@@ -48,17 +50,17 @@ namespace DotJEM.Json.Index
 
         #region Constructor Overloads
         public LuceneStorageIndex()
-            : this(new IndexConfiguration(), new LuceneMemmoryIndexStorage(), new DotJemAnalyzer(Version.LUCENE_30))
+            : this(new IndexConfiguration(), new LuceneMemmoryIndexStorage())
         {
         }
 
         public LuceneStorageIndex(string path)
-            : this(new IndexConfiguration(), new LuceneCachedMemmoryIndexStorage(path), new DotJemAnalyzer(Version.LUCENE_30))
+            : this(new IndexConfiguration(), new LuceneCachedMemmoryIndexStorage(path))
         {
         }
 
         public LuceneStorageIndex(IIndexStorage storage)
-            : this(new IndexConfiguration(), storage, new DotJemAnalyzer(Version.LUCENE_30))
+            : this(new IndexConfiguration(), storage)
         {
         }
 
@@ -68,12 +70,12 @@ namespace DotJEM.Json.Index
         }
 
         public LuceneStorageIndex(IIndexConfiguration configuration)
-            : this(configuration, new LuceneMemmoryIndexStorage(), new DotJemAnalyzer(Version.LUCENE_30))
+            : this(configuration, new LuceneMemmoryIndexStorage(), new DotJemAnalyzer(Version.LUCENE_30, configuration))
         {
         }
 
         public LuceneStorageIndex(IIndexConfiguration configuration, IIndexStorage storage)
-            : this(configuration, storage, new DotJemAnalyzer(Version.LUCENE_30))
+            : this(configuration, storage, new DotJemAnalyzer(Version.LUCENE_30, configuration))
         {
         }
         #endregion

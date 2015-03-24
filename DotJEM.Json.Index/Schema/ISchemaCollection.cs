@@ -66,15 +66,4 @@ namespace DotJEM.Json.Index.Schema
                 : schema.Traverse().Select(s => s.Field).Where(f => !string.IsNullOrEmpty(f));
         }
     }
-
-    //public interface IFieldDefinition
-    //{
-    //    bool Indexed { get; }
-    //    bool IsContentType { get; }
-    //    string Path { get; }
-    //    string ContentType { get; }
-    //    IEnumerable<JTokenType> Types { get; }
-    //    void AddType(JTokenType type, bool indexed);
-    //}
-
 }

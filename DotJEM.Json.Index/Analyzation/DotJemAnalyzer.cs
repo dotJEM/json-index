@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using DotJEM.Json.Index.Configuration;
 using Lucene.Net.Analysis;
 using Lucene.Net.Analysis.Standard;
 using Lucene.Net.Util;
@@ -8,39 +9,31 @@ namespace DotJEM.Json.Index.Analyzation
 {
     public class DotJemAnalyzer : Analyzer
     {
-        private ISet<string> stopSet;
-        private bool replaceInvalidAcronym;
-        private bool enableStopPositionIncrements;
-        private Version matchVersion;
+        private readonly ISet<string> stopSet = StopAnalyzer.ENGLISH_STOP_WORDS_SET;
+        private readonly bool replaceInvalidAcronym;
+        private readonly bool enableStopPositionIncrements;
+        private readonly Version matchVersion;
+
+        private readonly IIndexConfiguration configuration;
 
         public int MaxTokenLength { get; set; }
 
-        /// <summary>
-        /// Builds an analyzer with the default stop words (<see cref="F:Lucene.Net.Analysis.Standard.StandardAnalyzer.STOP_WORDS_SET"/>).
-        /// 
-        /// </summary>
-        /// <param name="matchVersion">Lucene version to match see <see cref="T:Lucene.Net.Util.Version">above</see></param>
-        public DotJemAnalyzer(Version matchVersion)
-            : this(matchVersion, StopAnalyzer.ENGLISH_STOP_WORDS_SET)
-        {
-        }
-
-        public DotJemAnalyzer(Version matchVersion, ISet<string> stopWords)
+        public DotJemAnalyzer(Version matchVersion, IIndexConfiguration configuration)
         {
             MaxTokenLength = byte.MaxValue;
-            stopSet = stopWords;
-
-            SetOverridesTokenStreamMethod<DotJemAnalyzer>();
 
             enableStopPositionIncrements = StopFilter.GetEnablePositionIncrementsVersionDefault(matchVersion);
             replaceInvalidAcronym = matchVersion.OnOrAfter(Version.LUCENE_24);
           
             this.matchVersion = matchVersion;
+            this.configuration = configuration;
         }
 
 
         public override TokenStream TokenStream(string fieldName, TextReader reader)
         {
+            //var strategy = configuration.
+
             return new StopFilter(enableStopPositionIncrements, 
                 new LowerCaseFilter(new StandardFilter(new StandardTokenizer(matchVersion, reader)
             {
@@ -50,12 +43,13 @@ namespace DotJEM.Json.Index.Analyzation
 
         public override TokenStream ReusableTokenStream(string fieldName, TextReader reader)
         {
-            if (overridesTokenStreamMethod)
-                return TokenStream(fieldName, reader);
-
 
             SavedStreams savedStreams = (SavedStreams)PreviousTokenStream;
-            if (savedStreams == null)
+            if (savedStreams != null)
+            {
+                savedStreams.tokenStream.Reset(reader);
+            }
+            else
             {
                 savedStreams = new SavedStreams();
                 PreviousTokenStream = savedStreams;
@@ -64,8 +58,6 @@ namespace DotJEM.Json.Index.Analyzation
                 savedStreams.filteredTokenStream = new LowerCaseFilter(savedStreams.filteredTokenStream);
                 savedStreams.filteredTokenStream = new StopFilter(enableStopPositionIncrements, savedStreams.filteredTokenStream, stopSet);
             }
-            else
-                savedStreams.tokenStream.Reset(reader);
             savedStreams.tokenStream.MaxTokenLength = MaxTokenLength;
             savedStreams.tokenStream.SetReplaceInvalidAcronym(replaceInvalidAcronym);
             return savedStreams.filteredTokenStream;
