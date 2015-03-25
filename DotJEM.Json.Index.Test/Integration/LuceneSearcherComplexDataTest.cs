@@ -28,25 +28,24 @@ namespace DotJEM.Json.Index.Test.Integration
                 .ForAll().SetIdentity(new FieldIdentityStrategy("Id"));
 
             config.For("Person")
-                .Index("Created", As.DateTime())
-                .Query("Created", Using.Range().When.Specified());
+                .Index("Created", As.DateTime);
 
-            config.For("Person")
-                //.Index("Age", As.Integer())
-                .Query("Age", Using.Range().When.Specified());
-
-            config.For("Person")
-                //.Index("Special.Rank", As.Integer())
-                .Query("Special.Rank", Using.Range().When.Specified());
-
-            //TODO: Compound fields something like: ???
             //config.For("Person")
-            //    .Index("Skills", As.Compound(item => item.Brand + ":" item.Model))
+            //    //.Index("Age", As.Integer())
+            //    .Query("Age", Using.Range().When.Specified());
+
+            //config.For("Person")
+            //    //.Index("Special.Rank", As.Integer())
+            //    .Query("Special.Rank", Using.Range().When.Specified());
+
+            ////TODO: Compound fields something like: ???
+            ////config.For("Person")
+            ////    .Index("Skills", As.Compound(item => item.Brand + ":" item.Model))
 
 
-            config.For("Person")
-                //.Index("Skills.Level", As.Integer())
-                .Query("Skills.Level", Using.Range().When.Specified());
+            //config.For("Person")
+            //    //.Index("Skills.Level", As.Integer())
+            //    .Query("Skills.Level", Using.Range().When.Specified());
 
             //TODO: Move to test file.
             //Note: Use http://www.jsoneditoronline.org/ to edit.
@@ -117,37 +116,37 @@ namespace DotJEM.Json.Index.Test.Integration
                 Has.Count.EqualTo(1));
         }
 
-        [Test]
-        public void Search_ForAllPersons_ReturnsJohnPeterAndAlice()
-        {
-            List<dynamic> result = index.Searcher
-                .Search("Person", "Type".Split(','), "Person")
-                .Select(hit => hit.Json)
-                .ToList();
+        //[Test]
+        //public void Search_ForAllPersons_ReturnsJohnPeterAndAlice()
+        //{
+        //    List<dynamic> result = index.Searcher
+        //        .Search("Person", "Type".Split(','), "Person")
+        //        .Select(hit => hit.Json)
+        //        .ToList();
 
 
-            Assert.That(result,
-                Has.Count.EqualTo(3) &
-                Has.Exactly(1).That(HAS.JProperties(JObject.Parse("{ Id: 1, Name: 'John' }"))) &
-                Has.Exactly(1).That(HAS.JProperties(JObject.Parse("{ Id: 2, Name: 'Peter' }"))) &
-                Has.Exactly(1).That(HAS.JProperties(JObject.Parse("{ Id: 3, Name: 'Alice' }")))
-                );
-        }
+        //    Assert.That(result,
+        //        Has.Count.EqualTo(3) &
+        //        Has.Exactly(1).That(HAS.JProperties(JObject.Parse("{ Id: 1, Name: 'John' }"))) &
+        //        Has.Exactly(1).That(HAS.JProperties(JObject.Parse("{ Id: 2, Name: 'Peter' }"))) &
+        //        Has.Exactly(1).That(HAS.JProperties(JObject.Parse("{ Id: 3, Name: 'Alice' }")))
+        //        );
+        //}
 
-        [Test]
-        public void Search_ForAllPersonsUnder20_ReturnsJohnPeterAndAlice()
-        {
-            List<dynamic> result = index.Searcher
-                .Search("0-20", "Age".Split(','), "Person")
-                .Select(hit => hit.Json)
-                .ToList();
+        //[Test]
+        //public void Search_ForAllPersonsUnder20_ReturnsJohnPeterAndAlice()
+        //{
+        //    List<dynamic> result = index.Searcher
+        //        .Search("0-20", "Age".Split(','), "Person")
+        //        .Select(hit => hit.Json)
+        //        .ToList();
 
-            Assert.That(result,
-                Has.Count.EqualTo(2) &
-                Has.Exactly(1).That(HAS.JProperties(JObject.Parse("{ Id: 2, Name: 'Peter' }"))) &
-                Has.Exactly(1).That(HAS.JProperties(JObject.Parse("{ Id: 3, Name: 'Alice' }")))
-                );
-        }
+        //    Assert.That(result,
+        //        Has.Count.EqualTo(2) &
+        //        Has.Exactly(1).That(HAS.JProperties(JObject.Parse("{ Id: 2, Name: 'Peter' }"))) &
+        //        Has.Exactly(1).That(HAS.JProperties(JObject.Parse("{ Id: 3, Name: 'Alice' }")))
+        //        );
+        //}
 
         //RangeQuery start
         [Test]

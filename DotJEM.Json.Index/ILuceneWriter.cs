@@ -35,7 +35,7 @@ namespace DotJEM.Json.Index
         public void Write(JObject entity)
         {
             IndexWriter writer = index.Storage.GetWriter(index.Analyzer);
-            writer.UpdateDocument(CreateTerm(entity), factory.Create(entity));
+            writer.UpdateDocument(CreateIdentityTerm(entity), factory.Create(entity));
             writer.Commit();
         }
 
@@ -43,21 +43,21 @@ namespace DotJEM.Json.Index
         {
             IndexWriter writer = index.Storage.GetWriter(index.Analyzer);
             foreach (JObject entity in entities)
-                writer.UpdateDocument(CreateTerm(entity), factory.Create(entity));
+                writer.UpdateDocument(CreateIdentityTerm(entity), factory.Create(entity));
             writer.Commit();
         }
 
         public void Delete(JObject entity)
         {
             IndexWriter writer = index.Storage.GetWriter(index.Analyzer);
-            writer.DeleteDocuments(CreateTerm(entity));
+            writer.DeleteDocuments(CreateIdentityTerm(entity));
             writer.Commit();
         }
 
         public void DeleteAll(IEnumerable<JObject> entities)
         {
             IndexWriter writer = index.Storage.GetWriter(index.Analyzer);
-            writer.DeleteDocuments(entities.Select(CreateTerm).ToArray());
+            writer.DeleteDocuments(entities.Select(CreateIdentityTerm).ToArray());
             writer.Commit();
         }
 
@@ -66,11 +66,9 @@ namespace DotJEM.Json.Index
             index.Storage.GetWriter(index.Analyzer).Optimize();
         }
 
-        private Term CreateTerm(JObject entity)
+        private Term CreateIdentityTerm(JObject entity)
         {
-            string contentType = index.Configuration.TypeResolver.Resolve(entity);
-            Term term = index.Configuration.Identity.Strategy(contentType, null).CreateTerm(entity);
-            return term;
+            return index.Configuration.IdentityStrategy.CreateTerm(entity);
         }
     }
 }

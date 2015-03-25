@@ -15,8 +15,7 @@ namespace DotJEM.Json.Index.Searching
     public interface IQueryBuilder
     {
         //TODO: encapsulate Query object so Lucene isn't a core dependency.
-        Query Build(string querytext);
-        Query Build(string querytext, IEnumerable<string> fields, string contentType = null);
+        Query Build(string query);
         Query Build(JObject queryobj, string contentType = null);
     }
 
@@ -36,29 +35,12 @@ namespace DotJEM.Json.Index.Searching
             this.enumarator = enumarator;
         }
 
-        public Query Build(string querytext)
+        public Query Build(string query)
         {
-            QueryParser parser = new MultiFieldQueryParser(Version.LUCENE_30, index.Analyzer, index);
+            MultiFieldQueryParser parser = new MultiFieldQueryParser(query, index);
             parser.AllowLeadingWildcard = true;
             parser.DefaultOperator = QueryParser.Operator.AND;
-
-            Query query = parser.Parse(querytext);
-            Debug.WriteLine("QUERY: " + query);
-            return query;
-        }
-
-        //TODO: Get rid of...
-        public Query Build(string querytext, IEnumerable<string> fields, string contentType)
-        {
-            BooleanQuery query = new BooleanQuery();
-            foreach (Query q in from field in fields
-                                let strategy = index.Configuration.Query.Strategy(contentType, field)
-                                select strategy.Create(field, querytext) into q where q != null select q)
-            {
-                query.Add(q, Occur.SHOULD);
-            }
-            Debug.WriteLine("QUERY: " + query);
-            return query;
+            return DebugLog(parser.Parse(query));
         }
 
         //TODO: Remove content type.
@@ -67,9 +49,13 @@ namespace DotJEM.Json.Index.Searching
             BooleanQuery query = enumarator
                 .Enumerate(queryobj)
                 .Where(node => node.IsLeaf)
-                .Select(node => index.Configuration.Query.Strategy(contentType, node.Path).Create(node.Path, node.Token.Value<string>()))
+                .Select(node => index.Configuration.Field.Strategy(contentType, node.Path).BuildQuery(node.Path, node.Token.Value<string>()))
                 .Aggregate(new BooleanQuery(), (bq, q) => bq.Put(q, Occur.MUST));
+            return DebugLog(query);
+        }
 
+        private Query DebugLog(Query query)
+        {
             Debug.WriteLine("QUERY: " + query);
             return query;
         }

@@ -23,7 +23,9 @@ namespace DotJEM.Json.Index
         public IEnumerable<IFieldable> Create(string fullName, string contentType, JValue value)
         {
             //TODO: Return FieldDefinitions???
-            List<IFieldable> fields = index.Configuration.Index.Strategy(contentType, fullName).CreateField(fullName, value).ToList();
+            List<IFieldable> fields = index.Configuration.Field
+                .Strategy(contentType, fullName)
+                .CreateField(fullName, value).ToList();
             return fields;
         }
     }

@@ -9,10 +9,8 @@ namespace DotJEM.Json.Index.Searching
     public interface ILuceneSearcher
     {
         ISearchResult Search(Query query);
-        ISearchResult Search(string value);
+        ISearchResult Search(string query);
         ISearchResult Search(JObject query, string contentType = "");
-        ISearchResult Search(string query, string contentType);
-        ISearchResult Search(string query, IEnumerable<string> fields, string contentType = "");
 
         IEnumerable<string> Terms(string field);
     }
@@ -39,19 +37,9 @@ namespace DotJEM.Json.Index.Searching
             return something;
         }
 
-        public ISearchResult Search(string value)
+        public ISearchResult Search(string query)
         {
-            return Search(queryBuilder.Build(value));
-        }
-
-        public ISearchResult Search(string value, string contentType)
-        {
-            return Search(value, index.Schemas.AllFields(), contentType);
-        }
-
-        public ISearchResult Search(string text, IEnumerable<string> fields, string contentType = "")
-        {
-            return Search(queryBuilder.Build(text, fields, contentType));
+            return Search(queryBuilder.Build(query));
         }
 
         public ISearchResult Search(JObject query, string contentType = "")

@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using DotJEM.Json.Index.Configuration.FieldStrategies;
 using DotJEM.Json.Index.Configuration.IdentityStrategies;
-using DotJEM.Json.Index.Configuration.IndexStrategies;
-using DotJEM.Json.Index.Configuration.QueryStrategies;
-using Lucene.Net.Documents;
 
 namespace DotJEM.Json.Index.Configuration
 {
@@ -11,42 +9,42 @@ namespace DotJEM.Json.Index.Configuration
     /// Provides the means to extend the framework with extension methods and share a common syntax.
     /// If custom implementations are not needed, it is recommended just to use the static <see cref="As"/> class.
     /// </summary>
-    public interface IQueryStrategyBuilder { }
-
-    /// <summary>
-    /// Provides the means to extend the framework with extension methods and share a common syntax.
-    /// If custom implementations are not needed, it is recommended just to use the static <see cref="Using"/> class.
-    /// </summary>
-    public interface IIndexStrategyBuilder { }
+    public interface IFieldStrategyBuilder { }
 
     public interface IContentTypeConfiguration
     {
+        IFieldStrategy this[string key] { get; }
         IIdentityStrategy IndentityStrategy { get; }
 
-        IContentTypeConfiguration Index(string field, IIndexStrategy indexStrategy);
-        IContentTypeConfiguration Index(string field, Func<IIndexStrategyBuilder, IIndexStrategy> build);
-        IContentTypeConfiguration Query(string field, IQueryStrategy indexQueryStrategy);
-        IContentTypeConfiguration Query(string field, Func<IQueryStrategyBuilder, IQueryStrategy> build);
+        IContentTypeConfiguration Index(string field, IFieldStrategy strategy);
+        IContentTypeConfiguration Index(string field, Func<IFieldStrategyBuilder, IFieldStrategy> build);
 
         IContentTypeConfiguration SetIdentity(string field);
         IContentTypeConfiguration SetIdentity(IIdentityStrategy strategy);
 
-        IIndexStrategy GetIndexStrategy(string fullName);
-        IQueryStrategy GetQueryStrategy(string fullName);
+        IFieldStrategy GetStrategy(string fullName);
     }
 
     public class ContentTypeConfiguration : IContentTypeConfiguration
     {
-        private readonly IDictionary<string, IIndexStrategy> indexConfigurations = new Dictionary<string, IIndexStrategy>();
-        private readonly IDictionary<string, IQueryStrategy> queryConfigurations = new Dictionary<string, IQueryStrategy>();
+        private readonly IDictionary<string, IFieldStrategy> strategies = new Dictionary<string, IFieldStrategy>();
+
+        public IFieldStrategy this[string key]
+        {
+            get
+            {
+                IFieldStrategy strategy;
+                strategies.TryGetValue(key, out strategy);
+                return strategy;
+            }
+        }
 
         public IIdentityStrategy IndentityStrategy { get; private set; }
 
         public IContentTypeConfiguration SetIdentity(string field)
         {
             return SetIdentity(new GuidIdentity(field))
-                .Index(field, As.Stored().Analyzed(Field.Index.NOT_ANALYZED))
-                .Query(field, Using.Term().When.Specified());
+                .Index(field, As.Term);
         }
 
         public IContentTypeConfiguration SetIdentity(IIdentityStrategy strategy)
@@ -55,36 +53,20 @@ namespace DotJEM.Json.Index.Configuration
             return this;
         }
 
-        public IIndexStrategy GetIndexStrategy(string fullName)
+        public IContentTypeConfiguration Index(string field, IFieldStrategy strategy)
         {
-            return indexConfigurations.ContainsKey(fullName) ? indexConfigurations[fullName] : null;
-        }
-
-        public IQueryStrategy GetQueryStrategy(string fullName)
-        {
-            return queryConfigurations.ContainsKey(fullName) ? queryConfigurations[fullName] : null;
-        }
-
-        public IContentTypeConfiguration Index(string field, IIndexStrategy indexStrategy)
-        {
-            indexConfigurations[field] = indexStrategy;
+            strategies[field] = strategy;
             return this;
         }
 
-        public IContentTypeConfiguration Index(string field, Func<IIndexStrategyBuilder, IIndexStrategy> build)
+        public IContentTypeConfiguration Index(string field, Func<IFieldStrategyBuilder, IFieldStrategy> build)
         {
             return Index(field, build(DummyStrategyBuilder.Instance));
         }
 
-        public IContentTypeConfiguration Query(string field, IQueryStrategy indexQueryStrategy)
+        public IFieldStrategy GetStrategy(string fullName)
         {
-            queryConfigurations[field] = indexQueryStrategy;
-            return this;
-        }
-
-        public IContentTypeConfiguration Query(string field, Func<IQueryStrategyBuilder, IQueryStrategy> build)
-        {
-            return Query(field, build(DummyStrategyBuilder.Instance));
+            return this[fullName];
         }
 
         /// <summary>
@@ -92,7 +74,7 @@ namespace DotJEM.Json.Index.Configuration
         /// Since these interfaces are just meant to guide intelisense for extension methods, we 
         /// don't need an actual implementation.
         /// </summary>
-        private class DummyStrategyBuilder : IIndexStrategyBuilder, IQueryStrategyBuilder
+        private class DummyStrategyBuilder : IFieldStrategyBuilder
         {
             internal static readonly DummyStrategyBuilder Instance = new DummyStrategyBuilder();
         }

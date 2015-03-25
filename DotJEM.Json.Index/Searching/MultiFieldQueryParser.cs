@@ -3,11 +3,8 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using DotJEM.Json.Index.Schema;
-using Lucene.Net.Analysis;
 using Lucene.Net.QueryParsers;
 using Lucene.Net.Search;
-using Lucene.Net.Search.Spans;
-using Version = Lucene.Net.Util.Version;
 
 namespace DotJEM.Json.Index.Searching
 {
@@ -16,51 +13,36 @@ namespace DotJEM.Json.Index.Searching
         private readonly string[] fields;
         private readonly IStorageIndex index;
 
-        public MultiFieldQueryParser(Version matchVersion, Analyzer analyzer, IStorageIndex index)
-            : base(matchVersion, null, analyzer)
+        public MultiFieldQueryParser(string query, IStorageIndex index)
+            : base(index.Version, null, index.Analyzer)
         {
-            this.fields = index.Schemas.AllFields().ToArray();
+            fields = index.Schemas.AllFields().ToArray();
             this.index = index;
         }
 
-        protected override Query GetFieldQuery(string field, string queryText, int slop)
+        public override Query Parse(string query)
         {
-            Query fieldQuery;
-            if (field == null)
+            return base.Parse(query);
+        }
+
+        protected override Query GetFieldQuery(string fieldName, string queryText, int slop)
+        {
+            if (fieldName != null)
             {
-                IList<BooleanClause> clauses = new List<BooleanClause>();
-                foreach (string t in fields)
-                {
-                    fieldQuery = base.GetFieldQuery(t, queryText);
-                    if (fieldQuery == null) continue;
-                    ApplySlop(fieldQuery, slop);
-                    clauses.Add(new BooleanClause(fieldQuery, Occur.SHOULD));
-                }
-                return clauses.Count == 0 ? null : GetBooleanQuery(clauses, true);
+
+
+                var query = ApplySlop(base.GetFieldQuery(fieldName, queryText), slop);
+                return query;
             }
-            fieldQuery = base.GetFieldQuery(field, queryText);
-            ApplySlop(fieldQuery, slop);
-            return fieldQuery;
-        }
 
-        private static bool ApplySlop(PhraseQuery query, int slop)
-        {
-            if (query != null) query.Slop = slop;
-            return query != null;
-        }
 
-        private static bool ApplySlop(MultiPhraseQuery query, int slop)
-        {
-            if (query != null) query.Slop = slop;
-            return query != null;
+            IList<BooleanClause> clauses = fields
+                .Select(field => base.GetFieldQuery(field, queryText))
+                .Where(field => field != null)
+                .Select(query => ApplySlop(query, slop))
+                .Select(query => new BooleanClause(query, Occur.SHOULD)).ToList();
+            return clauses.Any() ? GetBooleanQuery(clauses, true) : null;
         }
-
-        // ReSharper disable UnusedMethodReturnValue.Local
-        private static bool ApplySlop(Query q, int slop)
-        {
-            return ApplySlop(q as PhraseQuery, slop) || ApplySlop(q as MultiPhraseQuery, slop);
-        }
-        // ReSharper restore UnusedMethodReturnValue.Local
 
         protected override Query GetFieldQuery(string field, string queryText)
         {
@@ -119,7 +101,7 @@ namespace DotJEM.Json.Index.Searching
                     if (extendedType == JsonSchemaExtendedType.Date)
                     {
                         throw new ParseException("Invalid DateTime format", ex);
-                    }                    
+                    }
                 }
             }
 
@@ -130,5 +112,27 @@ namespace DotJEM.Json.Index.Searching
 
             return GetBooleanQuery(clauses, true);
         }
+
+        private static bool ApplySlop(PhraseQuery query, int slop)
+        {
+            if (query != null) query.Slop = slop;
+            return query != null;
+        }
+
+        private static bool ApplySlop(MultiPhraseQuery query, int slop)
+        {
+            if (query != null) query.Slop = slop;
+            return query != null;
+        }
+
+        // ReSharper disable UnusedMethodReturnValue.Local
+        private static Query ApplySlop(Query query, int slop)
+        {
+            if (ApplySlop(query as PhraseQuery, slop) || ApplySlop(query as MultiPhraseQuery, slop))
+            {
+            }
+            return query;
+        }
+        // ReSharper restore UnusedMethodReturnValue.Local
     }
 }

@@ -18,7 +18,7 @@ namespace DotJEM.Json.Index.Analyzation
 
         public int MaxTokenLength { get; set; }
 
-        public DotJemAnalyzer(Version matchVersion, IIndexConfiguration configuration)
+        public DotJemAnalyzer(Version matchVersion, IIndexConfiguration configuration = null)
         {
             MaxTokenLength = byte.MaxValue;
 

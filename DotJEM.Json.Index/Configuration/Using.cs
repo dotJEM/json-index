@@ -22,19 +22,19 @@ namespace DotJEM.Json.Index.Configuration
 
     public static class QueryStrategiesExt
     {
-        public static TermQueryStrategy Term(this IQueryStrategyBuilder self)
-        {
-            return Using.Term();
-        }
+        //public static TermQueryStrategy Term(this IQueryStrategyBuilder self)
+        //{
+        //    return Using.Term();
+        //}
 
-        public static RangeQueryStrategy Range(this IIndexStrategyBuilder self)
-        {
-            return Using.Range();
-        }
+        //public static RangeQueryStrategy Range(this IIndexStrategyBuilder self)
+        //{
+        //    return Using.Range();
+        //}
 
-        public static FreeTextQueryStrategy FreeText(this IIndexStrategyBuilder self)
-        {
-            return Using.FreeText();
-        }
+        //public static FreeTextQueryStrategy FreeText(this IIndexStrategyBuilder self)
+        //{
+        //    return Using.FreeText();
+        //}
     }
 }

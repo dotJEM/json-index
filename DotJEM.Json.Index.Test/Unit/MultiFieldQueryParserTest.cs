@@ -24,8 +24,7 @@ namespace DotJEM.Json.Index.Test.Unit
             mocker.Setup<IStorageIndex>(mock => mock.Schemas).Returns(mocker.GetMock<ISchemaCollection>().Object);
             mocker.GetMock<ISchemaCollection>().Setup(mock => mock.AllFields()).Returns(allFields);
 
-            var queryParser = new MultiFieldQueryParser(Version.LUCENE_30, new StandardAnalyzer(Version.LUCENE_30),
-                mocker.GetMock<IStorageIndex>().Object);
+            var queryParser = new MultiFieldQueryParser("", mocker.GetMock<IStorageIndex>().Object);
 
             const string queryString = "[2014-09-10T11:00 TO 2014-09-10T13:00]";
 
@@ -40,8 +39,7 @@ namespace DotJEM.Json.Index.Test.Unit
             mocker.GetMock<ISchemaCollection>().Setup(mock => mock.ExtendedType(It.IsAny<string>())).Returns(JsonSchemaExtendedType.Date);
             mocker.GetMock<ISchemaCollection>().Setup(mock => mock.AllFields()).Returns(Enumerable.Empty<string>());
 
-            var queryParser = new MultiFieldQueryParser(Version.LUCENE_30, new StandardAnalyzer(Version.LUCENE_30),
-                mocker.GetMock<IStorageIndex>().Object);
+            var queryParser = new MultiFieldQueryParser("", mocker.GetMock<IStorageIndex>().Object);
 
             const string queryString = "Created: [2014-09-10T11:00 TO 2014-09-10T13:00]";
 
@@ -56,8 +54,7 @@ namespace DotJEM.Json.Index.Test.Unit
             mocker.GetMock<ISchemaCollection>().Setup(mock => mock.ExtendedType(It.IsAny<string>())).Returns(JsonSchemaExtendedType.Date);
             mocker.GetMock<ISchemaCollection>().Setup(mock => mock.AllFields()).Returns(Enumerable.Empty<string>());
 
-            var queryParser = new MultiFieldQueryParser(Version.LUCENE_30, new StandardAnalyzer(Version.LUCENE_30),
-                mocker.GetMock<IStorageIndex>().Object);
+            var queryParser = new MultiFieldQueryParser("", mocker.GetMock<IStorageIndex>().Object);
 
             const string queryString = "Created: [2014-09-10T11:00 TO Hest]";
 
@@ -72,8 +69,7 @@ namespace DotJEM.Json.Index.Test.Unit
             mocker.GetMock<ISchemaCollection>().Setup(mock => mock.ExtendedType(It.IsAny<string>())).Returns(JsonSchemaExtendedType.Date | JsonSchemaExtendedType.String);
             mocker.GetMock<ISchemaCollection>().Setup(mock => mock.AllFields()).Returns(Enumerable.Empty<string>());
 
-            var queryParser = new MultiFieldQueryParser(Version.LUCENE_30, new StandardAnalyzer(Version.LUCENE_30),
-                mocker.GetMock<IStorageIndex>().Object);
+            var queryParser = new MultiFieldQueryParser("", mocker.GetMock<IStorageIndex>().Object);
 
             const string queryString = "Created: [2014-09-10T11:00 TO 2014-09-10T13:00]";
 
@@ -89,8 +85,7 @@ namespace DotJEM.Json.Index.Test.Unit
             mocker.GetMock<ISchemaCollection>().Setup(mock => mock.ExtendedType(It.IsAny<string>())).Returns(JsonSchemaExtendedType.Date | JsonSchemaExtendedType.String);
             mocker.GetMock<ISchemaCollection>().Setup(mock => mock.AllFields()).Returns(Enumerable.Empty<string>());
 
-            var queryParser = new MultiFieldQueryParser(Version.LUCENE_30, new StandardAnalyzer(Version.LUCENE_30),
-                mocker.GetMock<IStorageIndex>().Object);
+            var queryParser = new MultiFieldQueryParser("", mocker.GetMock<IStorageIndex>().Object);
 
             const string queryString = "Created: [2014-09-10T11:00 TO Hest]";
             var something = queryParser.Parse(queryString).ToString();

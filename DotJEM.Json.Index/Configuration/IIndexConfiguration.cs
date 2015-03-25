@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using DotJEM.Json.Index.Configuration.FieldStrategies;
 using DotJEM.Json.Index.Configuration.IdentityStrategies;
-using DotJEM.Json.Index.Configuration.IndexStrategies;
-using DotJEM.Json.Index.Configuration.QueryStrategies;
-using Lucene.Net.Documents;
 using Newtonsoft.Json.Linq;
 
 namespace DotJEM.Json.Index.Configuration
@@ -11,26 +9,27 @@ namespace DotJEM.Json.Index.Configuration
     public interface IStrategyResolver<out TStrategy> where TStrategy : class
     {
         TStrategy Strategy(string contentType, string field);
+        TStrategy Strategy(string field);
     }
 
     public interface IIndexConfiguration
     {
         IIndexConfiguration SetRawField(string field);
         IIndexConfiguration SetScoreField(string field);
-
         IIndexConfiguration SetTypeResolver(string field);
         IIndexConfiguration SetTypeResolver(IContentTypeResolver resolver);
+        IIndexConfiguration SetIdentity(string field);
+        IIndexConfiguration SetIdentity(IIdentityStrategy strategy);
 
         IContentTypeConfiguration ForAll();
         IContentTypeConfiguration For(string contentType);
+        //IContentTypeConfiguration For(params string[] contentType);
 
         string RawField { get; }
         string ScoreField { get; }
         IContentTypeResolver TypeResolver { get; }
-        IStrategyResolver<IIndexStrategy> Index { get; }
-        IStrategyResolver<IQueryStrategy> Query { get; }
-        IStrategyResolver<IIdentityStrategy> Identity { get; }
-        
+        IIdentityStrategy IdentityStrategy { get; }
+        IStrategyResolver<IFieldStrategy> Field { get; }
     }
 
     public class IndexConfiguration : IIndexConfiguration
@@ -40,13 +39,16 @@ namespace DotJEM.Json.Index.Configuration
 
         public string RawField { get; private set; }
         public string ScoreField { get; private set; }
+
         public IContentTypeResolver TypeResolver { get; private set; }
+        public IIdentityStrategy IdentityStrategy { get { return ForAll().IndentityStrategy; } }
 
         public IndexConfiguration()
         {
-            SetTypeResolver("$contentType");
             SetRawField("$raw");
             SetScoreField("$score");
+            SetTypeResolver("$contentType");
+            SetIdentity("$id");
         }
 
         public string ResolveIdentity(JObject value)
@@ -56,9 +58,7 @@ namespace DotJEM.Json.Index.Configuration
 
         public IIndexConfiguration SetTypeResolver(string field)
         {
-            For(string.Empty)
-                .Index(field, As.Default().Analyzed(Field.Index.NOT_ANALYZED))
-                .Query(field, Using.Term().When.Specified());
+            ForAll().Index(field, As.Term);
 
             return SetTypeResolver(new FieldContentTypeResolver(field));
         }
@@ -81,6 +81,18 @@ namespace DotJEM.Json.Index.Configuration
             return this;
         }
 
+        public IIndexConfiguration SetIdentity(string field)
+        {
+            ForAll().SetIdentity(field);
+            return this;
+        }
+
+        public IIndexConfiguration SetIdentity(IIdentityStrategy strategy)
+        {
+            ForAll().SetIdentity(strategy);
+            return this;
+        }
+
         #region ILuceneConfigurationBuilder
 
         public IContentTypeConfiguration ForAll()
@@ -99,30 +111,11 @@ namespace DotJEM.Json.Index.Configuration
 
         #region IIndexConfiguration
 
-        public IStrategyResolver<IIdentityStrategy> Identity
+        public IStrategyResolver<IFieldStrategy> Field
         {
             get
             {
-                return new StrategyResolver<IIdentityStrategy, DefaultIdentityStrategy>(
-                    (fullName, contentType) => For(contentType).IndentityStrategy);
-            }
-        }
-
-        public IStrategyResolver<IIndexStrategy> Index
-        {
-            get
-            {
-                return new StrategyResolver<IIndexStrategy, DefaultIndexStrategy>(
-                    (fullName, contentType) => For(contentType).GetIndexStrategy(fullName));
-            }
-        }
-
-        public IStrategyResolver<IQueryStrategy> Query
-        {
-            get
-            {
-                return new StrategyResolver<IQueryStrategy, DefaultQueryStrategy>(
-                    (fullName, contentType) => For(contentType).GetQueryStrategy(fullName));
+                return new StrategyResolver<IFieldStrategy, FieldStrategy>((fullName, contentType) => For(contentType).GetStrategy(fullName));
             }
         }
 
@@ -137,12 +130,14 @@ namespace DotJEM.Json.Index.Configuration
                 this.resolve = resolve;
             }
 
+            public TStrategy Strategy(string field)
+            {
+                return resolve(field, string.Empty) ?? new TDefault();
+            }
+
             public TStrategy Strategy(string contentType, string field)
             {
-                TStrategy strategy = resolve(field, contentType) ?? resolve(field, string.Empty);
-                if (strategy != null)
-                    return strategy;
-                return new TDefault();
+                return resolve(field, contentType) ?? Strategy(field);
             }
         }
 

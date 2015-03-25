@@ -56,14 +56,14 @@ namespace DotJEM.Json.Index.Test.Integration
                 Has.Count.EqualTo(2));
         }
 
-        [Test]
-        public void Search_ForMustangWithSpecifiedFields_ReturnsCarMustang()
-        {
-            List<dynamic> result = index.Searcher.Search("Mustang", "Model".Split(',')).Select(hit => hit.Json).ToList();
-            Assert.That(result,
-                Has.Count.EqualTo(1) &
-                Has.Exactly(1).That(HAS.JProperties(JObject.Parse("{ Id: '00000000-0000-0000-0000-000000000004', Type: 'Car', Brand: 'Ford', Model: 'Mustang' }"))));
-        }
+        //[Test]
+        //public void Search_ForMustangWithSpecifiedFields_ReturnsCarMustang()
+        //{
+        //    List<dynamic> result = index.Searcher.Search("Mustang", "Model".Split(',')).Select(hit => hit.Json).ToList();
+        //    Assert.That(result,
+        //        Has.Count.EqualTo(1) &
+        //        Has.Exactly(1).That(HAS.JProperties(JObject.Parse("{ Id: '00000000-0000-0000-0000-000000000004', Type: 'Car', Brand: 'Ford', Model: 'Mustang' }"))));
+        //}
 
         [Test]
         public void Search_ForMustang_ReturnsCarMustang()

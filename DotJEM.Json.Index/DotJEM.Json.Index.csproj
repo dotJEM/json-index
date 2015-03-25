@@ -83,17 +83,13 @@
   <ItemGroup>
     <Compile Include="Analyzation\DotJemAnalyzer.cs" />
     <Compile Include="Configuration\As.cs" />
-    <Compile Include="Configuration\FieldStrategy\IFieldStrategy.cs" />
+    <Compile Include="Configuration\FieldStrategies\IFieldStrategy.cs" />
     <Compile Include="Configuration\IContentTypeConfiguration.cs" />
     <Compile Include="Configuration\IContentTypeResolver.cs" />
     <Compile Include="Configuration\IdentityStrategies\DefaultIdentityStrategy.cs" />
     <Compile Include="Configuration\IdentityStrategies\FieldIdentityStrategy.cs" />
     <Compile Include="Configuration\IdentityStrategies\IIdentityStrategy.cs" />
     <Compile Include="Configuration\IIndexConfiguration.cs" />
-    <Compile Include="Configuration\IndexStrategies\AbstractIndexStrategy.cs" />
-    <Compile Include="Configuration\IndexStrategies\DefaultIndexStrategy.cs" />
-    <Compile Include="Configuration\IndexStrategies\IIndexStrategy.cs" />
-    <Compile Include="Configuration\IndexStrategies\NumericIndexStrategy.cs" />
     <Compile Include="Configuration\QueryStrategies\DefaultQueryStrategy.cs" />
     <Compile Include="Configuration\QueryStrategies\FreeTextQueryStrategy.cs" />
     <Compile Include="Configuration\QueryStrategies\IQueryStrategy.cs" />
