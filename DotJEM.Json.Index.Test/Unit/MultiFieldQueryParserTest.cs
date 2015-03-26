@@ -25,7 +25,7 @@ namespace DotJEM.Json.Index.Test.Unit
                 .Returns(new StrategyResolverFake<IFieldStrategy>(new FieldStrategy()));
             mocker.GetMock<ISchemaCollection>().Setup(mock => mock.AllFields()).Returns(new[] { "field1, field2, field3" });
 
-            var queryParser = new MultiFieldQueryParser("", mocker.GetMock<IStorageIndex>().Object);
+            var queryParser = new MultiFieldQueryParser(mocker.GetMock<IStorageIndex>().Object, "");
 
             Assert.That(queryParser.Parse("[2014-09-10T11:00 TO 2014-09-10T13:00]").ToString(),
                 Is.EqualTo("(field1, field2, field3:[0hzwfs800 TO 0hzxzie7z])"));
@@ -47,7 +47,7 @@ namespace DotJEM.Json.Index.Test.Unit
             mocker.GetMock<ISchemaCollection>().Setup(mock => mock.ExtendedType(It.IsAny<string>())).Returns(JsonSchemaExtendedType.Date);
             mocker.GetMock<ISchemaCollection>().Setup(mock => mock.AllFields()).Returns(Enumerable.Empty<string>());
 
-            var queryParser = new MultiFieldQueryParser("", mocker.GetMock<IStorageIndex>().Object);
+            var queryParser = new MultiFieldQueryParser(mocker.GetMock<IStorageIndex>().Object, "");
 
 
             Assert.That(queryParser.Parse("Created: [2014-09-10T11:00 TO 2014-09-10T13:00]").ToString(), 
@@ -65,7 +65,7 @@ namespace DotJEM.Json.Index.Test.Unit
             mocker.GetMock<ISchemaCollection>().Setup(mock => mock.ExtendedType(It.IsAny<string>())).Returns(JsonSchemaExtendedType.Date);
             mocker.GetMock<ISchemaCollection>().Setup(mock => mock.AllFields()).Returns(Enumerable.Empty<string>());
 
-            var queryParser = new MultiFieldQueryParser("", mocker.GetMock<IStorageIndex>().Object);
+            var queryParser = new MultiFieldQueryParser(mocker.GetMock<IStorageIndex>().Object, "");
 
 
             Assert.Throws<ParseException>(() => queryParser
@@ -83,7 +83,7 @@ namespace DotJEM.Json.Index.Test.Unit
             mocker.GetMock<ISchemaCollection>().Setup(mock => mock.ExtendedType(It.IsAny<string>())).Returns(JsonSchemaExtendedType.Date | JsonSchemaExtendedType.String);
             mocker.GetMock<ISchemaCollection>().Setup(mock => mock.AllFields()).Returns(Enumerable.Empty<string>());
 
-            var queryParser = new MultiFieldQueryParser("", mocker.GetMock<IStorageIndex>().Object);
+            var queryParser = new MultiFieldQueryParser(mocker.GetMock<IStorageIndex>().Object, "");
 
             Assert.That(queryParser.Parse("Created: [2014-09-10T11:00 TO 2014-09-10T13:00]").ToString(), 
                 Is.EqualTo("Created:[635459436000000000 TO 635459508000000000] " +
@@ -107,7 +107,7 @@ namespace DotJEM.Json.Index.Test.Unit
             mocker.GetMock<ISchemaCollection>().Setup(mock => mock.ExtendedType(It.IsAny<string>())).Returns(JsonSchemaExtendedType.Date | JsonSchemaExtendedType.String);
             mocker.GetMock<ISchemaCollection>().Setup(mock => mock.AllFields()).Returns(Enumerable.Empty<string>());
 
-            var queryParser = new MultiFieldQueryParser("", mocker.GetMock<IStorageIndex>().Object);
+            var queryParser = new MultiFieldQueryParser(mocker.GetMock<IStorageIndex>().Object, "");
             
             Assert.That(queryParser.Parse("Created: [2014-09-10T11:00 TO Hest]").ToString(), 
                 Is.EqualTo("Created:[2014-09-10t11:00 TO hest]"));

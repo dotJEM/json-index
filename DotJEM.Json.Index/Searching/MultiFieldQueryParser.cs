@@ -37,10 +37,15 @@ namespace DotJEM.Json.Index.Searching
 
         private readonly IStorageIndex index;
 
-        public MultiFieldQueryParser(string query, IStorageIndex index)
+        public MultiFieldQueryParser(IStorageIndex index, string query)
+            : this(index, query, index.Schemas.AllFields().ToArray())
+        {
+        }
+
+        public MultiFieldQueryParser(IStorageIndex index, string query, params string[] fields)
             : base(index.Version, null, index.Analyzer)
         {
-            fields = index.Schemas.AllFields().ToArray();
+            this.fields = fields;
             this.index = index;
             // contentTypes = 
         }
