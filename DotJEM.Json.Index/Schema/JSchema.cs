@@ -101,7 +101,8 @@ namespace DotJEM.Json.Index.Schema
 
         public JsonSchemaExtendedType LookupExtentedType(string field)
         {
-            if (!field.StartsWith(Field))
+            //TODO: Temp fix for null???
+            if (Field == null || !field.StartsWith(Field))
                 return JsonSchemaExtendedType.None;
 
             if (Field == field)
