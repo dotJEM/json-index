@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using DotJEM.Json.Index.Configuration.FieldStrategies;
 using DotJEM.Json.Index.Configuration.IdentityStrategies;
 
@@ -14,13 +15,13 @@ namespace DotJEM.Json.Index.Configuration
     public interface IContentTypeConfiguration
     {
         IFieldStrategy this[string key] { get; }
-        IIdentityStrategy IndentityStrategy { get; }
+        IIdentityResolver IndentityResolver { get; }
 
         IContentTypeConfiguration Index(string field, IFieldStrategy strategy);
         IContentTypeConfiguration Index(string field, Func<IFieldStrategyBuilder, IFieldStrategy> build);
 
         IContentTypeConfiguration SetIdentity(string field);
-        IContentTypeConfiguration SetIdentity(IIdentityStrategy strategy);
+        IContentTypeConfiguration SetIdentity(IIdentityResolver resolver);
 
         IFieldStrategy GetStrategy(string fullName);
     }
@@ -28,6 +29,8 @@ namespace DotJEM.Json.Index.Configuration
     public class ContentTypeConfiguration : IContentTypeConfiguration
     {
         private readonly IDictionary<string, IFieldStrategy> strategies = new Dictionary<string, IFieldStrategy>();
+
+        public IIdentityResolver IndentityResolver { get; private set; }
 
         public IFieldStrategy this[string key]
         {
@@ -39,17 +42,15 @@ namespace DotJEM.Json.Index.Configuration
             }
         }
 
-        public IIdentityStrategy IndentityStrategy { get; private set; }
-
         public IContentTypeConfiguration SetIdentity(string field)
         {
             return SetIdentity(new GuidIdentity(field))
                 .Index(field, As.Term);
         }
 
-        public IContentTypeConfiguration SetIdentity(IIdentityStrategy strategy)
+        public IContentTypeConfiguration SetIdentity(IIdentityResolver resolver)
         {
-            IndentityStrategy = strategy;
+            IndentityResolver = resolver;
             return this;
         }
 
@@ -80,5 +81,59 @@ namespace DotJEM.Json.Index.Configuration
         }
     }
 
+    public class MultiTargetContentTypeConfiguration : IContentTypeConfiguration
+    {
+        private readonly IEnumerable<IContentTypeConfiguration> targets;
+
+        public MultiTargetContentTypeConfiguration(IEnumerable<IContentTypeConfiguration> targets)
+        {
+            this.targets = targets;
+        }
+
+        public IFieldStrategy GetStrategy(string fullName)
+        {
+            throw new NotSupportedException();
+        }
+
+        public IIdentityResolver IndentityResolver
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public IContentTypeConfiguration Index(string field, IFieldStrategy strategy)
+        {
+            targets.AsParallel().ForAll(x => x.Index(field, strategy));
+            return this;
+        }
+
+        public IContentTypeConfiguration Index(string field, Func<IFieldStrategyBuilder, IFieldStrategy> build)
+        {
+            targets.AsParallel().ForAll(x => x.Index(field, build));
+            return this;
+        }
+
+        public IFieldStrategy this[string key]
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public IContentTypeConfiguration SetIdentity(string field)
+        {
+            targets.AsParallel().ForAll(x => x.SetIdentity(field));
+            return this;
+        }
+
+        public IContentTypeConfiguration SetIdentity(IIdentityResolver resolver)
+        {
+            targets.AsParallel().ForAll(x => x.SetIdentity(resolver));
+            return this;
+        }
+    }
 
 }

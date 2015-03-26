@@ -1,8 +1,8 @@
 ﻿namespace DotJEM.Json.Index.Configuration.IdentityStrategies
 {
-    public class DefaultIdentityStrategy : FieldIdentityStrategy
+    public class DefaultIdentityResolver : FieldIdentityResolver
     {
-        public DefaultIdentityStrategy()
+        public DefaultIdentityResolver()
             : base("$id")
         {
         }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using DotJEM.Json.Index.Configuration.FieldStrategies;
 using DotJEM.Json.Index.Configuration.IdentityStrategies;
 using Newtonsoft.Json.Linq;
@@ -19,16 +20,16 @@ namespace DotJEM.Json.Index.Configuration
         IIndexConfiguration SetTypeResolver(string field);
         IIndexConfiguration SetTypeResolver(IContentTypeResolver resolver);
         IIndexConfiguration SetIdentity(string field);
-        IIndexConfiguration SetIdentity(IIdentityStrategy strategy);
+        IIndexConfiguration SetIdentity(IIdentityResolver resolver);
 
         IContentTypeConfiguration ForAll();
-        IContentTypeConfiguration For(string contentType);
-        //IContentTypeConfiguration For(params string[] contentType);
+        IContentTypeConfiguration For(params string[] contentType);
 
         string RawField { get; }
         string ScoreField { get; }
+
         IContentTypeResolver TypeResolver { get; }
-        IIdentityStrategy IdentityStrategy { get; }
+        IIdentityResolver IdentityResolver { get; }
         IStrategyResolver<IFieldStrategy> Field { get; }
     }
 
@@ -41,7 +42,7 @@ namespace DotJEM.Json.Index.Configuration
         public string ScoreField { get; private set; }
 
         public IContentTypeResolver TypeResolver { get; private set; }
-        public IIdentityStrategy IdentityStrategy { get { return ForAll().IndentityStrategy; } }
+        public IIdentityResolver IdentityResolver { get { return ForAll().IndentityResolver; } }
 
         public IndexConfiguration()
         {
@@ -53,9 +54,10 @@ namespace DotJEM.Json.Index.Configuration
 
         public string ResolveIdentity(JObject value)
         {
-            return For(TypeResolver.Resolve(value)).IndentityStrategy.Resolve(value);
+            return For(TypeResolver.Resolve(value)).IndentityResolver.Resolve(value);
         }
 
+        #region Set Methods
         public IIndexConfiguration SetTypeResolver(string field)
         {
             ForAll().Index(field, As.Term);
@@ -87,24 +89,41 @@ namespace DotJEM.Json.Index.Configuration
             return this;
         }
 
-        public IIndexConfiguration SetIdentity(IIdentityStrategy strategy)
+        public IIndexConfiguration SetIdentity(IIdentityResolver resolver)
         {
-            ForAll().SetIdentity(strategy);
+            ForAll().SetIdentity(resolver);
             return this;
-        }
+        } 
+        #endregion
 
         #region ILuceneConfigurationBuilder
 
         public IContentTypeConfiguration ForAll()
         {
-            return For(string.Empty);
+            return InternalFor(string.Empty);
         }
 
-        public IContentTypeConfiguration For(string contentType)
+        private IContentTypeConfiguration InternalFor(string contentType)
         {
             if (!configurations.ContainsKey(contentType))
                 configurations[contentType] = new ContentTypeConfiguration();
+
             return configurations[contentType];
+        }
+
+        public IContentTypeConfiguration For(params string[] contentTypes)
+        {
+            if (contentTypes.Length == 0)
+            {
+                return ForAll();
+            }
+
+            if (contentTypes.Length == 1)
+            {
+                return InternalFor(contentTypes[0]);
+            }
+
+            return new MultiTargetContentTypeConfiguration(contentTypes.Select(InternalFor));
         }
 
         #endregion

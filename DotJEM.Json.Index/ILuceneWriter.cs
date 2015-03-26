@@ -68,7 +68,7 @@ namespace DotJEM.Json.Index
 
         private Term CreateIdentityTerm(JObject entity)
         {
-            return index.Configuration.IdentityStrategy.CreateTerm(entity);
+            return index.Configuration.IdentityResolver.CreateTerm(entity);
         }
     }
 }

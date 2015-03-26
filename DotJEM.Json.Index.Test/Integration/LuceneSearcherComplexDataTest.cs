@@ -25,7 +25,7 @@ namespace DotJEM.Json.Index.Test.Integration
         {
             var config = index.Configuration;
             config.SetTypeResolver("Type")
-                .ForAll().SetIdentity(new FieldIdentityStrategy("Id"));
+                .ForAll().SetIdentity(new FieldIdentityResolver("Id"));
 
             config.For("Person")
                 .Index("Created", As.DateTime);

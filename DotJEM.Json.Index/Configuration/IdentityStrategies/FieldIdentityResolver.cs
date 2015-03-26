@@ -4,13 +4,13 @@ using System;
 
 namespace DotJEM.Json.Index.Configuration.IdentityStrategies
 {
-    public class FieldIdentityStrategy : IIdentityStrategy
+    public class FieldIdentityResolver : IIdentityResolver
     {
         private readonly string field;
 
         protected string Field { get { return field; } }
 
-        public FieldIdentityStrategy(string field)
+        public FieldIdentityResolver(string field)
         {
             this.field = field;
         }
@@ -26,7 +26,7 @@ namespace DotJEM.Json.Index.Configuration.IdentityStrategies
         }
     }
 
-    public class GuidIdentity : FieldIdentityStrategy
+    public class GuidIdentity : FieldIdentityResolver
     {
         public GuidIdentity(string field) 
             : base(field)

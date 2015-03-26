@@ -2,22 +2,114 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using DotJEM.Json.Index.Schema;
+using DotJEM.Json.Index.Searching;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
+using Lucene.Net.QueryParsers;
 using Lucene.Net.Search;
 using Newtonsoft.Json.Linq;
 
 namespace DotJEM.Json.Index.Configuration.FieldStrategies
 {
+    public interface IFieldQueryBuilder
+    {
+        Query BuildFieldQuery(CallContext call, string query, int slop);
+        Query BuildFuzzyQuery(CallContext call, string query, float similarity);
+        Query BuildPrefixQuery(CallContext call, string query);
+        Query BuildWildcardQuery(CallContext call, string query);
+        Query BuildRangeQuery(CallContext call, string part1, string part2, bool inclusive);
+    }
+
+    public class FieldQueryBuilder : IFieldQueryBuilder
+    {
+        protected IQueryParser Parser { get; private set; }
+        protected string Field { get; private set; }
+        protected JsonSchemaExtendedType Type { get; private set; }
+
+        public FieldQueryBuilder(IQueryParser parser, string field, JsonSchemaExtendedType type)
+        {
+            Parser = parser;
+            Field = field;
+            Type = type;
+        }
+        
+        public virtual Query BuildFieldQuery(CallContext call, string query, int slop)
+        {
+            return call.CallDefault();
+        }
+
+        public virtual Query BuildFuzzyQuery(CallContext call, string query, float similarity)
+        {
+            return call.CallDefault();
+        }
+
+        public virtual Query BuildPrefixQuery(CallContext call, string query)
+        {
+            return call.CallDefault();
+        }
+
+        public virtual Query BuildWildcardQuery(CallContext call, string query)
+        {
+            return call.CallDefault();
+        }
+
+        public virtual Query BuildRangeQuery(CallContext call, string part1, string part2, bool inclusive)
+        {
+            IList<BooleanClause> clauses = new List<BooleanClause>();
+            if (Type.HasFlag(JsonSchemaExtendedType.Date))
+            {
+                try
+                {
+                    clauses.Add(
+                        new BooleanClause(
+                            NumericRangeQuery.NewLongRange(Field,
+                            DateTime.Parse(part1, CultureInfo.InvariantCulture).Ticks,
+                            DateTime.Parse(part2, CultureInfo.InvariantCulture).Ticks, inclusive,
+                            inclusive), Occur.SHOULD));
+                }
+                catch (FormatException ex)
+                {
+                    if (Type == JsonSchemaExtendedType.Date)
+                    {
+                        throw new ParseException("Invalid DateTime format", ex);
+                    }
+                }
+            }
+
+            if (Type != JsonSchemaExtendedType.Date)
+            {
+                clauses.Add(new BooleanClause(call.CallDefault(), Occur.SHOULD));
+            }
+
+            return Parser.BooleanQuery(clauses, true);
+        }
+    }
+
+    public class TermFieldQueryBuilder : FieldQueryBuilder
+    {
+        public TermFieldQueryBuilder(IQueryParser parser, string field, JsonSchemaExtendedType type)
+            : base(parser, field, type)
+        {
+        }
+
+        public override Query BuildFieldQuery(CallContext call, string query, int slop)
+        {
+            return new TermQuery(new Term(Field, query));
+        }
+    }
+
     public interface IFieldStrategy
     {
-        IEnumerable<IFieldable> CreateField(string fieldName, JValue value);
         Query BuildQuery(string path, string value);
+
+        IEnumerable<IFieldable> BuildFields(string fieldName, JValue value);
+        IFieldQueryBuilder PrepareBuilder(IQueryParser parser, string fieldName, JsonSchemaExtendedType type);
     }
 
     public class FieldStrategy : IFieldStrategy
     {
-        public virtual IEnumerable<IFieldable> CreateField(string fieldName, JValue value)
+        public virtual IEnumerable<IFieldable> BuildFields(string fieldName, JValue value)
         {
             switch (value.Type)
             {
@@ -69,6 +161,11 @@ namespace DotJEM.Json.Index.Configuration.FieldStrategies
             yield return new Field(fieldName, str, Field.Store.NO, Field.Index.ANALYZED);
         }
 
+        public virtual IFieldQueryBuilder PrepareBuilder(IQueryParser parser, string fieldName, JsonSchemaExtendedType type)
+        {
+            return new FieldQueryBuilder(parser, fieldName, type);
+        }
+
         //NOTE: This is temporary for now.
         private static readonly char[] delimiters = " ".ToCharArray();
         public virtual Query BuildQuery(string field, string value)
@@ -92,7 +189,7 @@ namespace DotJEM.Json.Index.Configuration.FieldStrategies
 
     public class NullFieldStrategy : FieldStrategy
     {
-        public override IEnumerable<IFieldable> CreateField(string fieldName, JValue value)
+        public override IEnumerable<IFieldable> BuildFields(string fieldName, JValue value)
         {
             yield break;
         }
@@ -100,14 +197,22 @@ namespace DotJEM.Json.Index.Configuration.FieldStrategies
 
     public class TermFieldStrategy : FieldStrategy
     {
-        public override IEnumerable<IFieldable> CreateField(string fieldName, JValue value)
+        public override IEnumerable<IFieldable> BuildFields(string fieldName, JValue value)
         {
-            yield return new Field(fieldName, value.ToString(CultureInfo.InvariantCulture), Field.Store.NO, Field.Index.NOT_ANALYZED);
+            string str = value.ToString(CultureInfo.InvariantCulture);
+            yield return new Field(fieldName, str, Field.Store.NO, Field.Index.NOT_ANALYZED);
+            yield return new Field(fieldName, str, Field.Store.NO, Field.Index.ANALYZED);
         }
 
         public override Query BuildQuery(string field, string value)
         {
             return new TermQuery(new Term(field, value));
+        }
+
+        //TODO: Select Builder implementation pattern instead.
+        public override IFieldQueryBuilder PrepareBuilder(IQueryParser parser, string fieldName, JsonSchemaExtendedType type)
+        {
+            return new TermFieldQueryBuilder(parser, fieldName, type);
         }
     }
 
@@ -120,7 +225,7 @@ namespace DotJEM.Json.Index.Configuration.FieldStrategies
             fieldSetter = setter;
         }
 
-        public override IEnumerable<IFieldable> CreateField(string fieldName, JValue value)
+        public override IEnumerable<IFieldable> BuildFields(string fieldName, JValue value)
         {
             switch (value.Type)
             {
