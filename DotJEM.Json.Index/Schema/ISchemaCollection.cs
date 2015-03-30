@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -23,7 +24,7 @@ namespace DotJEM.Json.Index.Schema
 
     public class SchemaCollection : ISchemaCollection
     {
-        private readonly IDictionary<string, JSchema> schemas = new Dictionary<string, JSchema>();
+        private readonly IDictionary<string, JSchema> schemas = new ConcurrentDictionary<string, JSchema>();
 
         public IEnumerable<string> ContentTypes { get { return schemas.Keys; } }
 
@@ -32,8 +33,7 @@ namespace DotJEM.Json.Index.Schema
             get { return schemas.ContainsKey(contentType) ? schemas[contentType] : null; }
             set
             {
-                if (String.IsNullOrWhiteSpace(contentType))
-                    throw new ArgumentNullException("contentType");
+                if (string.IsNullOrWhiteSpace(contentType)) throw new ArgumentNullException("contentType");
                 if (value == null) throw new ArgumentNullException("value");
 
                 schemas[contentType] = value;

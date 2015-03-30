@@ -117,7 +117,7 @@ namespace DotJEM.Json.Index.Schema
             schema.Description = (string) json["description"];
 
             schema.Items = json["items"] != null ? json["items"].ToObject<JSchema>() : null;
-            schema.Properties = json["properties"] != null ? json["properties"].ToObject<Dictionary<string, JSchema>>() : null;
+            schema.Properties = json["properties"] != null ? json["properties"].ToObject<JSchemaProperties>() : null;
 
             return schema;
         }

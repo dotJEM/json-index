@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -43,7 +44,7 @@ namespace DotJEM.Json.Index.Test.Unit.Schema
                 Has.Property("IsRoot").EqualTo(schema.IsRoot)
                 & Has.Property("Schema").EqualTo(schema.Schema));
         }
-        
+
         [TestCase("{ Foo: 42 }")]
         [TestCase("{ Foo: 42, Bar: { Foo: 'Test this' } }")]
         [TestCase("{ Foo: 42, Bar: { Foo: ['Test this', 42] } }")]
@@ -60,6 +61,144 @@ namespace DotJEM.Json.Index.Test.Unit.Schema
 
             Assert.That(deserialized, HAS.Properties.EqualTo(schema));
         }
+
+
+        [Test, TestCaseSource("JsonObjectToSchemas")]
+        public string SerializeDeserialize_FromGeneratedSchemas_GeneratesCorrectStructure(string json)
+        {
+            JSchema schema = new JSchemaGenerator().Generate(JObject.Parse(json));
+            return JsonConvert.SerializeObject(schema);
+        }
+
+        public static IEnumerable JsonObjectToSchemas
+        {
+            get
+            {
+                yield return new TestCaseData("{ Foo: 42 }")
+                    .Returns(JObject.FromObject(new
+                    {
+                        id = "",
+                        type = "object",
+                        extendedType = "object",
+                        required = false,
+                        field = "",
+                        properties = new
+                        {
+                            Foo = new
+                            {
+                                id = "Foo",
+                                type = "integer",
+                                extendedType = "integer",
+                                required = false,
+                                field = "Foo"
+                            }
+                        }
+                    }).ToString(Formatting.None));
+
+                yield return new TestCaseData("{ Foo: 42, Bar: { Foo: 'Test this' } }")
+                    .Returns(JObject.FromObject(new
+                    {
+                        id = "",
+                        type = "object",
+                        extendedType = "object",
+                        required = false,
+                        field = "",
+                        properties = new
+                        {
+                            Foo = new
+                            {
+                                id = "Foo",
+                                type = "integer",
+                                extendedType = "integer",
+                                required = false,
+                                field = "Foo"
+                            },
+                            Bar = new
+                            {
+                                id = "Bar",
+                                type = "object",
+                                extendedType = "object",
+                                required = false,
+                                field = "Bar",
+                                properties = new
+                                {
+                                    Foo = new
+                                    {
+
+                                        id = "Bar/Foo",
+                                        type = "string",
+                                        extendedType = "string",
+                                        required = false,
+                                        field = "Bar.Foo"
+                                    }
+                                }
+
+                            }
+                        }
+                    }).ToString(Formatting.None));
+                
+                yield return new TestCaseData("{ Foo: 42, Bar: { Foo: ['Test this', 42] } }")
+                    .Returns(JObject.FromObject(new
+                    {
+                        id = "",
+                        type = "object",
+                        extendedType = "object",
+                        required = false,
+                        field = "",
+                        properties = new
+                        {
+                            Foo = new
+                            {
+                                id = "Foo",
+                                type = "integer",
+                                extendedType = "integer",
+                                required = false,
+                                field = "Foo"
+                            },
+                            Bar = new
+                            {
+                                id = "Bar",
+                                type = "object",
+                                extendedType = "object",
+                                required = false,
+                                field = "Bar",
+                                properties = new
+                                {
+                                    Foo = new
+                                    {
+
+                                        id = "Bar/Foo",
+                                        type = "array",
+                                        extendedType = "array",
+                                        required = false,
+                                        field = "Bar.Foo",
+                                        items = new
+                                        {
+                                            type = new[] { "string", "integer" },
+                                            extendedType = new[] { "string", "integer" },
+                                            required = false,
+                                            field = "Bar.Foo",
+                                        }
+                                    }
+                                }
+
+                            }
+                        }
+                    }).ToString(Formatting.None));
+                //[TestCase("{ Foo: [ 42 ], Bar: { Foo: ['Test this', 42] } }")]
+                //[TestCase("{ Foo: '42', Bar: { Foo: ['Test this', 42] } }")]
+                //[TestCase("{ Foo: null, Bar: { Foo: ['Test this', 42] } }")]
+                //[TestCase("{ Foo: undefined, Bar: { Foo: ['Test this', 42] } }")]
+                //[TestCase("{ Foo: '42', Bar: { Foo: ['Test this', 42, { Test: 'hest' }] } }")]
+                //[TestCase("{ Foo: '42', Bar: { Foo: [ ['Test this', 42], { Test: 'hest' }] } }")]
+            }
+        }
+
+        /*
+
+         
+         
+         */
 
     }
 }

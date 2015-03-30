@@ -37,9 +37,9 @@ namespace DotJEM.Json.Index.Schema
             return schema;
         }
 
-        private IDictionary<string, JSchema> GenerateProperties(JObject json, JPath path)
+        private JSchemaProperties GenerateProperties(JObject json, JPath path)
         {
-            IDictionary<string, JSchema> properties = new Dictionary<string, JSchema>();
+            JSchemaProperties properties = new JSchemaProperties();
             foreach (JProperty property in json.Properties())
             {
                 JPath child = path + property.Name;

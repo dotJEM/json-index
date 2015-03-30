@@ -10,6 +10,7 @@ namespace DotJEM.Json.Index.Searching
     public interface ISearchResult : IEnumerable<IHit>
     {
         long TotalCount { get; }
+        IEnumerable<dynamic> Documents { get; }
 
         ISearchResult Take(int count);
         ISearchResult Skip(int count);
@@ -35,6 +36,8 @@ namespace DotJEM.Json.Index.Searching
         private readonly IStorageIndex index;
 
         public long TotalCount { get; private set; }
+
+        public IEnumerable<dynamic> Documents { get { return this.Select(hit => hit.Json); } }
 
         public SearchResultCollector(Query query, IStorageIndex index)
         {
