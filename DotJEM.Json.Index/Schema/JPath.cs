@@ -1,5 +1,8 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
+using Lucene.Net.Analysis;
 
 namespace DotJEM.Json.Index.Schema
 {
@@ -16,7 +19,7 @@ namespace DotJEM.Json.Index.Schema
 
         private JPath(string value)
         {
-            segments = value.Split(new[] { '.', '/' }, StringSplitOptions.RemoveEmptyEntries);
+            segments = JPathTokenizer.Tokens(value);
         }
 
         public static implicit operator JPath(string str)
@@ -37,6 +40,35 @@ namespace DotJEM.Json.Index.Schema
         public override string ToString()
         {
             return ToString(".");
+        }
+    }
+
+    public class JPathTokenizer : IEnumerable<string>
+    {
+        private readonly string value;
+
+        private JPathTokenizer(string value)
+        {
+            this.value = value;
+        }
+
+        public IEnumerator<string> GetEnumerator()
+        {
+            //TODO: Temporary implementation... Should work more like JPath in JSON Core.
+            return value
+                .Split(new[] {'.', '/'}, StringSplitOptions.RemoveEmptyEntries)
+                .ToList()
+                .GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+        
+        public static string[] Tokens(string value)
+        {
+            return new JPathTokenizer(value).ToArray();
         }
     }
 }
