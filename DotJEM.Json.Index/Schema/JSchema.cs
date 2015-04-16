@@ -131,10 +131,14 @@ namespace DotJEM.Json.Index.Schema
                 .Union(new[] { this });
 
             if (Items != null)
+            {
                 all = all.Union(Items.Traverse());
+            }
 
             if (Properties != null)
+            {
                 all = all.Union(Properties.Values.SelectMany(property => property.Traverse()));
+            }
 
             return all;
         }
