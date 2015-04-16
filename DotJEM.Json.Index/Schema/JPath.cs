@@ -10,6 +10,8 @@ namespace DotJEM.Json.Index.Schema
     {
         private readonly string[] segments;
 
+        public string Path { get; private set; }
+
         private JPath(JPath root, JPath relative)
         {
             segments = new string[root.segments.Length + relative.segments.Length];
@@ -19,6 +21,7 @@ namespace DotJEM.Json.Index.Schema
 
         private JPath(string value)
         {
+            Path = value;
             segments = JPathTokenizer.Tokens(value);
         }
 
