@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
@@ -32,7 +33,7 @@ namespace DotJEM.Json.Index.Schema
         {
             if (value == null) throw new ArgumentNullException("value", "value was null when trying to add item to JSchemaProperties");
             if (string.IsNullOrEmpty(key)) throw new ArgumentNullException("key", "key was null when trying to add item to JSchemaProperties");
-            map.Add(key,value);
+            map.Add(key, value);
         }
 
         public void Clear()
@@ -93,17 +94,29 @@ namespace DotJEM.Json.Index.Schema
         bool ICollection<KeyValuePair<string, JSchema>>.Remove(KeyValuePair<string, JSchema> item)
         {
             return Collection.Remove(item);
-        } 
+        }
         #endregion
     }
 
     [JsonConverter(typeof(JSchemeConverter))]
-    public class JSchema
+    public class JSchema : DynamicObject
     {
+        private readonly JObject extensions = new JObject();
+
+        public IEnumerable<JProperty> Extensions { get { return extensions.Properties(); } }
+
+        public JToken this[string key]
+        {
+            get { return extensions[key]; }
+            set { extensions[key] = value; }
+        }
+
         public string Schema { get; set; }
         public string Id { get; set; }
         public string Title { get; set; }
         public string Description { get; set; }
+        public string Area { get; set; }
+        public string ContentType { get; set; }
 
         public bool Required { get; set; }
 
@@ -143,16 +156,16 @@ namespace DotJEM.Json.Index.Schema
             return all;
         }
 
-        public virtual JObject Serialize(string httpDotjemComApiSchema)
+        public virtual JObject Serialize(string url)
         {
             JsonSerializer serializer = new JsonSerializer();
-            serializer.Converters.Add(new JSchemeConverter("http://dotjem.com/api/schema"));
+            serializer.Converters.Add(new JSchemeConverter(url));
             return JObject.FromObject(this, serializer);
         }
 
         public JSchema Merge(JSchema other)
         {
-           if (other == null)
+            if (other == null)
                 return this;
 
             Type = Type | other.Type;
@@ -162,19 +175,21 @@ namespace DotJEM.Json.Index.Schema
 
             Title = MostQualifying(Title, other.Title);
             Description = MostQualifying(Description, other.Description);
+            Area = MostQualifying(Area, other.Area);
+            ContentType = MostQualifying(ContentType, other.ContentType);
             Field = MostQualifying(Field, other.Field);
 
             Items = Items != null ? Items.Merge(other.Items) : other.Items;
 
             if (other.Properties == null)
                 return this;
-            
+
             if (Properties == null)
             {
                 Properties = other.Properties;
                 return this;
             }
-            
+
             foreach (KeyValuePair<string, JSchema> pair in other.Properties)
             {
                 if (Properties.ContainsKey(pair.Key))
@@ -196,7 +211,6 @@ namespace DotJEM.Json.Index.Schema
 
         public JsonSchemaExtendedType LookupExtentedType(string field)
         {
-            //TODO: Temp fix for null???
             if (Field == null || !field.StartsWith(Field))
                 return JsonSchemaExtendedType.None;
 
@@ -217,6 +231,24 @@ namespace DotJEM.Json.Index.Schema
         public override string ToString()
         {
             return JsonConvert.SerializeObject(this, Formatting.Indented);
+        }
+
+        public override bool TrySetMember(SetMemberBinder binder, object value)
+        {
+            extensions[binder.Name] = JToken.FromObject(value);
+            return true;
+        }
+
+        public override bool TryGetMember(GetMemberBinder binder, out object result)
+        {
+            JToken token;
+            if (extensions.TryGetValue(binder.Name, out token))
+            {
+                result = token.ToObject(binder.ReturnType);
+                return true;
+            }
+            result = null;
+            return false;
         }
     }
 }

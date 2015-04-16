@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -10,7 +11,7 @@ using Newtonsoft.Json.Linq;
 
 namespace DotJEM.Json.Index.Schema
 {
-    public interface ISchemaCollection
+    public interface ISchemaCollection : IEnumerable<JSchema>
     {
         IEnumerable<string> ContentTypes { get; }
         JSchema this[string contentType] { get; set; }
@@ -45,6 +46,7 @@ namespace DotJEM.Json.Index.Schema
             if (contentType == null) throw new ArgumentNullException("contentType");
             if (schema == null) throw new ArgumentNullException("schema");
 
+            schema.ContentType = contentType;
             if (schemas.ContainsKey(contentType))
             {
                 return this[contentType].Merge(schema);
@@ -75,6 +77,16 @@ namespace DotJEM.Json.Index.Schema
             return schema == null
                 ? Enumerable.Empty<string>()
                 : schema.Traverse().Select(s => s.Field).Where(f => !string.IsNullOrEmpty(f));
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+
+        public IEnumerator<JSchema> GetEnumerator()
+        {
+            return schemas.Values.GetEnumerator();
         }
     }
 }

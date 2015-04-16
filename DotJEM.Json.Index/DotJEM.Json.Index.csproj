@@ -85,7 +85,7 @@
     <Compile Include="Configuration\As.cs" />
     <Compile Include="Configuration\FieldStrategies\IFieldStrategy.cs" />
     <Compile Include="Configuration\IContentTypeConfiguration.cs" />
-    <Compile Include="Configuration\IContentTypeResolver.cs" />
+    <Compile Include="Configuration\IFieldResolver.cs" />
     <Compile Include="Configuration\IdentityStrategies\DefaultIdentityResolver.cs" />
     <Compile Include="Configuration\IdentityStrategies\FieldIdentityResolver.cs" />
     <Compile Include="Configuration\IdentityStrategies\IIdentityResolver.cs" />

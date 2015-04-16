@@ -36,11 +36,12 @@ namespace DotJEM.Json.Index
         public Document Create(JObject value)
         {
             string contentType = index.Configuration.TypeResolver.Resolve(value);
+            string storageArea = index.Configuration.AreaResolver.Resolve(value);
 
             JSchema schema = index.Schemas[contentType];
-            schema = schema == null 
-                ? generator.Generate(value)
-                : schema.Merge(generator.Generate(value));
+            schema = schema == null
+                ? generator.Generate(value, contentType, storageArea)
+                : schema.Merge(generator.Generate(value, contentType, storageArea));
 
             index.Schemas[contentType] = schema;
             

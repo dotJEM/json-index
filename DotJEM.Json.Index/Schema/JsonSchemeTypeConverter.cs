@@ -41,9 +41,15 @@ namespace DotJEM.Json.Index.Schema
             WriteProperty(writer, serializer, "field", schema.Field);
             WriteProperty(writer, serializer, "title", schema.Title);
             WriteProperty(writer, serializer, "description", schema.Description);
+            WriteProperty(writer, serializer, "contentType", schema.ContentType);
+            WriteProperty(writer, serializer, "area", schema.Area);
 
             WriteProperty(writer, serializer, "items", schema.Items);
             WriteProperty(writer, serializer, "properties", schema.Properties);
+
+            foreach (JProperty property in schema.Extensions)
+                WriteProperty(writer, serializer, property.Name, property.Value);
+
             writer.WriteEndObject();
         }
 
@@ -114,13 +120,34 @@ namespace DotJEM.Json.Index.Schema
             schema.Required = (bool)json["required"];
             schema.Field = (string) json["field"];
             schema.Title = (string) json["title"];
-            schema.Description = (string) json["description"];
+            schema.Description = (string)json["description"];
+            schema.ContentType = (string)json["contentType"];
+            schema.Area = (string)json["area"];
 
             schema.Items = json["items"] != null ? json["items"].ToObject<JSchema>() : null;
             schema.Properties = json["properties"] != null ? json["properties"].ToObject<JSchemaProperties>() : null;
 
+            json.Remove("type");
+            json.Remove("extendedType");
+            json.Remove("$schema");
+            json.Remove("id");
+            json.Remove("required");
+            json.Remove("field");
+            json.Remove("description");
+            json.Remove("contentType");
+            json.Remove("area");
+            json.Remove("items");
+            json.Remove("properties");
+
+            json.Properties().Aggregate(schema, (sc, property) =>
+            {
+                sc[property.Name] = property.Value;
+                return sc;
+            });
+
             return schema;
         }
+
 
 
         public override bool CanConvert(Type objectType)

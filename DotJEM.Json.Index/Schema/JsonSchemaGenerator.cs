@@ -14,14 +14,17 @@ namespace DotJEM.Json.Index.Schema
 {
     public interface IJSchemaGenerator
     {
-        JSchema Generate(JObject json);
+        JSchema Generate(JObject json, string contentType, string storageArea);
     }
 
     public class JSchemaGenerator : IJSchemaGenerator
     {
-        public JSchema Generate(JObject json)
+        public JSchema Generate(JObject json, string contentType = "", string storageArea = "")
         {
-            return InternalGenerate(json, "");
+            JSchema schema = InternalGenerate(json, "");
+            schema.ContentType = contentType;
+            schema.Area = storageArea;
+            return schema;
         }
 
         private JSchema InternalGenerate(JObject json, JPath path, bool isRoot = false)

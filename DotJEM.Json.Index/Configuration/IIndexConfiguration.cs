@@ -18,7 +18,7 @@ namespace DotJEM.Json.Index.Configuration
         IIndexConfiguration SetRawField(string field);
         IIndexConfiguration SetScoreField(string field);
         IIndexConfiguration SetTypeResolver(string field);
-        IIndexConfiguration SetTypeResolver(IContentTypeResolver resolver);
+        IIndexConfiguration SetTypeResolver(IFieldResolver resolver);
         IIndexConfiguration SetIdentity(string field);
         IIndexConfiguration SetIdentity(IIdentityResolver resolver);
 
@@ -28,7 +28,9 @@ namespace DotJEM.Json.Index.Configuration
         string RawField { get; }
         string ScoreField { get; }
 
-        IContentTypeResolver TypeResolver { get; }
+        IFieldResolver TypeResolver { get; }
+        IFieldResolver AreaResolver { get; }
+
         IIdentityResolver IdentityResolver { get; }
         IStrategyResolver<IFieldStrategy> Field { get; }
     }
@@ -41,7 +43,9 @@ namespace DotJEM.Json.Index.Configuration
         public string RawField { get; private set; }
         public string ScoreField { get; private set; }
 
-        public IContentTypeResolver TypeResolver { get; private set; }
+        public IFieldResolver TypeResolver { get; private set; }
+        public IFieldResolver AreaResolver { get; private set; }
+
         public IIdentityResolver IdentityResolver { get { return ForAll().IndentityResolver; } }
 
         public IndexConfiguration()
@@ -49,6 +53,7 @@ namespace DotJEM.Json.Index.Configuration
             SetRawField("$raw");
             SetScoreField("$score");
             SetTypeResolver("$contentType");
+            SetAreaResolver("$area");
             SetIdentity("$id");
         }
 
@@ -62,12 +67,25 @@ namespace DotJEM.Json.Index.Configuration
         {
             ForAll().Index(field, As.Term);
 
-            return SetTypeResolver(new FieldContentTypeResolver(field));
+            return SetTypeResolver(new FieldResolver(field));
         }
 
-        public IIndexConfiguration SetTypeResolver(IContentTypeResolver resolver)
+        public IIndexConfiguration SetAreaResolver(string field)
+        {
+            ForAll().Index(field, As.Term);
+
+            return SetAreaResolver(new FieldResolver(field));
+        }
+
+        public IIndexConfiguration SetTypeResolver(IFieldResolver resolver)
         {
             TypeResolver = resolver;
+            return this;
+        }
+
+        public IIndexConfiguration SetAreaResolver(IFieldResolver resolver)
+        {
+            AreaResolver = resolver;
             return this;
         }
 

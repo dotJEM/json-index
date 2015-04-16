@@ -2,16 +2,16 @@
 
 namespace DotJEM.Json.Index.Configuration
 {
-    public interface IContentTypeResolver
+    public interface IFieldResolver
     {
         string Resolve(JObject entity);
     }
 
-    public class FieldContentTypeResolver : IContentTypeResolver
+    public class FieldResolver : IFieldResolver
     {
         private readonly string field;
 
-        public FieldContentTypeResolver(string field)
+        public FieldResolver(string field)
         {
             this.field = field;
         }
