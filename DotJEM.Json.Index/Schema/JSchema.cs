@@ -181,6 +181,8 @@ namespace DotJEM.Json.Index.Schema
 
             Items = Items != null ? Items.Merge(other.Items) : other.Items;
 
+            extensions.Merge(other.extensions);
+
             if (other.Properties == null)
                 return this;
 
