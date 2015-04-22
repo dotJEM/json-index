@@ -99,6 +99,8 @@
     <Compile Include="Schema\IJObjectEnumarator.cs" />
     <Compile Include="Schema\JPath.cs" />
     <Compile Include="Schema\JSchema.cs" />
+    <Compile Include="Schema\JSchemaExtensions.cs" />
+    <Compile Include="Schema\JSchemaProperties.cs" />
     <Compile Include="Schema\JsonSchemaExtendedType.cs" />
     <Compile Include="Schema\JsonSchemaExtendedTypeMapper.cs" />
     <Compile Include="Schema\JsonSchemeTypeConverter.cs" />
