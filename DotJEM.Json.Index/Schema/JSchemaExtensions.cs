@@ -108,6 +108,9 @@ namespace DotJEM.Json.Index.Schema
 
         public static IEnumerable<JSchema> Traverse(this JSchema self)
         {
+            if (self == null)
+                throw new ArgumentNullException("self", "Cannot itterate a null schema.");
+
             try
             {
                 var all = Enumerable.Empty<JSchema>().Union(new[] { self });
