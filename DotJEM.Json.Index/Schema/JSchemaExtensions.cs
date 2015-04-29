@@ -91,18 +91,11 @@ namespace DotJEM.Json.Index.Schema
             }
             catch (NullReferenceException ex)
             {
-                //NOTE: This is defensive... 
-                if (self.Properties == null)
-                    throw;
-
-                var kv = self.Properties.Where(p => p.Key == null || p.Value == null).ToArray();
-                if (kv.Length <= 0)
-                    throw;
-
-                string message = "Found " + kv.Length + " propertie(s) where either the key or value was null in '" 
-                                 + self.ContentType + ":" + self.Field + "'.\n\r" 
-                                 + string.Join("\n\r", kv.Select(v => v.Key + " : " + v.Value));
-                throw new NullReferenceException(message, ex);
+                throw BuildException(self, ex);
+            }
+            catch (ArgumentNullException ex)
+            {
+                throw BuildException(self, ex);
             }
         }
 
@@ -128,19 +121,28 @@ namespace DotJEM.Json.Index.Schema
             }
             catch (NullReferenceException ex)
             {
-                //NOTE: This is defensive... 
-                if (self.Properties == null)
-                    throw;
-
-                var kv = self.Properties.Where(p => p.Key == null || p.Value == null).ToArray();
-                if (kv.Length <= 0)
-                    throw;
-
-                string message = "Found " + kv.Length + " propertie(s) where either the key or value was null in '"
-                                 + self.ContentType + ":" + self.Field + "'.\n\r"
-                                 + string.Join("\n\r", kv.Select(v => v.Key + " : " + v.Value));
-                throw new NullReferenceException(message, ex);
+                throw BuildException(self, ex);
             }
+            catch (ArgumentNullException ex)
+            {
+                throw BuildException(self, ex);
+            }
+        }
+
+        private static NullReferenceException BuildException(JSchema self, Exception ex)
+        {
+            //NOTE: This is defensive... 
+            if (self.Properties == null)
+                return new NullReferenceException(ex.Message, ex);
+
+            var kv = self.Properties.Where(p => p.Key == null || p.Value == null).ToArray();
+            if (kv.Length <= 0)
+                return new NullReferenceException(ex.Message, ex);
+
+            string message = "Found " + kv.Length + " propertie(s) where either the key or value was null in '"
+                             + self.ContentType + ":" + self.Field + "'.\n\r"
+                             + string.Join("\n\r", kv.Select(v => v.Key + " : " + v.Value));
+            return new NullReferenceException(message, ex);
         }
     }
 }
