@@ -106,7 +106,7 @@ namespace DotJEM.Json.Index.Schema
 
             try
             {
-                var all = Enumerable.Empty<JSchema>().Union(new[] { self });
+                IEnumerable<JSchema> all = Enumerable.Empty<JSchema>().Union(new[] { self });
                 if (self.Items != null)
                 {
                     all = all.Union(self.Items.Traverse());
@@ -117,7 +117,7 @@ namespace DotJEM.Json.Index.Schema
                     all = all.Union(self.Properties.Values.SelectMany(property => property.Traverse()));
                 }
 
-                return all;
+                return all.ToList();
             }
             catch (NullReferenceException ex)
             {
