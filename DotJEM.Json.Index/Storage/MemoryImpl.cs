@@ -78,8 +78,11 @@ namespace DotJEM.Json.Index.Storage
 
         public void Delete()
         {
-            blocks.Clear();
-            File.Delete(cacheFile);
+            lock (padlock)
+            {
+                blocks.Clear();
+                File.Delete(cacheFile);
+            }
         }
 
         public void WriteBytes(long pos, byte[] buffer, int offset, int count)
