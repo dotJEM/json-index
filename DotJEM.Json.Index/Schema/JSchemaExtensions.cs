@@ -114,7 +114,11 @@ namespace DotJEM.Json.Index.Schema
 
                 if (self.Properties != null)
                 {
-                    all = all.Union(self.Properties.Values.SelectMany(property => property.Traverse()));
+                    all = all.Union(self.Properties.Values
+                        //TODO: This is "Defensive", we still need to figure out WHY this happens.
+                        //      But we skip these here.
+                        .Where(p => p != null)
+                        .SelectMany(property => property.Traverse()));
                 }
 
                 return all.ToList();
