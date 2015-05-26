@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Linq;
 using System.Text;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework.Constraints;
@@ -51,7 +52,7 @@ namespace DotJEM.Json.Index.Test.Constraints
         /// <summary/>
         protected bool FailWithMessage(string format, params object[] args)
         {
-            AppendLine(string.Format(format, args));
+            AppendLine(args.Any() ? string.Format(format, args) : format);
             return Fail();
         }
 

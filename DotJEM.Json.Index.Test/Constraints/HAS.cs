@@ -7,6 +7,51 @@ using NUnit.Framework.Constraints;
 
 namespace DotJEM.Json.Index.Test.Constraints
 {
+    public class IS
+    {
+        public static IResolveConstraint EqualToJson(object expected)
+        {
+            string str = expected as string;
+            if (str != null)
+            {
+                return new JEqualsContraint(JToken.Parse(str));
+            }
+            JToken jobj = expected as JToken ?? JToken.FromObject(expected);
+            return new JEqualsContraint(jobj);
+
+        }
+
+        //JTokenEqualityComparer
+    }
+
+    public class JEqualsContraint : AbstractConstraint
+    {
+        private readonly JToken expectedToken;
+
+        public JEqualsContraint(JToken expectedToken)
+        {
+            this.expectedToken = expectedToken;
+        }
+
+        protected override void DoMatches(object actual)
+        {
+            JToken actualToken = actual as JToken;
+            if (actualToken == null)
+            {
+                FailWithMessage("Object was not a JToken");
+                return;
+            }
+
+            if (!JToken.DeepEquals(actualToken, expectedToken))
+            {
+                FailWithMessage("Expected JTokens to equal, they did not:");
+                FailWithMessage("actual:   " + actualToken);
+                FailWithMessage("expected: " + expectedToken);
+            }
+        }
+
+    }
+
     public class HAS
         // ReSharper restore InconsistentNaming
     {
