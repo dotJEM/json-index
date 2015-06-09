@@ -30,6 +30,8 @@ namespace DotJEM.Json.Index
         IStorageIndex Delete(JObject entity);
         IStorageIndex DeleteAll(IEnumerable<JObject> entities);
 
+        IStorageIndex Optimize();
+
         ISearchResult Search(string query);
         ISearchResult Search(Query query);
         ISearchResult Search(object query);
@@ -161,6 +163,12 @@ namespace DotJEM.Json.Index
         public IStorageIndex DeleteAll(IEnumerable<JObject> entities)
         {
             Writer.DeleteAll(entities);
+            return this;
+        }
+
+        public IStorageIndex Optimize()
+        {
+            Writer.Optimize();
             return this;
         }
 

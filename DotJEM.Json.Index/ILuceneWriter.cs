@@ -14,6 +14,7 @@ namespace DotJEM.Json.Index
         void WriteAll(IEnumerable<JObject> entities);
         void Delete(JObject entity);
         void DeleteAll(IEnumerable<JObject> entities);
+        void Optimize();
     }
 
     internal class LuceneWriter : ILuceneWriter
