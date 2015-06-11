@@ -53,7 +53,7 @@ namespace DotJEM.Json.Index.Configuration.FieldStrategies
         {
             return call.CallDefault();
         }
-
+        
         public virtual Query BuildRangeQuery(CallContext call, string part1, string part2, bool inclusive)
         {
             IList<BooleanClause> clauses = new List<BooleanClause>();
@@ -64,8 +64,9 @@ namespace DotJEM.Json.Index.Configuration.FieldStrategies
                     clauses.Add(
                         new BooleanClause(
                             NumericRangeQuery.NewLongRange(Field,
-                            DateTime.Parse(part1, CultureInfo.InvariantCulture).Ticks,
-                            DateTime.Parse(part2, CultureInfo.InvariantCulture).Ticks, inclusive,
+                            part1 == "*" ? (long?) null : DateTime.Parse(part1, CultureInfo.InvariantCulture).Ticks,
+                            part2 == "*" ? (long?) null : DateTime.Parse(part2, CultureInfo.InvariantCulture).Ticks,
+                            inclusive,
                             inclusive), Occur.SHOULD));
                 }
                 catch (FormatException ex)

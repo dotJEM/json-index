@@ -47,7 +47,6 @@ namespace DotJEM.Json.Index.Searching
         {
             this.fields = fields;
             this.index = index;
-            // contentTypes = 
         }
 
         public Query BooleanQuery(IList<BooleanClause> clauses, bool disableCoord)
@@ -55,11 +54,10 @@ namespace DotJEM.Json.Index.Searching
             return GetBooleanQuery(clauses, disableCoord);
         }
 
-        public override Query Parse(string query)
-        {
-            Debug.WriteLine("Parse({0})", query);
-            return base.Parse(query);
-        }
+        //public override Query Parse(string query)
+        //{
+        //    return base.Parse(query);
+        //}
 
         private IFieldQueryBuilder PrepareBuilderFor(string field)
         {
@@ -73,7 +71,6 @@ namespace DotJEM.Json.Index.Searching
 
         protected override Query GetFieldQuery(string fieldName, string queryText, int slop)
         {
-            Debug.WriteLine("GetFieldQuery({0}, {1}, {2})", fieldName, queryText, slop);
             if (fieldName != null)
             {
                 var query = PrepareBuilderFor(fieldName)
@@ -94,13 +91,11 @@ namespace DotJEM.Json.Index.Searching
 
         protected override Query GetFieldQuery(string field, string queryText)
         {
-            Debug.WriteLine("GetFieldQuery({0}, {1})", field, queryText);
             return GetFieldQuery(field, queryText, 0);
         }
 
         protected override Query GetFuzzyQuery(string field, string termStr, float minSimilarity)
         {
-            Debug.WriteLine("GetFuzzyQuery({0}, {1}, {2})", field, termStr, minSimilarity);
             if (field != null)
             {
                 var query = PrepareBuilderFor(field)
@@ -115,7 +110,6 @@ namespace DotJEM.Json.Index.Searching
 
         protected override Query GetPrefixQuery(string field, string termStr)
         {
-            Debug.WriteLine("GetPrefixQuery({0}, {1})", field, termStr);
             if (field != null)
             {
                 var query = PrepareBuilderFor(field)
@@ -130,7 +124,6 @@ namespace DotJEM.Json.Index.Searching
 
         protected override Query GetWildcardQuery(string field, string termStr)
         {
-            Debug.WriteLine("GetWildcardQuery({0}, {1})", field, termStr);
             if (field != null)
             {
                 var query = PrepareBuilderFor(field)
@@ -145,7 +138,6 @@ namespace DotJEM.Json.Index.Searching
 
         protected override Query GetRangeQuery(string field, string part1, string part2, bool inclusive)
         {
-            Debug.WriteLine("GetRangeQuery({0}, {1}, {2}, {3})", field, part1, part2, inclusive);
             if (field != null)
             {
                 var query = PrepareBuilderFor(field)
