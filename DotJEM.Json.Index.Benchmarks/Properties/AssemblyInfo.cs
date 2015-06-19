@@ -8,9 +8,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("DotJEM.Json.Index.Benchmarks")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("N/A")]
+[assembly: AssemblyCopyright("Copyright © DotJEM A/S 2014-2015")]
 [assembly: AssemblyProduct("DotJEM.Json.Index.Benchmarks")]
-[assembly: AssemblyCopyright("Copyright ©  2014")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
