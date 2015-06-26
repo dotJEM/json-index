@@ -64,8 +64,8 @@ namespace DotJEM.Json.Index.Configuration.FieldStrategies
                     clauses.Add(
                         new BooleanClause(
                             NumericRangeQuery.NewLongRange(Field,
-                            part1 == "*" ? (long?) null : DateTime.Parse(part1, CultureInfo.InvariantCulture).Ticks,
-                            part2 == "*" ? (long?) null : DateTime.Parse(part2, CultureInfo.InvariantCulture).Ticks,
+                            part1 == "null" ? (long?) null : DateTime.Parse(part1, CultureInfo.InvariantCulture).Ticks,
+                            part2 == "null" ? (long?)null : DateTime.Parse(part2, CultureInfo.InvariantCulture).Ticks,
                             inclusive,
                             inclusive), Occur.SHOULD));
                 }

@@ -138,6 +138,9 @@ namespace DotJEM.Json.Index.Searching
 
         protected override Query GetRangeQuery(string field, string part1, string part2, bool inclusive)
         {
+            part1 = (part1 == "*" ? "null" : part1);
+            part2 = (part2 == "*" ? "null" : part2);
+
             if (field != null)
             {
                 var query = PrepareBuilderFor(field)
