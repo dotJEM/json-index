@@ -56,6 +56,7 @@ namespace DotJEM.Json.Index.Configuration.FieldStrategies
         
         public virtual Query BuildRangeQuery(CallContext call, string part1, string part2, bool inclusive)
         {
+            //TODO: Try parse and separate type generators.
             IList<BooleanClause> clauses = new List<BooleanClause>();
             if (Type.HasFlag(JsonSchemaExtendedType.Date))
             {
@@ -77,8 +78,29 @@ namespace DotJEM.Json.Index.Configuration.FieldStrategies
                     }
                 }
             }
+            
+            if (Type.HasFlag(JsonSchemaExtendedType.Integer))
+            {
+                try
+                {
+                clauses.Add(
+                    new BooleanClause(
+                        NumericRangeQuery.NewLongRange(Field,
+                        part1 == "null" ? (long?)null : long.Parse(part1),
+                        part2 == "null" ? (long?)null : long.Parse(part2),
+                        inclusive,
+                        inclusive), Occur.SHOULD));
+                }
+                catch (FormatException ex)
+                {
+                    if (Type == JsonSchemaExtendedType.Integer)
+                    {
+                        throw new ParseException("Invalid Integer format", ex);
+                    }
+                }
+            }
 
-            if (Type != JsonSchemaExtendedType.Date)
+            if (Type != JsonSchemaExtendedType.Date && Type != JsonSchemaExtendedType.Integer)
             {
                 clauses.Add(new BooleanClause(call.CallDefault(), Occur.SHOULD));
             }
