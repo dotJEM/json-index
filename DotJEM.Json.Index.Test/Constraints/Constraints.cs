@@ -97,7 +97,7 @@ namespace DotJEM.Json.Index.Test.Constraints
             JObject actualJObject = actual as JObject;
             if (actualJObject == null)
             {
-                FailWithMessage("Object was not a JToken");
+                FailWithMessage("Object was not a JObject");
                 return;
             }
 
