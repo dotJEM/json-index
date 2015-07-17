@@ -33,6 +33,7 @@ namespace DotJEM.Json.Index
         IStorageIndex Optimize();
 
         ISearchResult Search(string query);
+        ISearchResult Search(string queryFormat, params object[] args);
         ISearchResult Search(Query query);
         ISearchResult Search(object query);
         ISearchResult Search(JObject query);
@@ -117,6 +118,11 @@ namespace DotJEM.Json.Index
         public ISearchResult Search(string query)
         {
             return Searcher.Search(query);
+        }
+
+        public ISearchResult Search(string queryFormat, params object[] args)
+        {
+            return Searcher.Search(string.Format(queryFormat, args));
         }
 
         public ISearchResult Search(Query query)
