@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Runtime.Serialization;
@@ -7,6 +8,7 @@ using Newtonsoft.Json.Schema;
 
 namespace DotJEM.Json.Index.Schema
 {
+    //TODO: Make Imuteable.
     [JsonConverter(typeof(JSchemeConverter))]
     public class JSchema : DynamicObject
     {
@@ -69,7 +71,7 @@ namespace DotJEM.Json.Index.Schema
         {
             return JsonConvert.SerializeObject(this, Formatting.Indented);
         }
-
+        
         public override bool TrySetMember(SetMemberBinder binder, object value)
         {
             extensions[binder.Name] = JToken.FromObject(value);

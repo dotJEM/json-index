@@ -12,44 +12,42 @@ namespace DotJEM.Json.Index.Schema
             if (other == null)
                 return self;
 
-            self.Type = self.Type | other.Type;
-            self.ExtendedType = self.ExtendedType | other.ExtendedType;
-            self.Indexed = self.Indexed || other.Indexed;
-            self.Required = self.Required || other.Required;
+            //Note: Create a new to avoid that we modifies one that is being used atm.
+            JSchema merged = new JSchema(self.Type, self.ExtendedType)
+            {
+                Type = self.Type | other.Type,
+                ExtendedType = self.ExtendedType | other.ExtendedType,
+                Indexed = self.Indexed || other.Indexed,
+                Required = self.Required || other.Required,
+                Title = MostQualifying(self.Title, other.Title),
+                Description = MostQualifying(self.Description, other.Description),
+                Area = MostQualifying(self.Area, other.Area),
+                ContentType = MostQualifying(self.ContentType, other.ContentType),
+                Field = MostQualifying(self.Field, other.Field),
+                Items = self.Items != null ? self.Items.Merge(other.Items) : other.Items
+            };
 
-            self.Title = MostQualifying(self.Title, other.Title);
-            self.Description = MostQualifying(self.Description, other.Description);
-            self.Area = MostQualifying(self.Area, other.Area);
-            self.ContentType = MostQualifying(self.ContentType, other.ContentType);
-            self.Field = MostQualifying(self.Field, other.Field);
-
-            self.Items = self.Items != null ? self.Items.Merge(other.Items) : other.Items;
-
-            self.MergeExtensions(other);
+            merged.MergeExtensions(self);
+            merged.MergeExtensions(other);
 
             if (other.Properties == null)
             {
-                return self.EnsureValidObject();
+                return merged.EnsureValidObject();
             }
 
             if (self.Properties == null)
             {
-                self.Properties = other.Properties;
-                return self.EnsureValidObject();
+                merged.Properties = other.Properties;
+                return merged.EnsureValidObject();
             }
 
+            merged.Properties = new JSchemaProperties();
             foreach (KeyValuePair<string, JSchema> pair in other.Properties)
             {
-                if (self.Properties.ContainsKey(pair.Key))
-                {
-                    self.Properties[pair.Key] = self.Properties[pair.Key].Merge(pair.Value);
-                }
-                else
-                {
-                    self.Properties.Add(pair.Key, pair.Value);
-                }
+                merged.Properties[pair.Key] = 
+                    self.Properties.ContainsKey(pair.Key) ? self.Properties[pair.Key].Merge(pair.Value) : pair.Value;
             }
-            return self;
+            return merged;
         }
 
         private static JSchema EnsureValidObject(this JSchema self)

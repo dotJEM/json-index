@@ -42,7 +42,6 @@ namespace DotJEM.Json.Index
             schema = schema == null
                 ? generator.Generate(value, contentType, storageArea)
                 : schema.Merge(generator.Generate(value, contentType, storageArea));
-
             index.Schemas[contentType] = schema;
             
             Document document = enumarator
@@ -50,8 +49,7 @@ namespace DotJEM.Json.Index
                 .Where(node => node.IsLeaf)
                 .SelectMany(node => factory.Create(node.Path, contentType, node.Token as JValue))
                 .Aggregate(new Document(), (doc, field) => doc.Put(field));
-
-
+            
             document.Add(new Field(index.Configuration.RawField, value.ToString(Formatting.None), Field.Store.YES, Field.Index.NO));
             return document;
         }
