@@ -1,13 +1,14 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace DotJEM.Json.Index.Schema
 {
     public class JSchemaProperties : IDictionary<string, JSchema>
     {
         private readonly Dictionary<string, JSchema> map = new Dictionary<string, JSchema>();
-
+        
         public int Count { get { return map.Count; } }
         public ICollection<string> Keys { get { return map.Keys; } }
         public ICollection<JSchema> Values { get { return map.Values; } }

@@ -41,7 +41,11 @@ namespace DotJEM.Json.Index.Schema
                 return merged.EnsureValidObject();
             }
 
-            merged.Properties = new JSchemaProperties();
+            merged.Properties = self.Properties.Aggregate(new JSchemaProperties(), (map, kp) =>
+            {
+                map.Add(kp.Key, kp.Value);
+                return map;
+            });
             foreach (KeyValuePair<string, JSchema> pair in other.Properties)
             {
                 merged.Properties[pair.Key] = 

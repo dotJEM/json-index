@@ -31,7 +31,10 @@ namespace DotJEM.Json.Index.Schema
 
         public JSchema this[string contentType]
         {
-            get { return schemas.ContainsKey(contentType) ? schemas[contentType] : null; }
+            get
+            {
+                return schemas.ContainsKey(contentType) ? schemas[contentType] : null;
+            }
             set
             {
                 if (string.IsNullOrWhiteSpace(contentType)) throw new ArgumentNullException("contentType");
@@ -49,7 +52,7 @@ namespace DotJEM.Json.Index.Schema
             schema.ContentType = contentType;
             if (schemas.ContainsKey(contentType))
             {
-                return this[contentType].Merge(schema);
+                return this[contentType] = this[contentType].Merge(schema);
             }
             schemas.Add(contentType, schema);
             return schema;
