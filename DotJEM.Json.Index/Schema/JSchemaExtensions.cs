@@ -48,7 +48,7 @@ namespace DotJEM.Json.Index.Schema
             });
             foreach (KeyValuePair<string, JSchema> pair in other.Properties)
             {
-                merged.Properties[pair.Key] = 
+                merged.Properties[pair.Key] =
                     self.Properties.ContainsKey(pair.Key) ? self.Properties[pair.Key].Merge(pair.Value) : pair.Value;
             }
             return merged;
@@ -99,6 +99,12 @@ namespace DotJEM.Json.Index.Schema
             {
                 throw BuildException(self, ex);
             }
+        }
+
+        public static JSchema GetField(this JSchema self, string fieldName)
+        {
+            return fieldName.Split('.')
+              .Aggregate(self, (schema, s) => schema != null && schema.Properties != null && schema.Properties.ContainsKey(s) ? schema.Properties[s] : null);
         }
 
         public static IEnumerable<JSchema> Traverse(this JSchema self)
