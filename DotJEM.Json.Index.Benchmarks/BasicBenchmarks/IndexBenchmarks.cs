@@ -1,11 +1,10 @@
-﻿using System;
-using System.Collections;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using DotJEM.Json.Index.Benchmarks.TestFactories;
 using DotJEM.Json.Index.Searching;
 using DotJEM.Json.Index.Test.Util;
-using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 
 namespace DotJEM.Json.Index.Benchmarks
@@ -158,131 +157,4 @@ namespace DotJEM.Json.Index.Benchmarks
 
         }
     }
-
-    public class TestObjectGenerator : IEnumerable<Document>
-    {
-        private bool stop = false;
-        private readonly int limit;
-        private readonly HashSet<string> contentTypes = new HashSet<string>(new[] { "order", "person", "product", "account", "storage", "address", "payment", "delivery", "token", "shipment" });
-        private readonly RandomTextGenerator textGenerator;
-
-        public TestObjectGenerator(int limit) : this(limit, new RandomTextGenerator())
-        {
-        }
-
-        public TestObjectGenerator(int limit, RandomTextGenerator textGenerator)
-        {
-            this.limit = limit;
-            this.textGenerator = textGenerator;
-        }
-
-        public IEnumerator<Document> GetEnumerator()
-        {
-            int count = 0;
-            while (!stop && count++ < limit)
-            {
-                string contentType = RandomContentType();
-                yield return new Document(contentType, RandomDocument(contentType));
-            }
-        }
-
-        private string RandomContentType()
-        {
-            return contentTypes.RandomItem();
-        }
-
-        private JObject RandomDocument(string contentType)
-        {
-            string text = textGenerator.RandomText();
-            //TODO: Bigger document and use contentype for propper stuff.
-            return JObject.FromObject(new
-            {
-                source = text,
-                content = textGenerator.Paragraph(text),
-                keys = textGenerator.Words(text, 4, 5)
-            });
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
-
-        public void Stop()
-        {
-            stop = true;
-        }
-    }
-
-    public static class RandomHelper
-    {
-        private static readonly Random rand = new Random();
-
-        public static T RandomItem<T>(this IEnumerable<T> items)
-        {
-            ICollection<T> list = items as ICollection<T> ?? items.ToArray();
-            return list.ElementAt(rand.Next(0, list.Count()));
-        }
-
-        public static T[] RandomItems<T>(this IEnumerable<T> items, int take)
-        {
-            ICollection<T> list = items as ICollection<T> ?? items.ToArray();
-            return list.Skip(rand.Next(list.Count-take)).Take(take).ToArray();
-        }
-
-        public static IEnumerable<int> RandomSequence(int lenght, int maxValue, bool allowRepeats)
-        {
-            var sequence = RandomSequence(maxValue);
-            if (!allowRepeats)
-                sequence = sequence.Distinct();
-            return sequence.Take(lenght);
-        }
-
-        private static IEnumerable<int> RandomSequence(int maxValue)
-        {
-            while (true) yield return rand.Next(maxValue);
-        }
-    }
-
-    public class RandomTextGenerator
-    {
-        private readonly string[] texts = "Childharold,Decameron,Faust,Inderfremde,Lebateauivre,Lemasque,Loremipsum,Nagyonfaj,Omagyar,Robinsonokruso,Theraven,Tierrayluna".Split(',');
-
-        public string RandomText()
-        {
-            return texts.RandomItem();
-        }
-
-        public string Paragraph(string @from, int count = 20)
-        {
-            return Open(from).RandomItems(count).Aggregate((s, s1) => s + " " + s1);
-        }
-
-        public string Word(string @from, int minLength = 2)
-        {
-            return Open(from).Where(w => w.Length >= minLength).RandomItem();
-        }
-
-        private IEnumerable<string> Open(string @from)
-        {
-            if(!texts.Contains(@from))
-                throw new ArgumentException(string.Format("The text '{0}' was unknown.", @from),"from");
-
-            Debug.Assert(LoremIpsums.ResourceManager != null, "LoremIpsums.ResourceManager != null");
-
-            string text = LoremIpsums.ResourceManager.GetString(@from, LoremIpsums.Culture);
-            Debug.Assert(text != null, "text != null");
-
-            return text.Split(new []{' '},StringSplitOptions.RemoveEmptyEntries);
-        }
-
-        public string[] Words(string @from, int minLength = 2, int count = 20)
-        {
-            HashSet<string> unique = new HashSet<string>(Open(from).Where(w => w.Length >= minLength));
-            return Enumerable.Repeat("", count)
-                .Select(s => unique.RandomItem())
-                .ToArray();
-        }
-    }
-
 }

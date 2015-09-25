@@ -21,6 +21,8 @@ namespace DotJEM.Json.Index.Configuration
         IIndexConfiguration SetTypeResolver(IFieldResolver resolver);
         IIndexConfiguration SetIdentity(string field);
         IIndexConfiguration SetIdentity(IIdentityResolver resolver);
+        IIndexConfiguration SetAreaResolver(string field);
+        IIndexConfiguration SetAreaResolver(IFieldResolver resolver);
 
         IContentTypeConfiguration ForAll();
         IContentTypeConfiguration For(params string[] contentType);
