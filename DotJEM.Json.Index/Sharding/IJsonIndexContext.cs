@@ -1,20 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Threading.Tasks;
-using DotJEM.Json.Index.Configuration;
-using DotJEM.Json.Index.Schema;
+﻿using System.Collections.Generic;
 using DotJEM.Json.Index.Searching;
 using Lucene.Net.Analysis;
 using Lucene.Net.Index;
 using Lucene.Net.Search;
 using Lucene.Net.Store;
 using Newtonsoft.Json.Linq;
-using Version = Lucene.Net.Util.Version;
 
-namespace DotJEM.Json.Index
+namespace DotJEM.Json.Index.Sharding
 {
     public interface IJsonIndex
     {
@@ -65,6 +57,10 @@ namespace DotJEM.Json.Index
 
         public ISearchResult Search(string query, params object[] args)
         {
+            //var searcher = new ParallelMultiSearcher(new IndexSearcher(), new IndexSearcher());
+
+
+
             return null;
         }
 
@@ -155,5 +151,108 @@ namespace DotJEM.Json.Index
 
     }
 
+    public interface IIndexStorage
+    {
+        IndexReader Reader { get; }
+        IndexWriter Writer { get; }
+    }
 
+    public class MemmoryIndexStorage : IIndexStorage
+    {
+        private Directory directory;
+
+        public IndexReader Reader { get; }
+        public IndexWriter Writer { get; }
+
+        public MemmoryIndexStorage(Directory directory)
+        {
+            this.directory = directory;
+
+        }
+
+
+
+    }
+
+
+    //public interface IIndexStorage
+    //{
+    //    IndexReader OpenReader();
+    //    IndexWriter GetWriter(Analyzer analyzer);
+    //    bool Exists { get; }
+    //    void Close();
+    //}
+
+    //public abstract class AbstractLuceneIndexStorage : IIndexStorage
+    //{
+    //    protected Directory Directory { get; private set; }
+    //    public virtual bool Exists { get { return Directory.ListAll().Any(); } }
+
+    //    private IndexWriter writer;
+
+    //    protected AbstractLuceneIndexStorage(Directory directory)
+    //    {
+    //        Directory = directory;
+    //    }
+
+    //    public IndexWriter GetWriter(Analyzer analyzer)
+    //    {
+    //        //TODO: The storage should define the analyzer, not the writer.
+    //        return writer ?? (writer = new IndexWriter(Directory, analyzer, !Exists, IndexWriter.MaxFieldLength.UNLIMITED));
+
+
+    //    }
+
+    //    public IndexReader OpenReader()
+    //    {
+    //        return Exists ? IndexReader.Open(Directory, true) : null;
+    //    }
+
+    //    public void Close()
+    //    {
+    //        if (writer != null)
+    //        {
+    //            writer.Dispose();
+    //            writer = null;
+    //        }
+    //    }
+    //}
+
+    //public class LuceneMemmoryIndexStorage : AbstractLuceneIndexStorage
+    //{
+    //    public LuceneMemmoryIndexStorage()
+    //        : base(new RAMDirectory())
+    //    {
+    //    }
+    //}
+
+    //public class LuceneFileIndexStorage : AbstractLuceneIndexStorage
+    //{
+    //    public LuceneFileIndexStorage(string path)
+    //        : base(FSDirectory.Open(path))
+    //    {
+    //        //Note: Ensure cacheDirectory.
+    //        System.IO.Directory.CreateDirectory(path);
+    //    }
+    //}
+
+    //public class LuceneCachedMemmoryIndexStorage : AbstractLuceneIndexStorage
+    //{
+    //    public LuceneCachedMemmoryIndexStorage(string path)
+    //        : base(new MemoryCachedDirective(path))
+    //    {
+    //        //Note: Ensure cacheDirectory.
+    //        System.IO.Directory.CreateDirectory(path);
+    //    }
+    //}
+
+    //public class LuceneMemmoryMappedFileIndexStorage : AbstractLuceneIndexStorage
+    //{
+    //    public LuceneMemmoryMappedFileIndexStorage(string path)
+    //        : base(new MMapDirectory(new DirectoryInfo(path)))
+    //    {
+    //        //Note: Ensure cacheDirectory.
+    //        System.IO.Directory.CreateDirectory(path);
+    //    }
+    //}
 }
