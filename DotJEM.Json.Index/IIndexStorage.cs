@@ -14,12 +14,15 @@ namespace DotJEM.Json.Index
         IndexWriter GetWriter(Analyzer analyzer);
         bool Exists { get; }
         void Close();
+        void Flush();
     }
 
     public abstract class AbstractLuceneIndexStorage : IIndexStorage
     {
+        private readonly object padlock = new object();
+
         protected Directory Directory { get; private set; }
-        public virtual bool Exists { get { return Directory.ListAll().Any(); } }
+        public virtual bool Exists => Directory.ListAll().Any();
 
         private IndexWriter writer;
 
@@ -31,7 +34,10 @@ namespace DotJEM.Json.Index
         public IndexWriter GetWriter(Analyzer analyzer)
         {
             //TODO: The storage should define the analyzer, not the writer.
-            return writer ?? (writer = new IndexWriter(Directory, analyzer, !Exists, IndexWriter.MaxFieldLength.UNLIMITED));
+            lock (padlock)
+            {
+                return writer ?? (writer = new IndexWriter(Directory, analyzer, !Exists, IndexWriter.MaxFieldLength.UNLIMITED));
+            }
         }
 
         public IndexReader OpenReader()
@@ -41,10 +47,18 @@ namespace DotJEM.Json.Index
 
         public void Close()
         {
-            if (writer != null)
+            lock (padlock)
             {
-                writer.Dispose();
+                writer?.Dispose();
                 writer = null;
+            }
+        }
+
+        public void Flush()
+        {
+            lock (padlock)
+            {
+                writer?.Flush(true, true, true);
             }
         }
     }

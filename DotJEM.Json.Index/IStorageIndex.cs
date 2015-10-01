@@ -41,6 +41,7 @@ namespace DotJEM.Json.Index
         IEnumerable<string> Terms(string field);
 
         void Close();
+        void Flush();
     }
 
     public class LuceneStorageIndex : IStorageIndex
@@ -108,6 +109,11 @@ namespace DotJEM.Json.Index
         public void Close()
         {
             Storage.Close();
+        }
+
+        public void Flush()
+        {
+            Storage.Flush();
         }
 
         public ILuceneWriter Writer { get { return writer.Value; } }
