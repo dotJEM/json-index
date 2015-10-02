@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Lucene.Net.Analysis.Standard;
+using Lucene.Net.Documents;
 using Lucene.Net.Index;
 using Newtonsoft.Json.Linq;
 using Version = Lucene.Net.Util.Version;
@@ -44,7 +45,19 @@ namespace DotJEM.Json.Index
         {
             IndexWriter writer = index.Storage.GetWriter(index.Analyzer);
             foreach (JObject entity in entities)
-                writer.UpdateDocument(CreateIdentityTerm(entity), factory.Create(entity));
+            {
+                try
+                {
+                    Term term = CreateIdentityTerm(entity);
+                    Document document = factory.Create(entity);
+                    writer.UpdateDocument(term, document);
+                }
+                catch (Exception)
+                {
+                    //ignore
+                }
+
+            }
             writer.Commit();
         }
 
@@ -58,7 +71,7 @@ namespace DotJEM.Json.Index
         public void DeleteAll(IEnumerable<JObject> entities)
         {
             IndexWriter writer = index.Storage.GetWriter(index.Analyzer);
-            writer.DeleteDocuments(entities.Select(CreateIdentityTerm).ToArray());
+            writer.DeleteDocuments(entities.Select(CreateIdentityTerm).Where(x => x != null).ToArray());
             writer.Commit();
         }
 
@@ -69,7 +82,15 @@ namespace DotJEM.Json.Index
 
         private Term CreateIdentityTerm(JObject entity)
         {
-            return index.Configuration.IdentityResolver.CreateTerm(entity);
+            try
+            {
+                return index.Configuration.IdentityResolver.CreateTerm(entity);
+            }
+            catch (Exception)
+            {
+                //ignore
+                return null;
+            }
         }
     }
 }

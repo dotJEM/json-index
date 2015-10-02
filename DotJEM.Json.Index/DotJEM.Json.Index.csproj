@@ -92,6 +92,7 @@
     <Compile Include="Configuration\IIndexConfiguration.cs" />
     <Compile Include="IFieldFactory.cs" />
     <Compile Include="IDocumentFactory.cs" />
+    <Compile Include="Sharding\IJsonIndexContext.cs" />
     <Compile Include="Schema\ISchemaCollection.cs" />
     <Compile Include="IStorageIndex.cs" />
     <Compile Include="IIndexStorage.cs" />
@@ -124,6 +125,7 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
