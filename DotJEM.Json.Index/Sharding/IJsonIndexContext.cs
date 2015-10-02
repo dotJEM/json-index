@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
+using System.Collections.Generic;
 using DotJEM.Json.Index.Searching;
 using Lucene.Net.Analysis;
 using Lucene.Net.Index;
@@ -8,6 +9,22 @@ using Newtonsoft.Json.Linq;
 
 namespace DotJEM.Json.Index.Sharding
 {
+    public interface IJsonIndexContext
+    {
+        IJsonIndex OpenIndex(string name);
+    }
+
+    public class LuceneJsonIndexContext : IJsonIndexContext
+    {
+        private readonly ConcurrentDictionary<string, IJsonIndex> indices = new ConcurrentDictionary<string, IJsonIndex>();
+
+        public IJsonIndex OpenIndex(string name)
+        {
+            return indices.GetOrAdd(name, key => new JsonIndex());
+        }
+    }
+
+
     public interface IJsonIndex
     {
         //Version Version { get; }
