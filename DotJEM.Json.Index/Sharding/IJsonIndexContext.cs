@@ -16,7 +16,13 @@ namespace DotJEM.Json.Index.Sharding
         {
             IJsonIndexContext context = new LuceneJsonIndexContext();
 
-            
+            JsonIndexConfiguration configuration = new JsonIndexConfiguration();
+
+            configuration.Storage<MemmoryIndexStorage>();
+            configuration.Analyzer<KeywordAnalyzer>();
+
+            context.Configuration["content"] = configuration;
+
 
 
         }
@@ -25,8 +31,6 @@ namespace DotJEM.Json.Index.Sharding
     public interface IJsonIndexContext
     {
         IJsonIndexContextConfiguration Configuration { get; }
-
-        IJsonIndexConfiguration Configure(string name);
 
         IJsonIndex Open(string name);
     }
@@ -42,17 +46,11 @@ namespace DotJEM.Json.Index.Sharding
         {
             return indices.GetOrAdd(name, key => new JsonIndex());
         }
-
-        public IJsonIndexConfiguration Configure(string name)
-        {
-            return Configuration[name];
-
-        }
     }
 
     public interface IJsonIndexContextConfiguration
     {
-        IJsonIndexConfiguration this[string name] { get; }
+        IJsonIndexConfiguration this[string name] { get; set; }
     }
 
     public class LuceneJsonIndexContextConfiguration : IJsonIndexContextConfiguration
@@ -62,26 +60,39 @@ namespace DotJEM.Json.Index.Sharding
 
         public IJsonIndexConfiguration this[string name]
         {
+            set { configurations[name] = value; }
             get
             {
-                return configurations.GetOrAdd(name, key => new JsonIndexConfiguration(this));
+                return configurations.GetOrAdd(name, key => new JsonIndexConfiguration());
             }
         }
     }
 
     public interface IJsonIndexConfiguration
     {
+        IJsonIndexConfiguration Storage<TStorageImpl>();
+        IJsonIndexConfiguration Analyzer<TAnalyzerImpl>();
+
     }
 
     public class JsonIndexConfiguration : IJsonIndexConfiguration
     {
-        private readonly LuceneJsonIndexContextConfiguration parent;
-
-        public JsonIndexConfiguration(LuceneJsonIndexContextConfiguration parent)
+        public JsonIndexConfiguration()
         {
-            this.parent = parent;
+        }
+
+        public IJsonIndexConfiguration Storage<TStorageImpl>()
+        {
+            throw new NotImplementedException();
+        }
+
+        public IJsonIndexConfiguration Analyzer<TAnalyzerImpl>()
+        {
+            throw new NotImplementedException();
         }
     }
+
+
 
     public interface IJsonIndex
     {
