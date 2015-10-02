@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using DotJEM.Json.Index.Searching;
 using Lucene.Net.Analysis;
@@ -9,21 +10,78 @@ using Newtonsoft.Json.Linq;
 
 namespace DotJEM.Json.Index.Sharding
 {
+    public class Usage
+    {
+        public void Test()
+        {
+            IJsonIndexContext context = new LuceneJsonIndexContext();
+
+            
+
+
+        }
+    }
+
     public interface IJsonIndexContext
     {
-        IJsonIndex OpenIndex(string name);
+        IJsonIndexContextConfiguration Configuration { get; }
+
+        IJsonIndexConfiguration Configure(string name);
+
+        IJsonIndex Open(string name);
     }
 
     public class LuceneJsonIndexContext : IJsonIndexContext
     {
         private readonly ConcurrentDictionary<string, IJsonIndex> indices = new ConcurrentDictionary<string, IJsonIndex>();
 
-        public IJsonIndex OpenIndex(string name)
+        public IJsonIndexContextConfiguration Configuration { get; } = new LuceneJsonIndexContextConfiguration();
+
+
+        public IJsonIndex Open(string name)
         {
             return indices.GetOrAdd(name, key => new JsonIndex());
         }
+
+        public IJsonIndexConfiguration Configure(string name)
+        {
+            return Configuration[name];
+
+        }
     }
 
+    public interface IJsonIndexContextConfiguration
+    {
+        IJsonIndexConfiguration this[string name] { get; }
+    }
+
+    public class LuceneJsonIndexContextConfiguration : IJsonIndexContextConfiguration
+    {
+        private readonly ConcurrentDictionary<string, IJsonIndexConfiguration> configurations 
+            = new ConcurrentDictionary<string, IJsonIndexConfiguration>();
+
+        public IJsonIndexConfiguration this[string name]
+        {
+            get
+            {
+                return configurations.GetOrAdd(name, key => new JsonIndexConfiguration(this));
+            }
+        }
+    }
+
+    public interface IJsonIndexConfiguration
+    {
+    }
+
+    public class JsonIndexConfiguration : IJsonIndexConfiguration
+    {
+        private readonly LuceneJsonIndexContextConfiguration parent;
+
+        public JsonIndexConfiguration(LuceneJsonIndexContextConfiguration parent)
+        {
+            this.parent = parent;
+        }
+    }
 
     public interface IJsonIndex
     {
