@@ -28,6 +28,114 @@ namespace DotJEM.Json.Index.Sharding
         }
     }
 
+    public interface IJTokenVisitor
+    {
+        void Visit(JToken json);
+
+
+    }
+
+    public abstract class AbstractJTokenVisitor : IJTokenVisitor
+    {
+        public virtual void VisitJArray(JArray json)
+        {
+            foreach (JToken token in json)
+                Visit(token);
+        }
+
+        public virtual void VisitJObject(JObject json)
+        {
+            foreach (JProperty property in json.Properties())
+                Visit(property);
+        }
+
+        public virtual void VisitProperty(JProperty json)
+        {
+            Visit(json.Value);
+        }
+
+
+        public abstract void VisitNone(JToken json);
+        public abstract void VisitConstructor(JToken json);
+        public abstract void VisitComment(JToken json);
+        public abstract void VisitInteger(JToken json);
+        public abstract void VisitFloat(JToken json);
+        public abstract void VisitString(JToken json);
+        public abstract void VisitBoolean(JToken json);
+        public abstract void VisitNull(JToken json);
+        public abstract void VisitUndefined(JToken json);
+        public abstract void VisitDate(JToken json);
+        public abstract void VisitRaw(JToken json);
+        public abstract void VisitBytes(JToken json);
+        public abstract void VisitGuid(JToken json);
+        public abstract void VisitUri(JToken json);
+        public abstract void VisitTimeSpan(JToken json);
+
+        public void Visit(JToken json)
+        {
+            switch (json.Type)
+            {
+                case JTokenType.None:
+                    VisitNone(json);
+                    break;
+                case JTokenType.Object:
+                    VisitJObject((JObject) json);
+                    break;
+                case JTokenType.Array:
+                    VisitJArray((JArray) json);
+                    break;
+                case JTokenType.Constructor:
+                    VisitConstructor(json);
+                    break;
+                case JTokenType.Property:
+                    VisitProperty((JProperty)json);
+                    break;
+                case JTokenType.Comment:
+                    VisitComment(json);
+                    break;
+                case JTokenType.Integer:
+                    VisitInteger(json);
+                    break;
+                case JTokenType.Float:
+                    VisitFloat(json);
+                    break;
+                case JTokenType.String:
+                    VisitString(json);
+                    break;
+                case JTokenType.Boolean:
+                    VisitBoolean(json);
+                    break;
+                case JTokenType.Null:
+                    VisitNull(json);
+                    break;
+                case JTokenType.Undefined:
+                    VisitUndefined(json);
+                    break;
+                case JTokenType.Date:
+                    VisitDate(json);
+                    break;
+                case JTokenType.Raw:
+                    VisitRaw(json);
+                    break;
+                case JTokenType.Bytes:
+                    VisitBytes(json);
+                    break;
+                case JTokenType.Guid:
+                    VisitGuid(json);
+                    break;
+                case JTokenType.Uri:
+                    VisitUri(json);
+                    break;
+                case JTokenType.TimeSpan:
+                    VisitTimeSpan(json);
+                    break;
+            }
+        }
+
+
+
+    }
+
     public interface IJsonIndexContext
     {
         IJsonIndexContextConfiguration Configuration { get; }
@@ -55,16 +163,12 @@ namespace DotJEM.Json.Index.Sharding
 
     public class LuceneJsonIndexContextConfiguration : IJsonIndexContextConfiguration
     {
-        private readonly ConcurrentDictionary<string, IJsonIndexConfiguration> configurations 
-            = new ConcurrentDictionary<string, IJsonIndexConfiguration>();
+        private readonly ConcurrentDictionary<string, IJsonIndexConfiguration> configurations = new ConcurrentDictionary<string, IJsonIndexConfiguration>();
 
         public IJsonIndexConfiguration this[string name]
         {
             set { configurations[name] = value; }
-            get
-            {
-                return configurations.GetOrAdd(name, key => new JsonIndexConfiguration());
-            }
+            get { return configurations.GetOrAdd(name, key => new JsonIndexConfiguration()); }
         }
     }
 
@@ -72,7 +176,6 @@ namespace DotJEM.Json.Index.Sharding
     {
         IJsonIndexConfiguration Storage<TStorageImpl>();
         IJsonIndexConfiguration Analyzer<TAnalyzerImpl>();
-
     }
 
     public class JsonIndexConfiguration : IJsonIndexConfiguration
@@ -91,7 +194,6 @@ namespace DotJEM.Json.Index.Sharding
             throw new NotImplementedException();
         }
     }
-
 
 
     public interface IJsonIndex
@@ -125,7 +227,7 @@ namespace DotJEM.Json.Index.Sharding
 
 
         IJsonIndex Write(IEnumerable<JObject> entities);
-        
+
         ISearchResult Search(string query, params object[] args);
     }
 
@@ -146,17 +248,12 @@ namespace DotJEM.Json.Index.Sharding
             //var searcher = new ParallelMultiSearcher(new IndexSearcher(), new IndexSearcher());
 
 
-
             return null;
         }
-
-
     }
 
     public interface IJsonIndexShard
     {
-
-
         //        public Version Version { get; private set; }
         //public Analyzer Analyzer { get; private set; }
 
@@ -224,17 +321,18 @@ namespace DotJEM.Json.Index.Sharding
 
         //public ILuceneWriter Writer { get { return writer.Value; } }
         //public ILuceneSearcher Searcher { get { return searcher.Value; } }
-
-
     }
 
-    public class JsonIndexShard : IJsonIndexShard { }
+    public class JsonIndexShard : IJsonIndexShard
+    {
+    }
 
-    public interface IJsonIndexShardCollection { }
+    public interface IJsonIndexShardCollection
+    {
+    }
 
     public class JsonIndexShardCollection : IJsonIndexShardCollection
     {
-
     }
 
     public interface IIndexStorage
@@ -253,11 +351,7 @@ namespace DotJEM.Json.Index.Sharding
         public MemmoryIndexStorage(Directory directory)
         {
             this.directory = directory;
-
         }
-
-
-
     }
 
 
