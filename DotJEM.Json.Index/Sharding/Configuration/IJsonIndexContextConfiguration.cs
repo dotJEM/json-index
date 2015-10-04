@@ -20,11 +20,11 @@ namespace DotJEM.Json.Index.Sharding.Configuration
 
     public interface IJsonIndexConfiguration
     {
-        IDocumentFactory DocumentFactory { get; }
+        Documents.IDocumentFactory DocumentFactory { get; }
     }
 
     public class DefaultJsonIndexConfiguration : IJsonIndexConfiguration
     {
-        public IDocumentFactory DocumentFactory { get; }
+        public Documents.IDocumentFactory DocumentFactory { get; }
     }
 }

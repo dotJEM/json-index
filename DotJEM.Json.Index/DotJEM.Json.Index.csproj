@@ -92,6 +92,7 @@
     <Compile Include="Configuration\IIndexConfiguration.cs" />
     <Compile Include="IFieldFactory.cs" />
     <Compile Include="IDocumentFactory.cs" />
+    <Compile Include="Sharding\Documents\IDocumentFactory.cs" />
     <Compile Include="Sharding\IJSchemaManager.cs" />
     <Compile Include="Sharding\IJsonIndexContext.cs" />
     <Compile Include="Schema\ISchemaCollection.cs" />

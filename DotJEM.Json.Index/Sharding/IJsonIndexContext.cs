@@ -5,6 +5,7 @@ using System.Linq;
 using DotJEM.Json.Index.Schema;
 using DotJEM.Json.Index.Searching;
 using DotJEM.Json.Index.Sharding.Configuration;
+using DotJEM.Json.Index.Sharding.Documents;
 using DotJEM.Json.Index.Sharding.Visitors;
 using Lucene.Net.Analysis;
 using Lucene.Net.Documents;
@@ -104,6 +105,7 @@ namespace DotJEM.Json.Index.Sharding
     public class JsonIndex : IJsonIndex
     {
         private readonly IJsonIndexConfiguration configuration;
+        private readonly IJsonIndexShardCollection shards = new JsonIndexShardCollection();
 
         public JsonIndex(IJsonIndexConfiguration configuration)
         {
@@ -112,13 +114,18 @@ namespace DotJEM.Json.Index.Sharding
 
         public IJsonIndex Write(IEnumerable<JObject> entities)
         {
-            IDocumentFactory factory = configuration.DocumentFactory;
+            Documents.IDocumentFactory factory = configuration.DocumentFactory;
 
-            IEnumerable<Document> documents = entities.Select(factory.Create);
+            IEnumerable<IDocumentCommand> documents = entities.Select(factory.Create);
 
 
 
             IndexWriter writer = new IndexWriter(new RAMDirectory(), new KeywordAnalyzer(), new KeepOnlyLastCommitDeletionPolicy(), IndexWriter.MaxFieldLength.UNLIMITED);
+            foreach (IDocumentCommand cmd in documents)
+            {
+                cmd.Execute(writer);
+            }
+
 
             //writer.UpdateDocument();
 
@@ -140,9 +147,11 @@ namespace DotJEM.Json.Index.Sharding
     public interface IMetaFieldResolver
     {
         string ContentType(JObject value);
-        
         string Area(JObject value);
+
+        Term Identifier(JObject value);
     }
+
     public interface IJSchemaManager
     {
         void Update(JObject value);
@@ -175,48 +184,6 @@ namespace DotJEM.Json.Index.Sharding
     }
 
 
-    public class DefaultDocumentFactory : IDocumentFactory
-    {
-        private readonly IJSchemaManager schemas;
-        private readonly IMetaFieldResolver resolver;
-
-        public DefaultDocumentFactory(IMetaFieldResolver resolver, IJSchemaManager schemas)
-        {
-            this.resolver = resolver;
-            this.schemas = schemas;
-        }
-
-        public Document Create(JObject value)
-        {
-            schemas.Update(value);
-
-
-            AbstractDocumentBuilder builder = new DefaultDocumentBuilder();
-            DocumentBuilderContext context = new DocumentBuilderContext(); 
-
-            builder.Visit(value, context);
-
-            return context.Document;
-
-            //string contentType = index.Configuration.TypeResolver.Resolve(value);
-            //string storageArea = index.Configuration.AreaResolver.Resolve(value);
-
-            //JSchema schema = index.Schemas[contentType];
-            //schema = schema == null
-            //    ? generator.Generate(value, contentType, storageArea)
-            //    : schema.Merge(generator.Generate(value, contentType, storageArea));
-            //index.Schemas[contentType] = schema;
-
-            //Document document = enumarator
-            //    .Enumerate(value)
-            //    .Where(node => node.IsLeaf)
-            //    .SelectMany(node => factory.Create(node.Path, contentType, node.Token as JValue))
-            //    .Aggregate(new Document(), (doc, field) => doc.Put(field));
-
-            //document.Add(new Field(index.Configuration.RawField, value.ToString(Formatting.None), Field.Store.YES, Field.Index.NO));
-            //return document;
-        }
-    }
 
     public interface IJsonIndexShard
     {
