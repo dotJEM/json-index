@@ -92,6 +92,7 @@
     <Compile Include="Configuration\IIndexConfiguration.cs" />
     <Compile Include="IFieldFactory.cs" />
     <Compile Include="IDocumentFactory.cs" />
+    <Compile Include="Sharding\IJSchemaManager.cs" />
     <Compile Include="Sharding\IJsonIndexContext.cs" />
     <Compile Include="Schema\ISchemaCollection.cs" />
     <Compile Include="IStorageIndex.cs" />
@@ -114,7 +115,12 @@
     <Compile Include="Searching\ILuceneSearcher.cs" />
     <Compile Include="Searching\ISearchResult.cs" />
     <Compile Include="Searching\MultiFieldQueryParser.cs" />
-    <Compile Include="Sharding\IJsonIndexContextConfiguration.cs" />
+    <Compile Include="Sharding\Configuration\IJsonIndexContextConfiguration.cs" />
+    <Compile Include="Sharding\Visitors\AbstractDocumentBuilder.cs" />
+    <Compile Include="Sharding\Visitors\AbstractJTokenVisitor.cs" />
+    <Compile Include="Sharding\Visitors\DefaultDocumentBuilder.cs" />
+    <Compile Include="Sharding\Visitors\DocumentBuilderContext.cs" />
+    <Compile Include="Sharding\Visitors\IJTokenVisitor.cs" />
     <Compile Include="Storage\RamInputStream.cs" />
     <Compile Include="Storage\RamOutputStream.cs" />
     <Compile Include="Storage\MemoryCashedLock.cs" />

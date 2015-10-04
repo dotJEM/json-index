@@ -1,8 +1,13 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
+using DotJEM.Json.Index.Schema;
 using DotJEM.Json.Index.Searching;
+using DotJEM.Json.Index.Sharding.Configuration;
+using DotJEM.Json.Index.Sharding.Visitors;
 using Lucene.Net.Analysis;
+using Lucene.Net.Documents;
 using Lucene.Net.Index;
 using Lucene.Net.Search;
 using Lucene.Net.Store;
@@ -16,10 +21,12 @@ namespace DotJEM.Json.Index.Sharding
         {
             IJsonIndexContext context = new LuceneJsonIndexContext();
 
-            JsonIndexConfiguration configuration = new JsonIndexConfiguration();
+            DefaultJsonIndexConfiguration configuration = new DefaultJsonIndexConfiguration();
 
-            configuration.Storage<MemmoryIndexStorage>();
-            configuration.Analyzer<KeywordAnalyzer>();
+            //configuration.Storage<MemmoryIndexStorage>();
+            //configuration.Analyzer<KeywordAnalyzer>();
+            //configuration.DocumentBuilder<DefaultDocumentBuilder>();
+            //configuration.ShardSelector<string>();
 
             context.Configuration["content"] = configuration;
 
@@ -28,113 +35,6 @@ namespace DotJEM.Json.Index.Sharding
         }
     }
 
-    public interface IJTokenVisitor
-    {
-        void Visit(JToken json);
-
-
-    }
-
-    public abstract class AbstractJTokenVisitor : IJTokenVisitor
-    {
-        public virtual void VisitJArray(JArray json)
-        {
-            foreach (JToken token in json)
-                Visit(token);
-        }
-
-        public virtual void VisitJObject(JObject json)
-        {
-            foreach (JProperty property in json.Properties())
-                Visit(property);
-        }
-
-        public virtual void VisitProperty(JProperty json)
-        {
-            Visit(json.Value);
-        }
-
-
-        public abstract void VisitNone(JToken json);
-        public abstract void VisitConstructor(JToken json);
-        public abstract void VisitComment(JToken json);
-        public abstract void VisitInteger(JToken json);
-        public abstract void VisitFloat(JToken json);
-        public abstract void VisitString(JToken json);
-        public abstract void VisitBoolean(JToken json);
-        public abstract void VisitNull(JToken json);
-        public abstract void VisitUndefined(JToken json);
-        public abstract void VisitDate(JToken json);
-        public abstract void VisitRaw(JToken json);
-        public abstract void VisitBytes(JToken json);
-        public abstract void VisitGuid(JToken json);
-        public abstract void VisitUri(JToken json);
-        public abstract void VisitTimeSpan(JToken json);
-
-        public void Visit(JToken json)
-        {
-            switch (json.Type)
-            {
-                case JTokenType.None:
-                    VisitNone(json);
-                    break;
-                case JTokenType.Object:
-                    VisitJObject((JObject) json);
-                    break;
-                case JTokenType.Array:
-                    VisitJArray((JArray) json);
-                    break;
-                case JTokenType.Constructor:
-                    VisitConstructor(json);
-                    break;
-                case JTokenType.Property:
-                    VisitProperty((JProperty)json);
-                    break;
-                case JTokenType.Comment:
-                    VisitComment(json);
-                    break;
-                case JTokenType.Integer:
-                    VisitInteger(json);
-                    break;
-                case JTokenType.Float:
-                    VisitFloat(json);
-                    break;
-                case JTokenType.String:
-                    VisitString(json);
-                    break;
-                case JTokenType.Boolean:
-                    VisitBoolean(json);
-                    break;
-                case JTokenType.Null:
-                    VisitNull(json);
-                    break;
-                case JTokenType.Undefined:
-                    VisitUndefined(json);
-                    break;
-                case JTokenType.Date:
-                    VisitDate(json);
-                    break;
-                case JTokenType.Raw:
-                    VisitRaw(json);
-                    break;
-                case JTokenType.Bytes:
-                    VisitBytes(json);
-                    break;
-                case JTokenType.Guid:
-                    VisitGuid(json);
-                    break;
-                case JTokenType.Uri:
-                    VisitUri(json);
-                    break;
-                case JTokenType.TimeSpan:
-                    VisitTimeSpan(json);
-                    break;
-            }
-        }
-
-
-
-    }
 
     public interface IJsonIndexContext
     {
@@ -147,51 +47,21 @@ namespace DotJEM.Json.Index.Sharding
     {
         private readonly ConcurrentDictionary<string, IJsonIndex> indices = new ConcurrentDictionary<string, IJsonIndex>();
 
-        public IJsonIndexContextConfiguration Configuration { get; } = new LuceneJsonIndexContextConfiguration();
+        public IJsonIndexContextConfiguration Configuration { get; }
+
+        public LuceneJsonIndexContext() : this(new LuceneJsonIndexContextConfiguration())
+        {
+        }
+
+        public LuceneJsonIndexContext(IJsonIndexContextConfiguration configuration)
+        {
+            Configuration = configuration;
+        }
 
 
         public IJsonIndex Open(string name)
         {
-            return indices.GetOrAdd(name, key => new JsonIndex());
-        }
-    }
-
-    public interface IJsonIndexContextConfiguration
-    {
-        IJsonIndexConfiguration this[string name] { get; set; }
-    }
-
-    public class LuceneJsonIndexContextConfiguration : IJsonIndexContextConfiguration
-    {
-        private readonly ConcurrentDictionary<string, IJsonIndexConfiguration> configurations = new ConcurrentDictionary<string, IJsonIndexConfiguration>();
-
-        public IJsonIndexConfiguration this[string name]
-        {
-            set { configurations[name] = value; }
-            get { return configurations.GetOrAdd(name, key => new JsonIndexConfiguration()); }
-        }
-    }
-
-    public interface IJsonIndexConfiguration
-    {
-        IJsonIndexConfiguration Storage<TStorageImpl>();
-        IJsonIndexConfiguration Analyzer<TAnalyzerImpl>();
-    }
-
-    public class JsonIndexConfiguration : IJsonIndexConfiguration
-    {
-        public JsonIndexConfiguration()
-        {
-        }
-
-        public IJsonIndexConfiguration Storage<TStorageImpl>()
-        {
-            throw new NotImplementedException();
-        }
-
-        public IJsonIndexConfiguration Analyzer<TAnalyzerImpl>()
-        {
-            throw new NotImplementedException();
+            return indices.GetOrAdd(name, key => new JsonIndex(Configuration["name"]));
         }
     }
 
@@ -233,9 +103,24 @@ namespace DotJEM.Json.Index.Sharding
 
     public class JsonIndex : IJsonIndex
     {
+        private readonly IJsonIndexConfiguration configuration;
+
+        public JsonIndex(IJsonIndexConfiguration configuration)
+        {
+            this.configuration = configuration;
+        }
+
         public IJsonIndex Write(IEnumerable<JObject> entities)
         {
+            IDocumentFactory factory = configuration.DocumentFactory;
+
+            IEnumerable<Document> documents = entities.Select(factory.Create);
+
+
+
             IndexWriter writer = new IndexWriter(new RAMDirectory(), new KeywordAnalyzer(), new KeepOnlyLastCommitDeletionPolicy(), IndexWriter.MaxFieldLength.UNLIMITED);
+
+            //writer.UpdateDocument();
 
             //TODO: Select shards.
 
@@ -249,6 +134,87 @@ namespace DotJEM.Json.Index.Sharding
 
 
             return null;
+        }
+    }
+    
+    public interface IMetaFieldResolver
+    {
+        string ContentType(JObject value);
+        
+        string Area(JObject value);
+    }
+    public interface IJSchemaManager
+    {
+        void Update(JObject value);
+    }
+
+    public class JSchemaManager : IJSchemaManager
+    {
+        private readonly IMetaFieldResolver resolver;
+        private readonly IJSchemaGenerator generator;
+        private readonly ISchemaCollection schemas;
+
+        public JSchemaManager(IMetaFieldResolver resolver, IJSchemaGenerator generator, ISchemaCollection schemas)
+        {
+            this.resolver = resolver;
+            this.generator = generator;
+            this.schemas = schemas;
+        }
+
+        public void Update(JObject value)
+        {
+            string contentType = resolver.ContentType(value);
+            string storageArea = resolver.Area(value);
+
+            JSchema schema = schemas[contentType];
+            schema = schema == null
+                ? generator.Generate(value, contentType, storageArea)
+                : schema.Merge(generator.Generate(value, contentType, storageArea));
+            schemas[contentType] = schema;
+        }
+    }
+
+
+    public class DefaultDocumentFactory : IDocumentFactory
+    {
+        private readonly IJSchemaManager schemas;
+        private readonly IMetaFieldResolver resolver;
+
+        public DefaultDocumentFactory(IMetaFieldResolver resolver, IJSchemaManager schemas)
+        {
+            this.resolver = resolver;
+            this.schemas = schemas;
+        }
+
+        public Document Create(JObject value)
+        {
+            schemas.Update(value);
+
+
+            AbstractDocumentBuilder builder = new DefaultDocumentBuilder();
+            DocumentBuilderContext context = new DocumentBuilderContext(); 
+
+            builder.Visit(value, context);
+
+            return context.Document;
+
+            //string contentType = index.Configuration.TypeResolver.Resolve(value);
+            //string storageArea = index.Configuration.AreaResolver.Resolve(value);
+
+            //JSchema schema = index.Schemas[contentType];
+            //schema = schema == null
+            //    ? generator.Generate(value, contentType, storageArea)
+            //    : schema.Merge(generator.Generate(value, contentType, storageArea));
+            //index.Schemas[contentType] = schema;
+
+            //Document document = enumarator
+            //    .Enumerate(value)
+            //    .Where(node => node.IsLeaf)
+            //    .SelectMany(node => factory.Create(node.Path, contentType, node.Token as JValue))
+            //    .Aggregate(new Document(), (doc, field) => doc.Put(field));
+
+            //document.Add(new Field(index.Configuration.RawField, value.ToString(Formatting.None), Field.Store.YES, Field.Index.NO));
+            //return document;
         }
     }
 
