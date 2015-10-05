@@ -17,7 +17,7 @@ namespace DotJEM.Json.Index.Configuration.IdentityStrategies
 
         public virtual string Resolve(JObject entity)
         {
-            return entity[field].Value<string>();
+            return (string)entity[Field];
         }
 
         public virtual Term CreateTerm(JObject entity)

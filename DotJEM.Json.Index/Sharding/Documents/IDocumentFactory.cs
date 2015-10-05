@@ -1,3 +1,5 @@
+using DotJEM.Json.Index.Sharding.Configuration;
+using DotJEM.Json.Index.Sharding.Schemas;
 using DotJEM.Json.Index.Sharding.Visitors;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
@@ -9,6 +11,7 @@ namespace DotJEM.Json.Index.Sharding.Documents
     {
         IDocumentCommand Create(JObject value);
     }
+
     public interface IDocumentCommand
     {
         void Execute(IndexWriter writer);
@@ -31,7 +34,7 @@ namespace DotJEM.Json.Index.Sharding.Documents
         }
     }
 
-    public class LuceneDocumentFactory : Documents.IDocumentFactory
+    public class LuceneDocumentFactory : IDocumentFactory
     {
         private readonly IJSchemaManager schemas;
         private readonly IMetaFieldResolver resolver;

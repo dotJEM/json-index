@@ -93,7 +93,8 @@
     <Compile Include="IFieldFactory.cs" />
     <Compile Include="IDocumentFactory.cs" />
     <Compile Include="Sharding\Documents\IDocumentFactory.cs" />
-    <Compile Include="Sharding\IJSchemaManager.cs" />
+    <Compile Include="Sharding\Storage\IIndexStorage.cs" />
+    <Compile Include="Sharding\Schemas\IJSchemaManager.cs" />
     <Compile Include="Sharding\IJsonIndexContext.cs" />
     <Compile Include="Schema\ISchemaCollection.cs" />
     <Compile Include="IStorageIndex.cs" />

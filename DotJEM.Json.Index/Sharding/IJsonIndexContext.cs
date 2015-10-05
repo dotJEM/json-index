@@ -6,6 +6,7 @@ using DotJEM.Json.Index.Schema;
 using DotJEM.Json.Index.Searching;
 using DotJEM.Json.Index.Sharding.Configuration;
 using DotJEM.Json.Index.Sharding.Documents;
+using DotJEM.Json.Index.Sharding.Schemas;
 using DotJEM.Json.Index.Sharding.Visitors;
 using Lucene.Net.Analysis;
 using Lucene.Net.Documents;
@@ -127,6 +128,7 @@ namespace DotJEM.Json.Index.Sharding
             }
 
 
+
             //writer.UpdateDocument();
 
             //TODO: Select shards.
@@ -143,45 +145,7 @@ namespace DotJEM.Json.Index.Sharding
             return null;
         }
     }
-    
-    public interface IMetaFieldResolver
-    {
-        string ContentType(JObject value);
-        string Area(JObject value);
 
-        Term Identifier(JObject value);
-    }
-
-    public interface IJSchemaManager
-    {
-        void Update(JObject value);
-    }
-
-    public class JSchemaManager : IJSchemaManager
-    {
-        private readonly IMetaFieldResolver resolver;
-        private readonly IJSchemaGenerator generator;
-        private readonly ISchemaCollection schemas;
-
-        public JSchemaManager(IMetaFieldResolver resolver, IJSchemaGenerator generator, ISchemaCollection schemas)
-        {
-            this.resolver = resolver;
-            this.generator = generator;
-            this.schemas = schemas;
-        }
-
-        public void Update(JObject value)
-        {
-            string contentType = resolver.ContentType(value);
-            string storageArea = resolver.Area(value);
-
-            JSchema schema = schemas[contentType];
-            schema = schema == null
-                ? generator.Generate(value, contentType, storageArea)
-                : schema.Merge(generator.Generate(value, contentType, storageArea));
-            schemas[contentType] = schema;
-        }
-    }
 
 
 
@@ -266,25 +230,6 @@ namespace DotJEM.Json.Index.Sharding
 
     public class JsonIndexShardCollection : IJsonIndexShardCollection
     {
-    }
-
-    public interface IIndexStorage
-    {
-        IndexReader Reader { get; }
-        IndexWriter Writer { get; }
-    }
-
-    public class MemmoryIndexStorage : IIndexStorage
-    {
-        private Directory directory;
-
-        public IndexReader Reader { get; }
-        public IndexWriter Writer { get; }
-
-        public MemmoryIndexStorage(Directory directory)
-        {
-            this.directory = directory;
-        }
     }
 
 
