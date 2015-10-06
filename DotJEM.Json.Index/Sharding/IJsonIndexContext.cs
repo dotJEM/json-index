@@ -107,25 +107,33 @@ namespace DotJEM.Json.Index.Sharding
     {
         private readonly IJsonIndexConfiguration configuration;
         private readonly IJsonIndexShardCollection shards = new JsonIndexShardCollection();
+        private readonly IMetaFieldResolver resolver;
 
         public JsonIndex(IJsonIndexConfiguration configuration)
         {
             this.configuration = configuration;
+            this.resolver = configuration.MetaFieldResolver;
         }
 
         public IJsonIndex Write(IEnumerable<JObject> entities)
         {
             Documents.IDocumentFactory factory = configuration.DocumentFactory;
 
-            IEnumerable<IDocumentCommand> documents = entities.Select(factory.Create);
+            //IEnumerable<IDocumentCommand> documents = entities.Select(factory.Create);
 
+
+            var docs = (from json in entities
+                let doc = factory.Create(json)
+                let id = resolver.Identifier(json)
+                let shard = resolver.Shard(json)
+                select new {doc, id, shard}).ToList();
 
 
             IndexWriter writer = new IndexWriter(new RAMDirectory(), new KeywordAnalyzer(), new KeepOnlyLastCommitDeletionPolicy(), IndexWriter.MaxFieldLength.UNLIMITED);
-            foreach (IDocumentCommand cmd in documents)
-            {
-                cmd.Execute(writer);
-            }
+            //foreach (IDocumentCommand cmd in documents)
+            //{
+            //    cmd.Execute(writer);
+            //}
 
 
 
