@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using DotJEM.Json.Index.Schema;
 using DotJEM.Json.Index.Searching;
@@ -103,6 +104,40 @@ namespace DotJEM.Json.Index.Sharding
         ISearchResult Search(string query, params object[] args);
     }
 
+    public class UpdateDocumentCommand 
+    {
+        private readonly Term term;
+        private readonly Document document;
+
+        public UpdateDocumentCommand(Term term, Document document)
+        {
+            this.term = term;
+            this.document = document;
+        }
+
+        public void Execute()
+        {
+
+        }
+    }
+
+    public class UpdateShardCommand 
+    {
+        private readonly IJsonIndexShard shard;
+        private readonly IEnumerable<UpdateDocumentCommand> updates;
+
+        public UpdateShardCommand(IJsonIndexShard shard, IEnumerable<UpdateDocumentCommand> updates)
+        {
+            this.shard = shard;
+            this.updates = updates;
+        }
+
+        public void Execute()
+        {
+            shard.OpenWriter();
+        }
+    }
+
     public class JsonIndex : IJsonIndex
     {
         private readonly IJsonIndexConfiguration configuration;
@@ -119,27 +154,16 @@ namespace DotJEM.Json.Index.Sharding
         {
             Documents.IDocumentFactory factory = configuration.DocumentFactory;
 
-            //IEnumerable<IDocumentCommand> documents = entities.Select(factory.Create);
+            IEnumerable<UpdateShardCommand> updates = from json in entities
+                let command = new UpdateDocumentCommand(resolver.Identifier(json), factory.Create(json))
+                group command by resolver.Shard(json) into updatesInShard
+                select new UpdateShardCommand(shards[updatesInShard.Key], updatesInShard);
 
-
-            var docs = (from json in entities
-                let doc = factory.Create(json)
-                let id = resolver.Identifier(json)
-                let shard = resolver.Shard(json)
-                select new {doc, id, shard}).ToList();
-
-
-            IndexWriter writer = new IndexWriter(new RAMDirectory(), new KeywordAnalyzer(), new KeepOnlyLastCommitDeletionPolicy(), IndexWriter.MaxFieldLength.UNLIMITED);
-            //foreach (IDocumentCommand cmd in documents)
-            //{
-            //    cmd.Execute(writer);
-            //}
-
-
-
-            //writer.UpdateDocument();
-
-            //TODO: Select shards.
+            foreach (UpdateShardCommand update in updates)
+            {
+                update.Execute();
+            }
+            
 
             return this;
         }
@@ -226,18 +250,28 @@ namespace DotJEM.Json.Index.Sharding
 
         //public ILuceneWriter Writer { get { return writer.Value; } }
         //public ILuceneSearcher Searcher { get { return searcher.Value; } }
+        IndexWriter OpenWriter();
     }
 
     public class JsonIndexShard : IJsonIndexShard
     {
+        public IndexWriter OpenWriter()
+        {
+            return new IndexWriter(new RAMDirectory(), new KeywordAnalyzer(), IndexWriter.MaxFieldLength.UNLIMITED);
+        }
     }
 
     public interface IJsonIndexShardCollection
     {
+        IJsonIndexShard this[string key] { get; }
     }
 
     public class JsonIndexShardCollection : IJsonIndexShardCollection
     {
+        public IJsonIndexShard this[string key]
+        {
+            get { return new JsonIndexShard(); }
+        }
     }
 
 
