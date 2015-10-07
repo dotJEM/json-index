@@ -5,6 +5,7 @@ using System.Collections.Specialized;
 using System.Linq;
 using DotJEM.Json.Index.Schema;
 using DotJEM.Json.Index.Searching;
+using DotJEM.Json.Index.Sharding.Commands;
 using DotJEM.Json.Index.Sharding.Configuration;
 using DotJEM.Json.Index.Sharding.Documents;
 using DotJEM.Json.Index.Sharding.Resolvers;
@@ -108,60 +109,7 @@ namespace DotJEM.Json.Index.Sharding
         ISearchResult Search(Query query);
     }
 
-    public class UpdateDocument 
-    {
-        private readonly Term term;
-        private readonly Document document;
 
-        public UpdateDocument(Term term, Document document)
-        {
-            this.term = term;
-            this.document = document;
-        }
-
-        public void Execute(IndexWriter writer)
-        {
-            writer.UpdateDocument(term, document);
-        }
-    }
-
-    public class DocumentCommand
-    {
-        private readonly Term term;
-
-        public DocumentCommand(Term term)
-        {
-            this.term = term;
-        }
-
-        public void Execute(IndexWriter writer)
-        {
-            writer.DeleteDocuments(term);
-        }
-    }
-
-    public class ShardCommandCollection 
-    {
-        private readonly IJsonIndexShard shard;
-        private readonly IEnumerable<UpdateDocument> updates;
-
-        public ShardCommandCollection(IJsonIndexShard shard, IEnumerable<UpdateDocument> updates)
-        {
-            this.shard = shard;
-            this.updates = updates;
-        }
-
-        public void Execute()
-        {
-            IndexWriter writer = shard.OpenWriter();
-            foreach (UpdateDocument update in updates)
-            {
-                update.Execute(writer);
-
-            }                
-            
-        }
-    }
 
     public class JsonIndex : IJsonIndex
     {
@@ -179,12 +127,12 @@ namespace DotJEM.Json.Index.Sharding
         {
             ILuceneDocumentFactory factory = configuration.DocumentFactory;
 
-            IEnumerable<ShardCommandCollection> updates = from json in entities
+            IEnumerable<IShardCommand> updates = from json in entities
                 let command = new UpdateDocument(resolver.Identity(json), factory.Create(json))
                 group command by resolver.Shard(json) into updatesInShard
-                select new ShardCommandCollection(shards[updatesInShard.Key], updatesInShard);
+                select new UpdateShardCommand(shards[updatesInShard.Key], updatesInShard);
 
-            foreach (ShardCommandCollection update in updates)
+            foreach (IShardCommand update in updates)
             {
                 update.Execute();
             }
