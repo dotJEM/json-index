@@ -2,7 +2,7 @@ using Lucene.Net.Documents;
 
 namespace DotJEM.Json.Index.Sharding.Visitors
 {
-    public class DocumentBuilderContext
+    public sealed class DocumentBuilderContext
     {
         public string Path { get; }
 
@@ -16,7 +16,7 @@ namespace DotJEM.Json.Index.Sharding.Visitors
             Document = new Document();
         }
 
-        protected DocumentBuilderContext(DocumentBuilderContext parent, string path)
+        private DocumentBuilderContext(DocumentBuilderContext parent, string path)
         {
             Path = path;
             Parent = parent;

@@ -92,7 +92,12 @@
     <Compile Include="Configuration\IIndexConfiguration.cs" />
     <Compile Include="IFieldFactory.cs" />
     <Compile Include="IDocumentFactory.cs" />
-    <Compile Include="Sharding\Documents\IDocumentFactory.cs" />
+    <Compile Include="Sharding\Resolvers\DefaultMetaFieldResolver.cs" />
+    <Compile Include="Sharding\Resolvers\DefaultServiceResolver.cs" />
+    <Compile Include="Sharding\Resolvers\DefaultServices.cs" />
+    <Compile Include="Sharding\Resolvers\IMetaFieldResolver.cs" />
+    <Compile Include="Sharding\Resolvers\IServiceResolver.cs" />
+    <Compile Include="Sharding\Documents\ILuceneDocumentFactory.cs" />
     <Compile Include="Sharding\Storage\IIndexStorage.cs" />
     <Compile Include="Sharding\Schemas\IJSchemaManager.cs" />
     <Compile Include="Sharding\IJsonIndexContext.cs" />

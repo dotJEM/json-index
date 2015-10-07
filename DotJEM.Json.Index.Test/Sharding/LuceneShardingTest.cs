@@ -1,16 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using DotJEM.Json.Index.Sharding;
-using DotJEM.Json.Index.Test.Constraints;
-using DotJEM.Json.Index.Test.Util;
-using Lucene.Net.Index;
-using Lucene.Net.Search;
-using Lucene.Net.Util;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 
-namespace DotJEM.Json.Index.Test.Unit.Sharding
+namespace DotJEM.Json.Index.Test.Sharding
 {
     [TestFixture]
     public class LuceneShardingTest

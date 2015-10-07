@@ -7,6 +7,7 @@ using DotJEM.Json.Index.Schema;
 using DotJEM.Json.Index.Searching;
 using DotJEM.Json.Index.Sharding.Configuration;
 using DotJEM.Json.Index.Sharding.Documents;
+using DotJEM.Json.Index.Sharding.Resolvers;
 using DotJEM.Json.Index.Sharding.Schemas;
 using DotJEM.Json.Index.Sharding.Visitors;
 using Lucene.Net.Analysis;
@@ -25,6 +26,8 @@ namespace DotJEM.Json.Index.Sharding
             IJsonIndexContext context = new LuceneJsonIndexContext();
 
             DefaultJsonIndexConfiguration configuration = new DefaultJsonIndexConfiguration();
+
+            //configuration.MetaFieldResolver 
 
             //configuration.Storage<MemmoryIndexStorage>();
             //configuration.Analyzer<KeywordAnalyzer>();
@@ -68,7 +71,7 @@ namespace DotJEM.Json.Index.Sharding
         }
     }
 
-
+    //https://github.com/NielsKuhnel/NrtManager
     public interface IJsonIndex
     {
         //Version Version { get; }
@@ -102,31 +105,47 @@ namespace DotJEM.Json.Index.Sharding
         IJsonIndex Write(IEnumerable<JObject> entities);
 
         ISearchResult Search(string query, params object[] args);
+        ISearchResult Search(Query query);
     }
 
-    public class UpdateDocumentCommand 
+    public class UpdateDocument 
     {
         private readonly Term term;
         private readonly Document document;
 
-        public UpdateDocumentCommand(Term term, Document document)
+        public UpdateDocument(Term term, Document document)
         {
             this.term = term;
             this.document = document;
         }
 
-        public void Execute()
+        public void Execute(IndexWriter writer)
         {
-
+            writer.UpdateDocument(term, document);
         }
     }
 
-    public class UpdateShardCommand 
+    public class DocumentCommand
+    {
+        private readonly Term term;
+
+        public DocumentCommand(Term term)
+        {
+            this.term = term;
+        }
+
+        public void Execute(IndexWriter writer)
+        {
+            writer.DeleteDocuments(term);
+        }
+    }
+
+    public class ShardCommandCollection 
     {
         private readonly IJsonIndexShard shard;
-        private readonly IEnumerable<UpdateDocumentCommand> updates;
+        private readonly IEnumerable<UpdateDocument> updates;
 
-        public UpdateShardCommand(IJsonIndexShard shard, IEnumerable<UpdateDocumentCommand> updates)
+        public ShardCommandCollection(IJsonIndexShard shard, IEnumerable<UpdateDocument> updates)
         {
             this.shard = shard;
             this.updates = updates;
@@ -134,7 +153,13 @@ namespace DotJEM.Json.Index.Sharding
 
         public void Execute()
         {
-            shard.OpenWriter();
+            IndexWriter writer = shard.OpenWriter();
+            foreach (UpdateDocument update in updates)
+            {
+                update.Execute(writer);
+
+            }                
+            
         }
     }
 
@@ -152,14 +177,14 @@ namespace DotJEM.Json.Index.Sharding
 
         public IJsonIndex Write(IEnumerable<JObject> entities)
         {
-            Documents.IDocumentFactory factory = configuration.DocumentFactory;
+            ILuceneDocumentFactory factory = configuration.DocumentFactory;
 
-            IEnumerable<UpdateShardCommand> updates = from json in entities
-                let command = new UpdateDocumentCommand(resolver.Identifier(json), factory.Create(json))
+            IEnumerable<ShardCommandCollection> updates = from json in entities
+                let command = new UpdateDocument(resolver.Identity(json), factory.Create(json))
                 group command by resolver.Shard(json) into updatesInShard
-                select new UpdateShardCommand(shards[updatesInShard.Key], updatesInShard);
+                select new ShardCommandCollection(shards[updatesInShard.Key], updatesInShard);
 
-            foreach (UpdateShardCommand update in updates)
+            foreach (ShardCommandCollection update in updates)
             {
                 update.Execute();
             }
@@ -175,6 +200,11 @@ namespace DotJEM.Json.Index.Sharding
 
 
             return null;
+        }
+
+        public ISearchResult Search(Query query)
+        {
+            throw new NotImplementedException();
         }
     }
 
@@ -250,7 +280,10 @@ namespace DotJEM.Json.Index.Sharding
 
         //public ILuceneWriter Writer { get { return writer.Value; } }
         //public ILuceneSearcher Searcher { get { return searcher.Value; } }
+
         IndexWriter OpenWriter();
+        IndexReader OpenReader();
+
     }
 
     public class JsonIndexShard : IJsonIndexShard
@@ -258,6 +291,11 @@ namespace DotJEM.Json.Index.Sharding
         public IndexWriter OpenWriter()
         {
             return new IndexWriter(new RAMDirectory(), new KeywordAnalyzer(), IndexWriter.MaxFieldLength.UNLIMITED);
+        }
+
+        public IndexReader OpenReader()
+        {
+            return null;
         }
     }
 

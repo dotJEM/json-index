@@ -110,7 +110,7 @@
     <Compile Include="Unit\Configuration\Class1.cs" />
     <Compile Include="Unit\Schema\JSchemaCollectionTest.cs" />
     <Compile Include="Unit\Schema\JsonSchemaTypeConverter.cs" />
-    <Compile Include="Unit\Sharding\LuceneShardingTest.cs" />
+    <Compile Include="Sharding\LuceneShardingTest.cs" />
     <Compile Include="Unit\Storage\CashedLocksTests.cs" />
     <Compile Include="Util\TestDocumentBuilder.cs" />
     <Compile Include="Util\TestIndexBuilder.cs" />
