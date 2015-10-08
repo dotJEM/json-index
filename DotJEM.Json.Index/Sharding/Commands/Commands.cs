@@ -58,9 +58,9 @@ namespace DotJEM.Json.Index.Sharding.Commands
     public class UpdateShardCommand : IShardCommand
     {
         private readonly IJsonIndexShard shard;
-        private readonly IEnumerable<UpdateDocument> updates;
+        private readonly IEnumerable<IDocumentCommand> updates;
 
-        public UpdateShardCommand(IJsonIndexShard shard, IEnumerable<UpdateDocument> updates)
+        public UpdateShardCommand(IJsonIndexShard shard, IEnumerable<IDocumentCommand> updates)
         {
             this.shard = shard;
             this.updates = updates;

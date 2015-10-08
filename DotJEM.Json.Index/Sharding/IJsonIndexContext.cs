@@ -31,13 +31,9 @@ namespace DotJEM.Json.Index.Sharding
             DefaultJsonIndexConfiguration configuration = new DefaultJsonIndexConfiguration();
 
             configuration.Shards["person.*"] = new DefaultJsonIndexShardConfiguration();
+            //configuration.Shards["person.*"] = new DefaultJsonIndexShardConfiguration();
+            //configuration.Shards["person.*"] = new DefaultJsonIndexShardConfiguration();
 
-            //configuration.MetaFieldResolver 
-
-            //configuration.Storage<MemmoryIndexStorage>();
-            //configuration.Analyzer<KeywordAnalyzer>();
-            //configuration.DocumentBuilder<DefaultDocumentBuilder>();
-            //configuration.ShardSelector<string>();
 
             context.Configuration["content"] = configuration;
 
@@ -96,23 +92,18 @@ namespace DotJEM.Json.Index.Sharding
 
         //IStorageIndex Optimize();
 
-        //ISearchResult Search(string query);
-        //ISearchResult Search(string queryFormat, params object[] args);
-        //ISearchResult Search(Query query);
+        IJsonIndex Write(IEnumerable<JObject> entities);
+        IJsonIndex Delete(IEnumerable<JObject> entities);
+
         //ISearchResult Search(object query);
-        //ISearchResult Search(JObject query);
+        ISearchResult Search(string query, params object[] args);
+        ISearchResult Search(Query query);
 
         //IEnumerable<string> Terms(string field);
 
         //void Close();
-
-
-        IJsonIndex Write(IEnumerable<JObject> entities);
-
-        ISearchResult Search(string query, params object[] args);
-        ISearchResult Search(Query query);
     }
-    
+
     public class JsonIndex : IJsonIndex
     {
         private readonly IJsonIndexConfiguration configuration;
@@ -138,14 +129,27 @@ namespace DotJEM.Json.Index.Sharding
             {
                 update.Execute();
             }
-            
-
             return this;
         }
 
+        public IJsonIndex Delete(IEnumerable<JObject> entities)
+        {
+            IEnumerable<IShardCommand> deletes = from json in entities
+                          let command = new DeleteDocument(resolver.Identity(json))
+                          group command by resolver.Shard(json) into deletesInShard
+                          select new UpdateShardCommand(shards[deletesInShard.Key], deletesInShard);
+
+            foreach (IShardCommand update in deletes)
+            {
+                update.Execute();
+            }
+            return this;
+        }
 
         public ISearchResult Search(string query, params object[] args)
         {
+            //TODO: Preanalyze query and determine which shards to go to.
+
             //var searcher = new ParallelMultiSearcher(new IndexSearcher(), new IndexSearcher());
 
 
