@@ -17,7 +17,8 @@ namespace DotJEM.Json.Index.Sharding.Resolvers
     {
         public string ContentType(JObject json)
         {
-            return (string)json["contentType"];
+            string contentType = (string)json["contentType"];
+            return contentType;
         }
 
         public string Area(JObject json)
@@ -28,7 +29,9 @@ namespace DotJEM.Json.Index.Sharding.Resolvers
         public string Shard(JObject json)
         {
             DateTime created = (DateTime)json["created"];
-            return (string)json[ContentType(json) + "." + created.Year];
+            string shard = ContentType(json) + "." + created.Year;
+
+            return shard;
         }
 
         public Term Identity(JObject json)

@@ -99,7 +99,9 @@
     <Compile Include="Sharding\Resolvers\IMetaFieldResolver.cs" />
     <Compile Include="Sharding\Resolvers\IServiceResolver.cs" />
     <Compile Include="Sharding\Documents\ILuceneDocumentFactory.cs" />
-    <Compile Include="Sharding\Storage\IIndexStorage.cs" />
+    <Compile Include="Sharding\Storage\Writers\IIndexWriterManager.cs" />
+    <Compile Include="Sharding\Util\Disposeable.cs" />
+    <Compile Include="Sharding\Storage\IJsonIndexStorage.cs" />
     <Compile Include="Sharding\Schemas\IJSchemaManager.cs" />
     <Compile Include="Sharding\IJsonIndexContext.cs" />
     <Compile Include="Schema\ISchemaCollection.cs" />
@@ -124,6 +126,8 @@
     <Compile Include="Searching\ISearchResult.cs" />
     <Compile Include="Searching\MultiFieldQueryParser.cs" />
     <Compile Include="Sharding\Configuration\IJsonIndexContextConfiguration.cs" />
+    <Compile Include="Sharding\Analyzers\JsonFieldAnalyzer.cs" />
+    <Compile Include="Sharding\Storage\Writers\IJsonIndexWriter.cs" />
     <Compile Include="Sharding\Visitors\AbstractDocumentBuilder.cs" />
     <Compile Include="Sharding\Visitors\AbstractJTokenVisitor.cs" />
     <Compile Include="Sharding\Visitors\DefaultDocumentBuilder.cs" />

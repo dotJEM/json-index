@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using DotJEM.Json.Index.Sharding.Storage;
+using DotJEM.Json.Index.Sharding.Storage.Writers;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
 
@@ -10,7 +12,7 @@ namespace DotJEM.Json.Index.Sharding.Commands
 {
     public interface IDocumentCommand
     {
-        void Execute(IndexWriter writer);
+        void Execute(IJsonIndexWriter writer);
     }
 
     public class UpdateDocument : IDocumentCommand
@@ -24,7 +26,7 @@ namespace DotJEM.Json.Index.Sharding.Commands
             this.document = document;
         }
 
-        public void Execute(IndexWriter writer)
+        public void Execute(IJsonIndexWriter writer)
         {
             writer.UpdateDocument(term, document);
         }
@@ -39,7 +41,7 @@ namespace DotJEM.Json.Index.Sharding.Commands
             this.term = term;
         }
 
-        public void Execute(IndexWriter writer)
+        public void Execute(IJsonIndexWriter writer)
         {
             //TODO: (jmd 2015-10-07) Delete can be improved by passing a list of terms.
             //                       we would need another pattern in that case.
@@ -66,8 +68,8 @@ namespace DotJEM.Json.Index.Sharding.Commands
 
         public void Execute()
         {
-            IndexWriter writer = shard.OpenWriter();
-            foreach (UpdateDocument update in updates)
+            IJsonIndexWriter writer = shard.AquireWriter();
+            foreach (IDocumentCommand update in updates)
             {
                 update.Execute(writer);
             }

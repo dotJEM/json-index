@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using DotJEM.Json.Index.Sharding;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
@@ -11,40 +12,45 @@ namespace DotJEM.Json.Index.Test.Sharding
     {
         private readonly IJsonIndexContext context = new LuceneJsonIndexContext();
 
-        [TestFixtureSetUp]
-        public void TestFixtureSetUp()
+        [Test]
+        public void T001_Write_ForMustangWithSpecifiedFields_Returns()
         {
             var index = context.Open("test");
-            index.Write(TestObjects());
+            index.Write(TestJson());
         }
 
         [Test]
-        public void Search_ForMustangWithSpecifiedFields_Returns()
+        public void T002_Search_ForMustangWithSpecifiedFields_Returns()
         {
             var index = context.Open("test");
 
             index.Search("contentType: Person");
         }
 
+        private IEnumerable<JObject> TestJson()
+        {
+            return TestObjects().Select(JObject.Parse);
+        }
 
-        private IEnumerable<JObject> TestObjects()
+        private IEnumerable<string> TestObjects()
         {
             int count = 0;
-            Func<Guid> nextId = () => new Guid("00000000-0000-0000-0000-" + (count++).ToString("000000000000"));
+            Func<string> nextId = () => $"'{new Guid("00000000-0000-0000-0000-" + (count++).ToString("000000000000"))}'";
 
+            yield return $"{{ id:{nextId()}, contentType: 'person', name: 'John', surname: 'Doe', created: '{DateTime.Now}', area: 'test' }}";
+            yield return $"{{ id:{nextId()}, contentType: 'person', name: 'Peter', surname: 'Pan', created: '{DateTime.Now}', area: 'test' }}";
+            yield return $"{{ id:{nextId()}, contentType: 'person', name: 'Alice', created: '{DateTime.Now}', area: 'test' }}";
 
-            yield return JObject.FromObject(new { id = nextId(), contentType = "person", Name = "John", LastName = "Doe", created = DateTime.Now, area= "test" });
-            yield return JObject.FromObject(new { id = nextId(), contentType = "person", Name = "Peter", LastName = "Pan", created = DateTime.Now, area = "test" });
-            yield return JObject.FromObject(new { id = nextId(), contentType = "person", Name = "Alice", created = DateTime.Now, area = "test" });
+            yield return $"{{ id:{nextId()}, contentType: 'car', brand: 'Ford', surname: 'Mustang', num: 5, created: '{DateTime.Now}', area: 'test' }}";
+            yield return $"{{ id:{nextId()}, contentType: 'car', brand: 'Dodge', surname: 'Charger', num: 10, created: '{DateTime.Now}', area: 'test' }}";
+            yield return $"{{ id:{nextId()}, contentType: 'car', brand: 'Chevrolet', surname: 'Camaro', num: 15, created: '{DateTime.Now}', area: 'test' }}";
 
-            yield return JObject.FromObject(new { id = nextId(), contentType = "car", Brand = "Ford", Model = "Mustang", Number = 5, created = DateTime.Now, area = "test" });
-            yield return JObject.FromObject(new { id = nextId(), contentType = "car", Brand = "Dodge", Model = "Charger", Number = 10, created = DateTime.Now, area = "test" });
-            yield return JObject.FromObject(new { id = nextId(), contentType = "car", Brand = "Chevrolet", Model = "Camaro", Number = 15, created = DateTime.Now, area = "test" });
-
-            yield return JObject.FromObject(new { id = nextId(), contentType = "flower", Name = "Lilly", Meaning = "Majesty", Number = 5, created = DateTime.Now, area = "test" });
-            yield return JObject.FromObject(new { id = nextId(), contentType = "flower", Name = "Freesia", Meaning = "Innocence", Number = 10, created = DateTime.Now, area = "test" });
-            yield return JObject.FromObject(new { id = nextId(), contentType = "flower", Name = "Aster", Meaning = "Patience", Number = 15, created = DateTime.Now, area = "test" });
+            yield return $"{{ id:{nextId()}, contentType: 'flower', name: 'Lilly', meaning: 'Majesty', num: 5, created: '{DateTime.Now}', area: 'test' }}";
+            yield return $"{{ id:{nextId()}, contentType: 'flower', name: 'Freesia', meaning: 'Innocence', num: 10, created: '{DateTime.Now}', area: 'test' }}";
+            yield return $"{{ id:{nextId()}, contentType: 'flower', name: 'Aster', meaning: 'Patience', num: 15, created: '{DateTime.Now}', area: 'test' }}";
         }
+
+        
         
     }
 }

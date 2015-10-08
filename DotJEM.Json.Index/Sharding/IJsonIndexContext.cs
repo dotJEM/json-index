@@ -10,6 +10,8 @@ using DotJEM.Json.Index.Sharding.Configuration;
 using DotJEM.Json.Index.Sharding.Documents;
 using DotJEM.Json.Index.Sharding.Resolvers;
 using DotJEM.Json.Index.Sharding.Schemas;
+using DotJEM.Json.Index.Sharding.Storage;
+using DotJEM.Json.Index.Sharding.Storage.Writers;
 using DotJEM.Json.Index.Sharding.Visitors;
 using Lucene.Net.Analysis;
 using Lucene.Net.Documents;
@@ -27,6 +29,8 @@ namespace DotJEM.Json.Index.Sharding
             IJsonIndexContext context = new LuceneJsonIndexContext();
 
             DefaultJsonIndexConfiguration configuration = new DefaultJsonIndexConfiguration();
+
+            configuration.Shards["person.*"] = new DefaultJsonIndexShardConfiguration();
 
             //configuration.MetaFieldResolver 
 
@@ -68,7 +72,7 @@ namespace DotJEM.Json.Index.Sharding
 
         public IJsonIndex Open(string name)
         {
-            return indices.GetOrAdd(name, key => new JsonIndex(Configuration["name"]));
+            return indices.GetOrAdd(name, key => new JsonIndex(Configuration[name]));
         }
     }
 
@@ -108,13 +112,11 @@ namespace DotJEM.Json.Index.Sharding
         ISearchResult Search(string query, params object[] args);
         ISearchResult Search(Query query);
     }
-
-
-
+    
     public class JsonIndex : IJsonIndex
     {
         private readonly IJsonIndexConfiguration configuration;
-        private readonly IJsonIndexShardCollection shards = new JsonIndexShardCollection();
+        private readonly IJsonIndexShardsManager shards = new JsonIndexShardsManager();
         private readonly IMetaFieldResolver resolver;
 
         public JsonIndex(IJsonIndexConfiguration configuration)
@@ -229,34 +231,41 @@ namespace DotJEM.Json.Index.Sharding
         //public ILuceneWriter Writer { get { return writer.Value; } }
         //public ILuceneSearcher Searcher { get { return searcher.Value; } }
 
-        IndexWriter OpenWriter();
-        IndexReader OpenReader();
+        IJsonIndexWriter AquireWriter();
 
     }
 
     public class JsonIndexShard : IJsonIndexShard
     {
-        public IndexWriter OpenWriter()
+        private readonly IJsonIndexStorage storage;
+
+        public JsonIndexShard(IJsonIndexStorage storage)
         {
-            return new IndexWriter(new RAMDirectory(), new KeywordAnalyzer(), IndexWriter.MaxFieldLength.UNLIMITED);
+            this.storage = storage;
         }
 
-        public IndexReader OpenReader()
+        public IJsonIndexWriter AquireWriter()
         {
-            return null;
+            return storage.Writer.Aquire();
         }
     }
 
-    public interface IJsonIndexShardCollection
+    public interface IJsonIndexShardsManager
     {
         IJsonIndexShard this[string key] { get; }
     }
 
-    public class JsonIndexShardCollection : IJsonIndexShardCollection
+    public class JsonIndexShardsManager : IJsonIndexShardsManager
     {
+        private readonly ConcurrentDictionary<string, IJsonIndex> shards = new ConcurrentDictionary<string, IJsonIndex>();
+
         public IJsonIndexShard this[string key]
         {
-            get { return new JsonIndexShard(); }
+            get
+            {
+                Console.WriteLine("Aquireing shard: " +  key);
+                return new JsonIndexShard(new MemmoryJsonIndexStorage());
+            }
         }
     }
 
