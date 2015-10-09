@@ -15,6 +15,8 @@ namespace DotJEM.Json.Index.Sharding.Resolvers
 
     public class DefaultMetaFieldResolver : IMetaFieldResolver
     {
+        //TODO: (jmd 2015-10-09) Configurable field names and redo all 
+
         public string ContentType(JObject json)
         {
             string contentType = (string)json["contentType"];
@@ -28,6 +30,9 @@ namespace DotJEM.Json.Index.Sharding.Resolvers
 
         public string Shard(JObject json)
         {
+            //TODO: (jmd 2015-10-09) Over time sharding and named sharding should be reconsidered.
+            //                       since over time sharding is not easy to target from configuration. 
+
             DateTime created = (DateTime)json["created"];
             string shard = ContentType(json) + "." + created.Year;
 
