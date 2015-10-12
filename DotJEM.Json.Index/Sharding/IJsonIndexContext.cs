@@ -5,9 +5,9 @@ using System.Collections.Specialized;
 using System.Linq;
 using DotJEM.Json.Index.Schema;
 using DotJEM.Json.Index.Searching;
-using DotJEM.Json.Index.Sharding.Commands;
 using DotJEM.Json.Index.Sharding.Configuration;
 using DotJEM.Json.Index.Sharding.Documents;
+using DotJEM.Json.Index.Sharding.Infos;
 using DotJEM.Json.Index.Sharding.Resolvers;
 using DotJEM.Json.Index.Sharding.Schemas;
 using DotJEM.Json.Index.Sharding.Storage;
@@ -107,41 +107,40 @@ namespace DotJEM.Json.Index.Sharding
     public class JsonIndex : IJsonIndex
     {
         private readonly IJsonIndexConfiguration configuration;
-        private readonly IJsonIndexShardsManager shards = new JsonIndexShardsManager();
+        //TODO: (jmd 2015-10-12) Inject but as trancient?
+        private readonly IJsonIndexShardsManager shardManager;
         private readonly IMetaFieldResolver resolver;
 
         public JsonIndex(IJsonIndexConfiguration configuration)
         {
+            shardManager = new JsonIndexShardsManager(configuration);
             this.configuration = configuration;
             this.resolver = configuration.MetaFieldResolver;
         }
 
         public IJsonIndex Write(IEnumerable<JObject> entities)
         {
-            ILuceneDocumentFactory factory = configuration.DocumentFactory;
 
-            IEnumerable<IShardCommand> updates = from json in entities
-                let command = new UpdateDocument(resolver.Identity(json), factory.Create(json))
-                group command by resolver.Shard(json) into updatesInShard
-                select new UpdateShardCommand(shards[updatesInShard.Key], updatesInShard);
+            IEnumerable<ShardChanges> changes = from json in entities
+                                                group json by resolver.Shard(json) into updatesInShard
+                                                select new ShardChanges(updatesInShard.Key, updatesInShard);
 
-            foreach (IShardCommand update in updates)
+            foreach (ShardChanges update in changes)
             {
-                update.Execute();
+                shardManager[update.Shard].Write(update.Changes);
             }
             return this;
         }
 
         public IJsonIndex Delete(IEnumerable<JObject> entities)
         {
-            IEnumerable<IShardCommand> deletes = from json in entities
-                          let command = new DeleteDocument(resolver.Identity(json))
-                          group command by resolver.Shard(json) into deletesInShard
-                          select new UpdateShardCommand(shards[deletesInShard.Key], deletesInShard);
+            IEnumerable<ShardChanges> changes = from json in entities
+                                                group json by resolver.Shard(json) into deletesInShard
+                                                select new ShardChanges(deletesInShard.Key, deletesInShard);
 
-            foreach (IShardCommand update in deletes)
+            foreach (ShardChanges update in changes)
             {
-                update.Execute();
+                shardManager[update.Shard].Delete(update.Changes);
             }
             return this;
         }
@@ -161,8 +160,6 @@ namespace DotJEM.Json.Index.Sharding
             throw new NotImplementedException();
         }
     }
-
-
 
 
     public interface IJsonIndexShard
@@ -237,40 +234,67 @@ namespace DotJEM.Json.Index.Sharding
 
         IJsonIndexWriter AquireWriter();
 
+        void Write(IEnumerable<JObject> entities);
+        void Delete(IEnumerable<JObject> entities);
     }
 
     public class JsonIndexShard : IJsonIndexShard
     {
         private readonly IJsonIndexStorage storage;
+        private readonly ILuceneDocumentFactory factory;
+        private readonly IJsonIndexShardConfiguration configuration;
+        
 
-        public JsonIndexShard(IJsonIndexStorage storage)
+        public JsonIndexShard(IJsonIndexShardConfiguration configuration, IJsonIndexStorage storage, ILuceneDocumentFactory factory)
         {
+            this.configuration = configuration;
             this.storage = storage;
+            this.factory = factory;
         }
 
         public IJsonIndexWriter AquireWriter()
         {
             return storage.Writer.Aquire();
         }
+
+        public void Write(IEnumerable<JObject> entities)
+        {
+            foreach (JObject entity in entities)
+            {
+                
+            }
+        }
+
+        public void Delete(IEnumerable<JObject> entities)
+        {
+        }
     }
+
 
     public interface IJsonIndexShardsManager
     {
-        IJsonIndexShard this[string key] { get; }
+        IJsonIndexShard this[ShardInfo key] { get; }
     }
 
     public class JsonIndexShardsManager : IJsonIndexShardsManager
     {
-        private readonly ConcurrentDictionary<string, IJsonIndex> shards = new ConcurrentDictionary<string, IJsonIndex>();
+        private readonly IJsonIndexConfiguration configuration;
+        private readonly ConcurrentDictionary<string, IJsonIndexShard> shards = new ConcurrentDictionary<string, IJsonIndexShard>();
 
-        public IJsonIndexShard this[string key]
+        public JsonIndexShardsManager(IJsonIndexConfiguration configuration)
+        {
+            this.configuration = configuration;
+        }
+
+        public IJsonIndexShard this[ShardInfo key]
         {
             get
             {
-                Console.WriteLine("Aquireing shard: " +  key);
-                return new JsonIndexShard(new MemmoryJsonIndexStorage());
+                Console.WriteLine("Aquireing shard: " + key);
+                return shards.GetOrAdd(key.Name, new JsonIndexShard(configuration.Shards[key.Name], new MemmoryJsonIndexStorage(), configuration.DocumentFactory));
             }
         }
+
     }
 
 

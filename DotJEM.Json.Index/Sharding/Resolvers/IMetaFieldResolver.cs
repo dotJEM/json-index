@@ -1,4 +1,5 @@
 using System;
+using DotJEM.Json.Index.Sharding.Infos;
 using Lucene.Net.Index;
 using Newtonsoft.Json.Linq;
 
@@ -7,8 +8,7 @@ namespace DotJEM.Json.Index.Sharding.Resolvers
     public interface IMetaFieldResolver
     {
         string ContentType(JObject json);
-        string Area(JObject json);
-        string Shard(JObject json);
+        ShardInfo Shard(JObject json);
 
         Term Identity(JObject json);
     }
@@ -16,27 +16,27 @@ namespace DotJEM.Json.Index.Sharding.Resolvers
     public class DefaultMetaFieldResolver : IMetaFieldResolver
     {
         //TODO: (jmd 2015-10-09) Configurable field names and redo all 
+        private string contentTypeField;
+
+        public DefaultMetaFieldResolver(string contentTypeField = "contentType")
+        {
+            this.contentTypeField = contentTypeField;
+        }
+
 
         public string ContentType(JObject json)
         {
-            string contentType = (string)json["contentType"];
+            string contentType = (string)json[contentTypeField];
             return contentType;
         }
-
-        public string Area(JObject json)
-        {
-            return (string)json["area"];
-        }
-
-        public string Shard(JObject json)
+        
+        public ShardInfo Shard(JObject json)
         {
             //TODO: (jmd 2015-10-09) Over time sharding and named sharding should be reconsidered.
             //                       since over time sharding is not easy to target from configuration. 
 
             DateTime created = (DateTime)json["created"];
-            string shard = ContentType(json) + "." + created.Year;
-
-            return shard;
+            return new ShardInfo(ContentType(json), created.ToString("yyyyMM"));
         }
 
         public Term Identity(JObject json)
