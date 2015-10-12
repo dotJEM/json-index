@@ -15,6 +15,7 @@ namespace DotJEM.Json.Index.Sharding.Storage
     public interface IJsonIndexStorage
     {
         bool Exists { get; }
+        LuceneDirectory Directory { get; }
         IIndexWriterManager Writer { get; }
         void Unlock();
     }

@@ -52,7 +52,7 @@ namespace DotJEM.Json.Index.Sharding.Configuration
         public IMetaFieldResolver MetaFieldResolver => services.Resolve<IMetaFieldResolver>();
         public ILuceneDocumentFactory DocumentFactory => services.Resolve<ILuceneDocumentFactory>();
 
-        public IJsonIndexShardsConfiguration Shards { get; }
+        public IJsonIndexShardsConfiguration Shards { get; } = new JsonIndexShardsConfiguration();
     }
 
     public interface IJsonIndexShardsConfiguration
@@ -82,12 +82,16 @@ namespace DotJEM.Json.Index.Sharding.Configuration
 
     public interface IJsonIndexShardConfiguration
     {
-
+        bool Partitioned { get; }
     }
 
     public class DefaultJsonIndexShardConfiguration : IJsonIndexShardConfiguration
     {
-        
+        public bool Partitioned { get; } = false;
+
+        public DefaultJsonIndexShardConfiguration()
+        {
+        }
     }
 
 
