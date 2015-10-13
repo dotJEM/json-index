@@ -16,9 +16,11 @@ using DotJEM.Json.Index.Sharding.Visitors;
 using Lucene.Net.Analysis;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
+using Lucene.Net.QueryParsers;
 using Lucene.Net.Search;
 using Lucene.Net.Store;
 using Newtonsoft.Json.Linq;
+using Version = Lucene.Net.Util.Version;
 
 namespace DotJEM.Json.Index.Sharding
 {
@@ -150,19 +152,30 @@ namespace DotJEM.Json.Index.Sharding
             //TODO: Preanalyze query and determine which shards to go to.
 
             //var searcher = new ParallelMultiSearcher(new IndexSearcher(), new IndexSearcher());
-            
 
+            Lucene.Net.QueryParsers.MultiFieldQueryParser parser = new Lucene.Net.QueryParsers.MultiFieldQueryParser(Version.LUCENE_30, "contentType".Split(';'), new KeywordAnalyzer());
             //MultiFieldQueryParser parser = new MultiFieldQueryParser(index, query);
-            //parser.AllowLeadingWildcard = true;
+            parser.AllowLeadingWildcard = true;
             //parser.DefaultOperator = QueryParser.Operator.AND;
             //return DebugLog(parser.Parse(query));
+            if(args.Any())
+                query = string.Format(query, args);
 
-            return null;
+            Query queryObj = parser.Parse(query);
+            return Search(queryObj);
         }
 
         public DummySearchResult Search(Query query)
         {
-            var searcher = new MultiSearcher(shardManager.Searchers());
+            var searchers = shardManager.Searchers();
+            foreach (IndexSearcher sear in searchers)
+            {
+                var results = 
+                sear.Search(query, 10);
+            }
+
+
+            var searcher = new MultiSearcher(searchers);
             var result = searcher.Search(query, 1000);
             return new DummySearchResult(result);
         }

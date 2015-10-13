@@ -29,7 +29,7 @@ namespace DotJEM.Json.Index.Test.Sharding
             Query query = new TermQuery(new Term("contentType", "person"));
 
 
-            var result = index.Search(query);//"contentType: person"
+            var result = index.Search("contentType: *");//"contentType: person"
 
             Assert.That(result.Result.TotalHits, Is.EqualTo(3));
         }
