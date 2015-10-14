@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using DotJEM.Json.Index.Sharding.Analyzers;
+using DotJEM.Json.Index.Sharding.Storage.Readers;
 using DotJEM.Json.Index.Sharding.Storage.Writers;
 using DotJEM.Json.Index.Storage;
 using Lucene.Net.Analysis;
@@ -16,6 +17,7 @@ namespace DotJEM.Json.Index.Sharding.Storage
     {
         bool Exists { get; }
         LuceneDirectory Directory { get; }
+        IIndexReaderManager Reader { get; }
         IIndexWriterManager Writer { get; }
         void Unlock();
     }
@@ -23,6 +25,7 @@ namespace DotJEM.Json.Index.Sharding.Storage
     public abstract class AbstractJsonIndexStorage : IJsonIndexStorage
     {
         public IIndexWriterManager Writer { get; }
+        public IIndexReaderManager Reader { get; }
         public LuceneDirectory Directory { get; }
         public Analyzer Analyzer { get; }
 
@@ -33,7 +36,9 @@ namespace DotJEM.Json.Index.Sharding.Storage
             Directory = directory;
             //TODO: (jmd 2015-10-08) Analyzer should get injected. 
             Analyzer = new JsonFieldAnalyzer();
+
             Writer = new IndexWriterManager(this);
+            Reader = new IndexReaderManager(this);
         }
 
         public void Unlock()
