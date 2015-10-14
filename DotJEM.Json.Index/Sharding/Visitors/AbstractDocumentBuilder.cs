@@ -11,7 +11,7 @@ namespace DotJEM.Json.Index.Sharding.Visitors
     {
         public DocumentBuilderContext BuildDocument(JObject json)
         {
-            DocumentBuilderContext context = new DocumentBuilderContext();
+            DocumentBuilderContext context = new DocumentBuilderContext(json);
             Visit(json, context);
             return context;
         }

@@ -8,7 +8,9 @@ using DotJEM.Json.Index.Searching;
 using DotJEM.Json.Index.Sharding.Configuration;
 using DotJEM.Json.Index.Sharding.Documents;
 using DotJEM.Json.Index.Sharding.Infos;
+using DotJEM.Json.Index.Sharding.QueryParser;
 using DotJEM.Json.Index.Sharding.Resolvers;
+using DotJEM.Json.Index.Sharding.Results;
 using DotJEM.Json.Index.Sharding.Schemas;
 using DotJEM.Json.Index.Sharding.Storage;
 using DotJEM.Json.Index.Sharding.Storage.Writers;
@@ -98,8 +100,8 @@ namespace DotJEM.Json.Index.Sharding
         IJsonIndex Delete(IEnumerable<JObject> entities);
 
         //ISearchResult Search(object query);
-        DummySearchResult Search(string query, params object[] args);
-        DummySearchResult Search(Query query);
+        IJsonSearchResult Search(string query, params object[] args);
+        IJsonSearchResult Search(Query query);
 
         //IEnumerable<string> Terms(string field);
 
@@ -147,37 +149,27 @@ namespace DotJEM.Json.Index.Sharding
             return this;
         }
 
-        public DummySearchResult Search(string query, params object[] args)
+        public IJsonSearchResult Search(string query, params object[] args)
         {
             //TODO: Preanalyze query and determine which shards to go to.
 
             //var searcher = new ParallelMultiSearcher(new IndexSearcher(), new IndexSearcher());
 
-            Lucene.Net.QueryParsers.MultiFieldQueryParser parser = new Lucene.Net.QueryParsers.MultiFieldQueryParser(Version.LUCENE_30, "contentType".Split(';'), new KeywordAnalyzer());
-            //MultiFieldQueryParser parser = new MultiFieldQueryParser(index, query);
+            JsonIndexQueryParser parser = new JsonIndexQueryParser();
             parser.AllowLeadingWildcard = true;
-            //parser.DefaultOperator = QueryParser.Operator.AND;
-            //return DebugLog(parser.Parse(query));
-            if(args.Any())
+            parser.DefaultOperator = Lucene.Net.QueryParsers.QueryParser.Operator.AND;
+            if (args.Any())
+            {
                 query = string.Format(query, args);
+            }
 
             Query queryObj = parser.Parse(query);
             return Search(queryObj);
         }
 
-        public DummySearchResult Search(Query query)
+        public IJsonSearchResult Search(Query query)
         {
-            var searchers = shardManager.Searchers();
-            foreach (IndexSearcher sear in searchers)
-            {
-                var results = 
-                sear.Search(query, 10);
-            }
-
-
-            var searcher = new MultiSearcher(searchers);
-            var result = searcher.Search(query, 1000);
-            return new DummySearchResult(result);
+            return new JsonSearchResult(query,  shardManager.SearchProvider);
         }
     }
 
@@ -262,10 +254,10 @@ namespace DotJEM.Json.Index.Sharding
         //public ILuceneSearcher Searcher { get { return searcher.Value; } }
 
         IJsonIndexWriter AquireWriter();
+        Searcher AquireSearcher();
 
         void Write(IEnumerable<JObject> entities);
         void Delete(IEnumerable<JObject> entities);
-        Searchable AquireSearcher();
     }
 
     public class JsonIndexShard : IJsonIndexShard
@@ -274,7 +266,6 @@ namespace DotJEM.Json.Index.Sharding
         private readonly ILuceneDocumentFactory factory;
         private readonly IMetaFieldResolver resolver;
         private readonly IJsonIndexShardConfiguration configuration;
-        
 
         public JsonIndexShard(IJsonIndexShardConfiguration configuration, ILuceneDocumentFactory factory, IMetaFieldResolver resolver)
         {
@@ -291,7 +282,7 @@ namespace DotJEM.Json.Index.Sharding
 
         public void Write(IEnumerable<JObject> entities)
         {
-            var writer = AquireWriter();
+            IJsonIndexWriter writer = AquireWriter();
             foreach (JObject entity in entities)
             {
                 Term id = resolver.Identity(entity);
@@ -306,23 +297,62 @@ namespace DotJEM.Json.Index.Sharding
         {
         }
 
-        public Searchable AquireSearcher()
+        public Searcher AquireSearcher()
         {
             return new IndexSearcher(storage.Directory);
         }
     }
 
+    public interface ISearcherProvider
+    {
+        Searcher Aquire();
+    }
+
+    public class SearchableProvider : ISearcherProvider
+    {
+        private readonly IJsonIndexShard shard;
+
+        public SearchableProvider(string name, IJsonIndexShard shard)
+        {
+            this.shard = shard;
+        }
+
+        public Searcher Aquire()
+        {
+            return shard.AquireSearcher();
+        }
+    }
+
+    public class MultiSearchableProviders : ISearcherProvider
+    {
+        private readonly IEnumerable<SearchableProvider> providers;
+
+        public MultiSearchableProviders(IEnumerable<SearchableProvider> providers)
+        {
+            this.providers = providers;
+        }
+
+        public Searcher Aquire()
+        {
+            return new ParallelMultiSearcher(providers.Select(s => s.Aquire()).Cast<Searchable>().ToArray());
+        }
+    }
 
     public interface IJsonIndexShardsManager
     {
         IJsonIndexShard this[ShardInfo key] { get; }
-        Searchable[] Searchers();
+        ISearcherProvider SearchProvider { get; }
     }
 
     public class JsonIndexShardsManager : IJsonIndexShardsManager
     {
         private readonly IJsonIndexConfiguration configuration;
         private readonly ConcurrentDictionary<string, IJsonIndexShard> shards = new ConcurrentDictionary<string, IJsonIndexShard>();
+
+        public ISearcherProvider SearchProvider
+        {
+            get { return new MultiSearchableProviders(shards.Select(shard => new SearchableProvider(shard.Key, shard.Value))); }
+        }
 
         public JsonIndexShardsManager(IJsonIndexConfiguration configuration)
         {
@@ -334,6 +364,7 @@ namespace DotJEM.Json.Index.Sharding
             get
             {
                 Console.WriteLine("Aquireing shard: " + key);
+
                 string name = key.Name;
                 IJsonIndexShardConfiguration config = configuration.Shards[name];
                 ILuceneDocumentFactory factory = configuration.DocumentFactory;
@@ -343,10 +374,6 @@ namespace DotJEM.Json.Index.Sharding
             }
         }
 
-        public Searchable[] Searchers()
-        {
-            return shards.Values.Select(shard => shard.AquireSearcher()).ToArray();
-        }
     }
 
 

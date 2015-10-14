@@ -1,4 +1,6 @@
 using Lucene.Net.Documents;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace DotJEM.Json.Index.Sharding.Visitors
 {
@@ -10,10 +12,11 @@ namespace DotJEM.Json.Index.Sharding.Visitors
 
         public Document Document { get; }
 
-        public DocumentBuilderContext()
+        public DocumentBuilderContext(JObject json)
         {
             Path = "";
             Document = new Document();
+            Document.Add(new Field("$raw", json.ToString(Formatting.None), Field.Store.YES, Field.Index.NO));
         }
 
         private DocumentBuilderContext(DocumentBuilderContext parent, string path)
@@ -25,7 +28,8 @@ namespace DotJEM.Json.Index.Sharding.Visitors
 
         public DocumentBuilderContext Child(string name)
         {
-            return new DocumentBuilderContext(this, Path + "." + name);
+            string childPath = Path == "" ? name : Path + "." + name;
+            return new DocumentBuilderContext(this, childPath);
         }
 
         public void AddField(IFieldable field)

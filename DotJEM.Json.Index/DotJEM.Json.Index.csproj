@@ -100,6 +100,7 @@
     <Compile Include="Sharding\Resolvers\IMetaFieldResolver.cs" />
     <Compile Include="Sharding\Resolvers\IServiceResolver.cs" />
     <Compile Include="Sharding\Documents\ILuceneDocumentFactory.cs" />
+    <Compile Include="Sharding\Results\SearchResult.cs" />
     <Compile Include="Sharding\Storage\Writers\IIndexWriterManager.cs" />
     <Compile Include="Sharding\Util\Disposeable.cs" />
     <Compile Include="Sharding\Storage\IJsonIndexStorage.cs" />

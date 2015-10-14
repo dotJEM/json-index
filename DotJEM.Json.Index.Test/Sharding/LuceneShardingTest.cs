@@ -25,13 +25,18 @@ namespace DotJEM.Json.Index.Test.Sharding
         public void T002_Search_ForMustangWithSpecifiedFields_Returns()
         {
             var index = context.Open("test");
+            var result = index.Search("contentType: person");//"contentType: person"
 
-            Query query = new TermQuery(new Term("contentType", "person"));
+            Assert.That(result.TotalCount, Is.EqualTo(3));
+        }
 
+        [Test]
+        public void T003_Search_ForMustangWithSpecifiedFields_Returns()
+        {
+            var index = context.Open("test");
+            var result = index.Search("(contentType: person AND name: Peter) OR surname: Doe");//"contentType: person"
 
-            var result = index.Search("contentType: *");//"contentType: person"
-
-            Assert.That(result.Result.TotalHits, Is.EqualTo(3));
+            Assert.That(result.TotalCount, Is.EqualTo(2));
         }
 
         private IEnumerable<JObject> TestJson()
