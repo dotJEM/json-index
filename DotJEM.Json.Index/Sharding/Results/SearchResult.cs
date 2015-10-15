@@ -40,7 +40,7 @@ namespace DotJEM.Json.Index.Sharding.Results
 
     public class JsonSearchResult : IJsonSearchResult
     {
-        private readonly ISearcherProvider searcherProvider;
+        private readonly IJsonIndexSearcher searcher;
         private readonly Lazy<IEnumerable<IJsonHit>> results;
          
         private int skip = 0;
@@ -68,9 +68,9 @@ namespace DotJEM.Json.Index.Sharding.Results
 
         private int TotalTake => skip + take;
 
-        public JsonSearchResult(Query query, ISearcherProvider searcherProvider)
+        public JsonSearchResult(Query query, IJsonIndexSearcher searcher)
         {
-            this.searcherProvider = searcherProvider;
+            this.searcher = searcher;
             this.query = query;
 
             results = new Lazy<IEnumerable<IJsonHit>>(ExecuteSearch);
@@ -119,7 +119,7 @@ namespace DotJEM.Json.Index.Sharding.Results
 
         private IEnumerable<IJsonHit> ExecuteSearch()
         {
-            Searcher searcher = searcherProvider.Aquire();
+            Searcher searcher = null;//this.searcher.Aquire();
             query = searcher.Rewrite(query);
 
             TopDocs hits = sorting == null

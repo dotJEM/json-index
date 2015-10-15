@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
+using System.Runtime.Remoting.Messaging;
 using DotJEM.Json.Index.Schema;
 using DotJEM.Json.Index.Searching;
 using DotJEM.Json.Index.Sharding.Configuration;
@@ -169,7 +170,7 @@ namespace DotJEM.Json.Index.Sharding
 
         public IJsonSearchResult Search(Query query)
         {
-            return new JsonSearchResult(query,  shardManager.SearchProvider);
+            return new JsonSearchResult(query,  shardManager.Searcher);
         }
     }
 
@@ -252,9 +253,10 @@ namespace DotJEM.Json.Index.Sharding
 
         //public ILuceneWriter Writer { get { return writer.Value; } }
         //public ILuceneSearcher Searcher { get { return searcher.Value; } }
+        string Name { get; }
 
         IJsonIndexWriter AquireWriter();
-        Searcher AquireSearcher();
+        IJsonIndexSearcher AquireSearcher();
 
         void Write(IEnumerable<JObject> entities);
         void Delete(IEnumerable<JObject> entities);
@@ -267,8 +269,11 @@ namespace DotJEM.Json.Index.Sharding
         private readonly IMetaFieldResolver resolver;
         private readonly IJsonIndexShardConfiguration configuration;
 
-        public JsonIndexShard(IJsonIndexShardConfiguration configuration, ILuceneDocumentFactory factory, IMetaFieldResolver resolver)
+        public string Name { get; }
+
+        public JsonIndexShard(string name, IJsonIndexShardConfiguration configuration, ILuceneDocumentFactory factory, IMetaFieldResolver resolver)
         {
+            this.Name = name;
             this.configuration = configuration;
             this.storage = new MemmoryJsonIndexStorage();
             this.factory = factory;
@@ -297,51 +302,39 @@ namespace DotJEM.Json.Index.Sharding
         {
         }
 
-        public Searcher AquireSearcher()
+        public IJsonIndexSearcher AquireSearcher()
         {
-            return new IndexSearcher(storage.Directory);
+            return new ShardJsonIndexSearcher(Name, this, storage);
+            //return   new IndexSearcher(storage.Directory);
         }
     }
 
-    public interface ISearcherProvider
+    public interface IJsonIndexSearcher
     {
-        Searcher Aquire();
     }
 
-    public class SearchableProvider : ISearcherProvider
+    public class ShardJsonIndexSearcher : IJsonIndexSearcher
     {
-        private readonly IJsonIndexShard shard;
-
-        public SearchableProvider(string name, IJsonIndexShard shard)
+        public ShardJsonIndexSearcher(string shardKey, IJsonIndexShard value, IJsonIndexStorage storage)
         {
-            this.shard = shard;
-        }
-
-        public Searcher Aquire()
-        {
-            return shard.AquireSearcher();
+            
         }
     }
 
-    public class MultiSearchableProviders : ISearcherProvider
+    public class MultiJsonIndexSearcher : IJsonIndexSearcher
     {
-        private readonly IEnumerable<SearchableProvider> providers;
+        private readonly IEnumerable<IJsonIndexSearcher> searchers;
 
-        public MultiSearchableProviders(IEnumerable<SearchableProvider> providers)
+        public MultiJsonIndexSearcher(IEnumerable<IJsonIndexSearcher> searchers)
         {
-            this.providers = providers;
-        }
-
-        public Searcher Aquire()
-        {
-            return new ParallelMultiSearcher(providers.Select(s => s.Aquire()).Cast<Searchable>().ToArray());
+            this.searchers = searchers;
         }
     }
-
+    
     public interface IJsonIndexShardsManager
     {
         IJsonIndexShard this[ShardInfo key] { get; }
-        ISearcherProvider SearchProvider { get; }
+        IJsonIndexSearcher Searcher { get; }
     }
 
     public class JsonIndexShardsManager : IJsonIndexShardsManager
@@ -349,9 +342,12 @@ namespace DotJEM.Json.Index.Sharding
         private readonly IJsonIndexConfiguration configuration;
         private readonly ConcurrentDictionary<string, IJsonIndexShard> shards = new ConcurrentDictionary<string, IJsonIndexShard>();
 
-        public ISearcherProvider SearchProvider
+        public IJsonIndexSearcher Searcher
         {
-            get { return new MultiSearchableProviders(shards.Select(shard => new SearchableProvider(shard.Key, shard.Value))); }
+            get
+            {
+                return new MultiJsonIndexSearcher(shards.Select(shard => shard.Value.AquireSearcher()));
+            }
         }
 
         public JsonIndexShardsManager(IJsonIndexConfiguration configuration)
@@ -370,7 +366,7 @@ namespace DotJEM.Json.Index.Sharding
                 ILuceneDocumentFactory factory = configuration.DocumentFactory;
                 IMetaFieldResolver resolver = configuration.MetaFieldResolver;
 
-                return shards.GetOrAdd(name, k => new JsonIndexShard(config, factory, resolver));
+                return shards.GetOrAdd(name, k => new JsonIndexShard(key.Name, config, factory, resolver));
             }
         }
 
