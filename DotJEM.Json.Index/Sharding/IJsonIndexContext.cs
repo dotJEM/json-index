@@ -311,23 +311,48 @@ namespace DotJEM.Json.Index.Sharding
 
     public interface IJsonIndexSearcher
     {
+        Searcher Aquire();
     }
 
     public class ShardJsonIndexSearcher : IJsonIndexSearcher
     {
+        private readonly Searcher searcher;
+
+        private readonly IJsonIndexShard value;
+        private readonly IJsonIndexStorage storage;
+
+        public Searcher Aquire()
+        {
+            return searcher;
+        }
+
         public ShardJsonIndexSearcher(string shardKey, IJsonIndexShard value, IJsonIndexStorage storage)
         {
-            
+            this.value = value;
+            this.storage = storage;
+
+            this.searcher = new IndexSearcher(storage.Directory);
         }
     }
 
     public class MultiJsonIndexSearcher : IJsonIndexSearcher
     {
+        private readonly Searcher searcher;
+
+        public Searcher Aquire()
+        {
+            return searcher;
+        }
+
         private readonly IEnumerable<IJsonIndexSearcher> searchers;
 
         public MultiJsonIndexSearcher(IEnumerable<IJsonIndexSearcher> searchers)
         {
             this.searchers = searchers;
+
+            //TODO: (jmd 2015-10-16) The searchers we actually get here should be based on the Query.
+            //TODO: (jmd 2015-10-16) We need to convert to multi readers instead. 
+            this.searcher = new ParallelMultiSearcher(searchers.Select(s => s.Aquire()).Cast<Searchable>().ToArray());
         }
     }
     

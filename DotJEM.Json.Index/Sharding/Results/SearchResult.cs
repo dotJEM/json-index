@@ -14,28 +14,7 @@ namespace DotJEM.Json.Index.Sharding.Results
     public interface IJsonSearchResult : IEnumerable<IJsonHit>
     {
         long TotalCount { get; }
-
         IEnumerable<dynamic> Documents { get; }
-    }
-
-    public class JsonSearch
-    {
-        
-    }
-
-    public class PendingJsonSearch : JsonSearch
-    {
-        
-    }
-
-    public class CountedJsonSearch : JsonSearch
-    {
-        
-    }
-
-    public class CompletedJsonSearch : JsonSearch
-    {
-
     }
 
     public class JsonSearchResult : IJsonSearchResult
@@ -49,6 +28,7 @@ namespace DotJEM.Json.Index.Sharding.Results
         private Filter filtering;
         private Sort sorting;
         private Query query;
+        private SearchState state;
 
         public long TotalCount
         {
@@ -70,47 +50,13 @@ namespace DotJEM.Json.Index.Sharding.Results
 
         public JsonSearchResult(Query query, IJsonIndexSearcher searcher)
         {
+            this.state = new PendingSearch(this, query, searcher);
+
             this.searcher = searcher;
             this.query = query;
 
             results = new Lazy<IEnumerable<IJsonHit>>(ExecuteSearch);
         }
-
-        //public SearchResultCollector(Query query, IStorageIndex index)
-        //{
-        //    this.query = query;
-        //    this.index = index;
-        //}
-
-        //public ISearchResult Take(int count)
-        //{
-        //    take = count;
-        //    return this;
-        //}
-
-        //public ISearchResult Skip(int count)
-        //{
-        //    skip = count;
-        //    return this;
-        //}
-
-        //public ISearchResult Filter(Filter value)
-        //{
-        //    filtering = value;
-        //    return this;
-        //}
-
-        //public ISearchResult Sort(Sort value)
-        //{
-        //    sorting = value;
-        //    return this;
-        //}
-
-        //public ISearchResult All()
-        //{
-        //    take = int.MaxValue;
-        //    return this;
-        //}
 
         public IEnumerator<IJsonHit> GetEnumerator()
         {
@@ -135,6 +81,78 @@ namespace DotJEM.Json.Index.Sharding.Results
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
+        }
+
+        internal abstract class SearchState
+        {
+            protected JsonSearchResult Context { get; }
+
+            public abstract int Count { get; }
+
+            protected SearchState(JsonSearchResult context)
+            {
+                Context = context;
+            }
+        }
+
+        internal class PendingSearch : SearchState
+        {
+            private readonly Query query;
+            private readonly IJsonIndexSearcher searcher;
+
+            public override int Count
+            {
+                get
+                {
+                    return ExecuteSearch();
+                }
+            }
+
+            private int ExecuteSearch()
+            {
+                Searcher luceneSearcher = searcher.Aquire();
+                Query q = luceneSearcher.Rewrite(query);
+
+                TopDocs hits = Context.sorting == null
+                    ? luceneSearcher.Search(query, Context.filtering, Context.TotalTake)
+                    : luceneSearcher.Search(query, Context.filtering, Context.TotalTake, Context.sorting);
+
+                Context.state = new CountedSearch(Context, hits, searcher);
+
+                return hits.TotalHits;
+            }
+
+            public PendingSearch(JsonSearchResult context, Query query, IJsonIndexSearcher searcher) 
+                : base(context)
+            {
+                this.query = query;
+                this.searcher = searcher;
+            }
+        }
+
+        internal class CountedSearch : SearchState
+        {
+            public override int Count { get; }
+
+            public CountedSearch(JsonSearchResult context) 
+                : base(context)
+            {
+            }
+
+            public CountedSearch(JsonSearchResult context, TopDocs hits, IJsonIndexSearcher jsonIndexSearcher) : base(context)
+            {
+                
+            }
+        }
+
+        internal class CompletedSearch : SearchState
+        {
+            public override int Count { get; }
+
+            public CompletedSearch(JsonSearchResult context) 
+                : base(context)
+            {
+            }
         }
     }
 
