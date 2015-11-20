@@ -52,8 +52,27 @@ namespace DotJEM.Json.Index.Test.Constraints
 
     }
 
+    public class XIS
+    {
+        public static IResolveConstraint JsonEqual(object expected)
+        {
+            JObject jobj;
+            string str = expected as string;
+            if (str != null)
+            {
+                jobj = JObject.Parse(str);
+            }
+            else
+            {
+                jobj = expected as JObject ?? JObject.FromObject(expected);
+            }
+            //Note: If expected was not a JObject, Most likely used with an anonomous type...
+            //      but this also means we can allow for actual business objects to be passed in directly.
+            return new JsonEqualsConstraint(jobj);
+        }
+    }
+
     public class HAS
-        // ReSharper restore InconsistentNaming
     {
         public static ResolvableConstraintExpression Property<T>(Expression<Func<T, object>> property)
         {
