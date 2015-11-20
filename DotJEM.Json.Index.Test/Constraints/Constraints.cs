@@ -242,6 +242,7 @@ namespace DotJEM.Json.Index.Test.Constraints
             if (actual.Type != expected.Type)
             {
                 FailWithMessage("'{0}' was expected to be of type '{1}' but was of type '{2}'.", path, actual.Type, expected.Type);
+                return;
             }
 
             JObject obj = expected as JObject;
