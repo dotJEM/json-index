@@ -30,6 +30,9 @@ build:
   publish_nuget: true
   publish_nuget_symbols: true
 
+after_build:
+  dir
+
 test:
   assemblies:
     - '**\*.test.dll'
