@@ -103,10 +103,8 @@
     <Compile Include="Constraints\Properties\ObjectPropertiesEqualsConstraint.cs" />
     <Compile Include="Constraints\Properties\ObjectPropertiesNotEqualsConstraint.cs" />
     <Compile Include="Constraints\Properties\PrivateMembersHelper.cs" />
-    <Compile Include="Integration\LuceneSearcherComplexDataTest.cs" />
     <Compile Include="Integration\LuceneSearcherSortingTest.cs" />
     <Compile Include="Integration\LuceneSearcherSimpleDataTest.cs" />
-    <Compile Include="Integration\LuceneSearcherTests.cs" />
     <Compile Include="Unit\Configuration\Class1.cs" />
     <Compile Include="Unit\Schema\JSchemaCollectionTest.cs" />
     <Compile Include="Unit\Schema\JsonSchemaTypeConverter.cs" />
