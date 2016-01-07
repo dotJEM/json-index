@@ -185,20 +185,7 @@ namespace DotJEM.Json.Index.Test.Unit.Schema
                             }
                         }
                     }).ToString(Formatting.None));
-                //[TestCase("{ Foo: [ 42 ], Bar: { Foo: ['Test this', 42] } }")]
-                //[TestCase("{ Foo: '42', Bar: { Foo: ['Test this', 42] } }")]
-                //[TestCase("{ Foo: null, Bar: { Foo: ['Test this', 42] } }")]
-                //[TestCase("{ Foo: undefined, Bar: { Foo: ['Test this', 42] } }")]
-                //[TestCase("{ Foo: '42', Bar: { Foo: ['Test this', 42, { Test: 'hest' }] } }")]
-                //[TestCase("{ Foo: '42', Bar: { Foo: [ ['Test this', 42], { Test: 'hest' }] } }")]
             }
         }
-
-        /*
-
-         
-         
-         */
-
     }
 }
