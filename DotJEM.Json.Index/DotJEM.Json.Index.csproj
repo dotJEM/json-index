@@ -146,6 +146,7 @@
     <Compile Include="Storage\MemoryImpl.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="DotJEM.Json.Index.nuspec" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup />

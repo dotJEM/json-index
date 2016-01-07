@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("DotJEM.Json.Index")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Indexing of JSON in Lucene.net")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyProduct("DotJEM.Json.Index")]
 [assembly: AssemblyCompany("N/A")]
 [assembly: AssemblyCopyright("Copyright © DotJEM A/S 2014-2015")]
-[assembly: AssemblyTrademark("")]
+[assembly: AssemblyTrademark("N/A")]
 [assembly: AssemblyCulture("")]
 
 // Setting ComVisible to false makes the types in this assembly not visible 

@@ -7,9 +7,10 @@ using DotJEM.Json.Index.Searching;
 using DotJEM.Json.Index.Test.Util;
 using NUnit.Framework;
 
-namespace DotJEM.Json.Index.Benchmarks
+namespace DotJEM.Json.Index.Benchmarks.BasicBenchmarks
 {
     [TestFixture]
+    [Category("benchmark")]
     public class IndexBenchmarks
     {
         private readonly IStorageIndex index = new LuceneStorageIndex();

@@ -1,0 +1,41 @@
+version: 0.0.{build}
+
+configuration: Release
+
+init:
+- ps: Update-AppveyorBuild -Version "0.0.$env:appveyor_build_number-sha.$($env:appveyor_repo_commit.substring(0,7))"
+
+nuget:
+  disable_publish_on_pr: true
+
+assembly_info:
+  patch: true
+  file: AssemblyInfo.*
+  assembly_version: '0.0.{build}'
+  assembly_file_version: '0.0.{build}'
+  assembly_informational_version: '{version}'
+
+matrix:
+  fast_finish: true # fail fast!
+
+clone_depth: 3  
+
+pull_requests:
+  do_not_increment_build_number: true
+
+before_build:
+  nuget restore
+
+build:
+  publish_nuget: true
+  publish_nuget_symbols: true
+
+test:
+  assemblies:
+    - **\*.test.dll
+
+deploy:
+  provider: NuGet
+  api_key:
+    secure: KEHWtW02rf5aCAlwchP0Siow5EA24hwtm09uvsR58bMWirJ8uXl1SidBnNCfJ3cw
+  skip_symbols: false
