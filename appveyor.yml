@@ -32,7 +32,7 @@ build:
 
 test:
   assemblies:
-    - **\*.test.dll
+    - '**\*.test.dll'
 
 deploy:
   provider: NuGet

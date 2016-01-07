@@ -17,6 +17,9 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotJEM.Json.Index.Benchmarks", "DotJEM.Json.Index.Benchmarks\DotJEM.Json.Index.Benchmarks.csproj", "{6351B6F6-E877-4368-B2F8-0178FC9E92DB}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{CD1D96F2-E04C-4E83-96E7-9EA05DC18C2E}"
+	ProjectSection(SolutionItems) = preProject
+		appveyor.yml = appveyor.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
