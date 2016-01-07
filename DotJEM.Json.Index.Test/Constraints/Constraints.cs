@@ -14,6 +14,8 @@ namespace DotJEM.Json.Index.Test.Constraints
         private bool result = true;
         private StringBuilder message;
 
+        
+
         #region Core
         public override bool Matches(object actual)
         {
