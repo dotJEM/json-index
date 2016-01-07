@@ -1,3 +1,5 @@
+[![Build status](https://ci.appveyor.com/api/projects/status/y64ia7mb9e3uxks3/branch/master?svg=true)](https://ci.appveyor.com/project/jeme/json-index/branch/master)
+
 dotJEM JSON Index
 =================
 
