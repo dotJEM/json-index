@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using DotJEM.Json.Index.Configuration.FieldStrategies;
+using DotJEM.Json.Index.Configuration.FieldStrategies.Querying;
 using DotJEM.Json.Index.Schema;
 using Lucene.Net.QueryParsers;
 using Lucene.Net.Search;
@@ -53,12 +54,7 @@ namespace DotJEM.Json.Index.Searching
         {
             return GetBooleanQuery(clauses, disableCoord);
         }
-
-        //public override Query Parse(string query)
-        //{
-        //    return base.Parse(query);
-        //}
-
+        
         private IFieldQueryBuilder PrepareBuilderFor(string field)
         {
             JsonSchemaExtendedType type = index.Schemas.ExtendedType(field);

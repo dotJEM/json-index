@@ -2,126 +2,16 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using DotJEM.Json.Index.Configuration.FieldStrategies.Querying;
 using DotJEM.Json.Index.Schema;
 using DotJEM.Json.Index.Searching;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
-using Lucene.Net.QueryParsers;
 using Lucene.Net.Search;
 using Newtonsoft.Json.Linq;
 
 namespace DotJEM.Json.Index.Configuration.FieldStrategies
 {
-    public interface IFieldQueryBuilder
-    {
-        Query BuildFieldQuery(CallContext call, string query, int slop);
-        Query BuildFuzzyQuery(CallContext call, string query, float similarity);
-        Query BuildPrefixQuery(CallContext call, string query);
-        Query BuildWildcardQuery(CallContext call, string query);
-        Query BuildRangeQuery(CallContext call, string part1, string part2, bool inclusive);
-    }
-
-    public class FieldQueryBuilder : IFieldQueryBuilder
-    {
-        protected IQueryParser Parser { get; private set; }
-        protected string Field { get; private set; }
-        protected JsonSchemaExtendedType Type { get; private set; }
-
-        public FieldQueryBuilder(IQueryParser parser, string field, JsonSchemaExtendedType type)
-        {
-            Parser = parser;
-            Field = field;
-            Type = type;
-        }
-        
-        public virtual Query BuildFieldQuery(CallContext call, string query, int slop)
-        {
-            return call.CallDefault();
-        }
-
-        public virtual Query BuildFuzzyQuery(CallContext call, string query, float similarity)
-        {
-            return call.CallDefault();
-        }
-
-        public virtual Query BuildPrefixQuery(CallContext call, string query)
-        {
-            return call.CallDefault();
-        }
-
-        public virtual Query BuildWildcardQuery(CallContext call, string query)
-        {
-            return call.CallDefault();
-        }
-        
-        public virtual Query BuildRangeQuery(CallContext call, string part1, string part2, bool inclusive)
-        {
-            //TODO: Try parse and separate type generators.
-            IList<BooleanClause> clauses = new List<BooleanClause>();
-            if (Type.HasFlag(JsonSchemaExtendedType.Date))
-            {
-                try
-                {
-                    clauses.Add(
-                        new BooleanClause(
-                            NumericRangeQuery.NewLongRange(Field,
-                            part1 == "null" ? (long?) null : DateTime.Parse(part1, CultureInfo.InvariantCulture).Ticks,
-                            part2 == "null" ? (long?)null : DateTime.Parse(part2, CultureInfo.InvariantCulture).Ticks,
-                            inclusive,
-                            inclusive), Occur.SHOULD));
-                }
-                catch (FormatException ex)
-                {
-                    if (Type == JsonSchemaExtendedType.Date)
-                    {
-                        throw new ParseException("Invalid DateTime format", ex);
-                    }
-                }
-            }
-            
-            if (Type.HasFlag(JsonSchemaExtendedType.Integer))
-            {
-                try
-                {
-                clauses.Add(
-                    new BooleanClause(
-                        NumericRangeQuery.NewLongRange(Field,
-                        part1 == "null" ? (long?)null : long.Parse(part1),
-                        part2 == "null" ? (long?)null : long.Parse(part2),
-                        inclusive,
-                        inclusive), Occur.SHOULD));
-                }
-                catch (FormatException ex)
-                {
-                    if (Type == JsonSchemaExtendedType.Integer)
-                    {
-                        throw new ParseException("Invalid Integer format", ex);
-                    }
-                }
-            }
-
-            if (Type != JsonSchemaExtendedType.Date && Type != JsonSchemaExtendedType.Integer)
-            {
-                clauses.Add(new BooleanClause(call.CallDefault(), Occur.SHOULD));
-            }
-
-            return Parser.BooleanQuery(clauses, true);
-        }
-    }
-
-    public class TermFieldQueryBuilder : FieldQueryBuilder
-    {
-        public TermFieldQueryBuilder(IQueryParser parser, string field, JsonSchemaExtendedType type)
-            : base(parser, field, type)
-        {
-        }
-
-        public override Query BuildFieldQuery(CallContext call, string query, int slop)
-        {
-            return new TermQuery(new Term(Field, query));
-        }
-    }
-
     public interface IFieldStrategy
     {
         Query BuildQuery(string path, string value);

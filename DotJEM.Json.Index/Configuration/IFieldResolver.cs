@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using System;
+using Newtonsoft.Json.Linq;
 
 namespace DotJEM.Json.Index.Configuration
 {
@@ -18,7 +19,15 @@ namespace DotJEM.Json.Index.Configuration
 
         public string Resolve(JObject entity)
         {
-            return entity[field].Value<string>();
+            try
+            {
+                return entity[field].Value<string>();
+            }
+            catch (Exception)
+            {
+                
+                throw;
+            }
         }
     }
 }

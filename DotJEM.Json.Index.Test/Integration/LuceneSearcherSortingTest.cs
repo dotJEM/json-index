@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using DotJEM.Json.Index.Configuration;
-using DotJEM.Json.Index.Test.Constraints;
-using DotJEM.Json.Index.Test.Util;
 using Lucene.Net.Index;
 using Lucene.Net.Search;
 using Lucene.Net.Util;

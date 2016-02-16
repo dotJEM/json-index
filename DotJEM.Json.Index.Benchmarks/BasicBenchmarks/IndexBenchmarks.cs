@@ -5,7 +5,9 @@ using System.Linq;
 using DotJEM.Json.Index.Benchmarks.TestFactories;
 using DotJEM.Json.Index.Searching;
 using DotJEM.Json.Index.Test.Util;
+using Lucene.Net.Documents;
 using NUnit.Framework;
+using Document = DotJEM.Json.Index.Test.Util.Document;
 
 namespace DotJEM.Json.Index.Benchmarks.BasicBenchmarks
 {

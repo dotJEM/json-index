@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using DotJEM.Json.Index.Configuration;
-using DotJEM.Json.Index.Test.Constraints;
-using DotJEM.Json.Index.Test.Util;
+using DotJEM.NUnit.Json;
+using DotJEM.NUnit.Json.Extensions;
 using Lucene.Net.Index;
 using Lucene.Net.Search;
 using Lucene.Net.Util;
@@ -71,7 +70,7 @@ namespace DotJEM.Json.Index.Test.Integration
             List<dynamic> result = index.Searcher.Search("Mustang").Select(hit => hit.Json).ToList();
             Assert.That(result,
                 Has.Count.EqualTo(1) &
-                Has.Exactly(1).That(HAS.JProperties(JObject.Parse("{ Id: '00000000-0000-0000-0000-000000000004', Type: 'Car', Brand: 'Ford', Model: 'Mustang' }"))));
+                Has.Exactly(1).That(JsonHas.Properties("{ Id: '00000000-0000-0000-0000-000000000004', Type: 'Car', Brand: 'Ford', Model: 'Mustang' }")));
         }
 
         [Test]
@@ -84,7 +83,7 @@ namespace DotJEM.Json.Index.Test.Integration
             List<dynamic> result = index.Searcher.Search(query).Select(hit => hit.Json).ToList();
             Assert.That(result,
                 Has.Count.EqualTo(1) &
-                Has.Exactly(1).That(HAS.JProperties(JObject.Parse("{ Id: '00000000-0000-0000-0000-000000000004', Type: 'Car', Brand: 'Ford', Model: 'Mustang' }"))));
+                Has.Exactly(1).That(JsonHas.Properties("{ Id: '00000000-0000-0000-0000-000000000004', Type: 'Car', Brand: 'Ford', Model: 'Mustang' }")));
         }
     }
 }
