@@ -51,7 +51,7 @@ namespace DotJEM.Json.Index.Test.Unit
 
 
             Assert.That(queryParser.Parse("Created: [2014-09-10T11:00 TO 2014-09-10T13:00]").ToString(), 
-                Is.EqualTo("Created:[635459436000000000 TO 635459508000000000]"));
+                Is.EqualTo("+Created:[635459436000000000 TO 635459508000000000]"));
         }
 
         [Test]
