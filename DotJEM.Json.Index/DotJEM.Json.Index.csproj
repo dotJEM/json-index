@@ -126,6 +126,10 @@
     <Compile Include="Storage\MemoryCashedLockFactory.cs" />
     <Compile Include="Storage\MemoryImpl.cs" />
     <Compile Include="Util\AdvConvert.cs" />
+    <Compile Include="Visitors\AbstractDocumentBuilder.cs" />
+    <Compile Include="Visitors\AbstractJTokenVisitor.cs" />
+    <Compile Include="Visitors\DefaultDocumentBuilder.cs" />
+    <Compile Include="Visitors\DocumentBuilderContext.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="DotJEM.Json.Index.nuspec" />

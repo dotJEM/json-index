@@ -97,6 +97,7 @@ namespace DotJEM.Json.Index.Configuration.FieldStrategies.Querying
                 }
             }
 
+
             if (Type != JsonSchemaExtendedType.Date && Type != JsonSchemaExtendedType.Integer)
             {
                 clauses.Add(new BooleanClause(call.CallDefault(), Occur.SHOULD));
