@@ -76,6 +76,12 @@ namespace DotJEM.Json.Index.Visitors
             DateTime date = json.Value<DateTime>();
             AddField(new NumericField(context.Path + ".@ticks", Field.Store.NO, true).SetLongValue(date.Ticks));
 
+            //TODO: It is likely that we can switch to a better format such as lucene it self uses, this is very short and should therefore probably
+            //      perform even better.
+            //
+            //   Examples: 
+            //      2014-09-10T11:00 => 0hzwfs800
+            //      2014-09-10T13:00 => 0hzxzie7z
             AddField(new NumericField(context.Path + ".@year", Field.Store.NO, true).SetIntValue(date.Year));
             AddField(new NumericField(context.Path + ".@month", Field.Store.NO, true).SetIntValue(date.Month));
             AddField(new NumericField(context.Path + ".@day", Field.Store.NO, true).SetIntValue(date.Day));
