@@ -74,10 +74,10 @@ namespace DotJEM.Json.Index.Schema
                 Field = path.ToString("."),
                 Items = json.Aggregate(
                     new JSchema(JsonSchemaType.None, JsonSchemaExtendedType.None),
-                    (schema, token) =>
-                        schema.Merge(InternalGenerate(token as JObject, path) 
-                            ?? InternalGenerate(token as JValue, path)
-                            ?? InternalGenerate(token as JArray, path))
+                    (schema, token) => schema.Merge(
+                           InternalGenerate(token as JObject, path) ??
+                           InternalGenerate(token as JValue, path) ??
+                           InternalGenerate(token as JArray, path))
                     )
             };
         }

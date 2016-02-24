@@ -49,30 +49,37 @@ namespace DotJEM.Json.Index.Configuration.FieldStrategies.Querying
             DateTime? lower = ParseOptionalDateTime(part1, now);
             DateTime? upper = ParseOptionalDateTime(part2, now);
 
-            return NumericRangeQuery.NewLongRange(field /* + ".@ticks"*/, lower?.Ticks, upper?.Ticks, inclusive, inclusive);
+            Query absoluteRange = NumericRangeQuery.NewLongRange(field + ".@ticks", lower?.Ticks, upper?.Ticks, inclusive, inclusive);
+            BooleanQuery decomp = new BooleanQuery();
 
-            //Query absoluteRange = NumericRangeQuery.NewLongRange(field + ".@ticks", lower?.Ticks, upper?.Ticks, inclusive, inclusive);
-            //BooleanQuery decomp = new BooleanQuery();
-            //decomp.Add(absoluteRange, Occur.MUST);
+            if (lower == null || upper == null)
+            {
+                decomp.Add(NumericRangeQuery.NewIntRange(field + ".@year", lower?.Year, upper?.Year, true, true), Occur.MUST);
+                decomp.Add(NumericRangeQuery.NewIntRange(field + ".@month", lower?.Month, upper?.Month, true, true), Occur.MUST);
+                decomp.Add(NumericRangeQuery.NewIntRange(field + ".@day", lower?.Day, upper?.Day, true, true), Occur.MUST);
+                return decomp.Append(absoluteRange);
+            }
 
-            //if (lower == null || upper == null)
-            //{
-            //    decomp.Add(NumericRangeQuery.NewIntRange(field + ".@year", lower?.Year, upper?.Year, true, true), Occur.MUST);
-            //    decomp.Add(NumericRangeQuery.NewIntRange(field + ".@month", lower?.Month, upper?.Month, true, true), Occur.MUST);
-            //    decomp.Add(NumericRangeQuery.NewIntRange(field + ".@day", lower?.Day, upper?.Day, true, true), Occur.MUST);
-            //    return decomp;
-            //}
+            decomp.Add(NumericRangeQuery.NewIntRange(field + ".@year", lower?.Year, upper?.Year, true, true), Occur.MUST);
+            if (lower.Value.Year != upper.Value.Year)
+                return decomp.Append(absoluteRange);
 
-            //decomp.Add(NumericRangeQuery.NewIntRange(field + ".@year", lower?.Year, upper?.Year, true, true), Occur.MUST);
-            //if (lower.Value.Year != upper.Value.Year)
-            //    return decomp;
+            decomp.Add(NumericRangeQuery.NewIntRange(field + ".@month", lower?.Month, upper?.Month, true, true), Occur.MUST);
+            if (lower.Value.Month != upper.Value.Month)
+                return decomp.Append(absoluteRange);
 
-            //decomp.Add(NumericRangeQuery.NewIntRange(field + ".@month", lower?.Month, upper?.Month, true, true), Occur.MUST);
-            //if (lower.Value.Month != upper.Value.Month)
-            //    return decomp;
-
-            //decomp.Add(NumericRangeQuery.NewIntRange(field + ".@day", lower?.Day, upper?.Day, true, true), Occur.MUST);
-            //return decomp;
+            decomp.Add(NumericRangeQuery.NewIntRange(field + ".@day", lower?.Day, upper?.Day, true, true), Occur.MUST);
+            return decomp.Append(absoluteRange);
         }
+    }
+
+    public static class BooleanQueryExt
+    {
+        public static BooleanQuery Append(this BooleanQuery self, Query absoluteRange)
+        {
+            self.Add(absoluteRange, Occur.MUST);
+            return self;
+        }
+
     }
 }

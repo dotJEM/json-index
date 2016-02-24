@@ -19,9 +19,9 @@ namespace DotJEM.Json.Index.Configuration.FieldStrategies.Querying
 
     public class FieldQueryBuilder : IFieldQueryBuilder
     {
-        protected IQueryParser Parser { get; private set; }
-        protected string Field { get; private set; }
-        protected JsonSchemaExtendedType Type { get; private set; }
+        protected IQueryParser Parser { get; }
+        protected string Field { get; }
+        protected JsonSchemaExtendedType Type { get; }
 
         public FieldQueryBuilder(IQueryParser parser, string field, JsonSchemaExtendedType type)
         {
@@ -54,18 +54,32 @@ namespace DotJEM.Json.Index.Configuration.FieldStrategies.Querying
         {
             //TODO: Try parse and separate type generators.
             IList<BooleanClause> clauses = new List<BooleanClause>();
+            //TODO: this is hacky atm. 
+            if (Field.EndsWith(".@count"))
+            {
+                try
+                {
+                    clauses.Add(
+                        new BooleanClause(
+                            NumericRangeQuery.NewIntRange(Field,
+                                part1 == "null" ? (int?)null : int.Parse(part1),
+                                part2 == "null" ? (int?)null : int.Parse(part2),
+                                inclusive,
+                                inclusive), Occur.MUST));
+                }
+                catch (FormatException ex)
+                {
+                    throw new ParseException("Invalid format for count.", ex);
+                }
+                return Parser.BooleanQuery(clauses, true);
+            }
+
             if (Type.HasFlag(JsonSchemaExtendedType.Date))
             {
                 try
                 {
-                    clauses.Add(new BooleanClause(new DateRangeFieldQueryFactory().Create(Field, call, part1, part2, inclusive), Occur.MUST));
-                    //clauses.Add(
-                    //    new BooleanClause(
-                    //        NumericRangeQuery.NewLongRange(Field,
-                    //            part1 == "null" ? (long?) null : DateTime.Parse(part1, CultureInfo.InvariantCulture).Ticks,
-                    //            part2 == "null" ? (long?)null : DateTime.Parse(part2, CultureInfo.InvariantCulture).Ticks,
-                    //            inclusive,
-                    //            inclusive), Occur.SHOULD));
+                    clauses.Add(new BooleanClause(new DateRangeFieldQueryFactory().Create(Field, call, part1, part2, inclusive), 
+                        Type == JsonSchemaExtendedType.Date ? Occur.MUST : Occur.SHOULD));
                 }
                 catch (FormatException ex)
                 {
@@ -86,7 +100,7 @@ namespace DotJEM.Json.Index.Configuration.FieldStrategies.Querying
                                 part1 == "null" ? (long?)null : long.Parse(part1),
                                 part2 == "null" ? (long?)null : long.Parse(part2),
                                 inclusive,
-                                inclusive), Occur.SHOULD));
+                                inclusive), Type == JsonSchemaExtendedType.Integer ? Occur.MUST : Occur.SHOULD));
                 }
                 catch (FormatException ex)
                 {
@@ -96,6 +110,7 @@ namespace DotJEM.Json.Index.Configuration.FieldStrategies.Querying
                     }
                 }
             }
+
 
             if (Type != JsonSchemaExtendedType.Date && Type != JsonSchemaExtendedType.Integer)
             {

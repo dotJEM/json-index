@@ -17,19 +17,16 @@ namespace DotJEM.Json.Index.Test.Integration
         private readonly IStorageIndex index = new LuceneStorageIndex();
 
         [TestFixtureSetUp]
+        //[Test]
         public void TestFixtureSetUp()
         {
             var config = index.Configuration;
-            config.SetTypeResolver("Type").SetAreaResolver("Area")
-                .ForAll().SetIdentity("Id");
-
-            //config.For("ship").Index("number", As.Long());
-
-            //config.ForAll().Index("Number", As.Term());
-
-            //config.For("Car").Index("Model", As.Default().Analyzed(Field.Index.NOT_ANALYZED))
-            //                 .Query("Model", Using.Term().When.Always());
-
+            config
+                .SetTypeResolver("Type")
+                .SetAreaResolver("Area")
+                .ForAll()
+                .SetIdentity("Id");
+            
             index.Write(JObject.FromObject(new { Id = new Guid("00000000-0000-0000-0000-000000000001"), Type = "Person", Name = "John", LastName = "Doe", Area = "Foo" }));
             index.Write(JObject.FromObject(new { Id = new Guid("00000000-0000-0000-0000-000000000002"), Type = "Person", Name = "Peter", LastName = "Pan", Area = "Foo" }));
             index.Write(JObject.FromObject(new { Id = new Guid("00000000-0000-0000-0000-000000000003"), Type = "Person", Name = "Alice", Area = "Foo" }));
@@ -55,14 +52,14 @@ namespace DotJEM.Json.Index.Test.Integration
                 Has.Count.EqualTo(2));
         }
 
-        //[Test]
-        //public void Search_ForMustangWithSpecifiedFields_ReturnsCarMustang()
-        //{
-        //    List<dynamic> result = index.Searcher.Search("Mustang", "Model".Split(',')).Select(hit => hit.Json).ToList();
-        //    Assert.That(result,
-        //        Has.Count.EqualTo(1) &
-        //        Has.Exactly(1).That(HAS.JProperties(JObject.Parse("{ Id: '00000000-0000-0000-0000-000000000004', Type: 'Car', Brand: 'Ford', Model: 'Mustang' }"))));
-        //}
+        [Test]
+        public void Search_Id4_ReturnsCarMustang()
+        {
+            List<dynamic> result = index.Searcher.Search("Id: 00000000-0000-0000-0000-000000000004").Select(hit => hit.Json).ToList();
+            Assert.That(result,
+                Has.Count.EqualTo(1) &
+                Has.Exactly(1).That(JsonHas.Properties("{ Id: '00000000-0000-0000-0000-000000000004', Type: 'Car', Brand: 'Ford', Model: 'Mustang' }")));
+        }
 
         [Test]
         public void Search_ForMustang_ReturnsCarMustang()
