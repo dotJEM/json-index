@@ -15,13 +15,7 @@ namespace DotJEM.Json.Index.Visitors
 
         protected override void VisitArray(JArray json, IDocumentBuilderContext context)
         {
-            Config.Field.Strategy(context.Path);
-            //List<IFieldable> fields = index.Configuration.Field
-            //    .Strategy(contentType, fullName)
-            //    .BuildFields(fullName, value).ToList();
-            //return fields;
-
-            AddField(new NumericField(context.Path + ".@count", Field.Store.NO, true).SetLongValue(json.Count));
+            AddField(new NumericField(context.Path + ".@count", Field.Store.NO, true).SetIntValue(json.Count));
             base.VisitArray(json, context);
         }
 
@@ -40,15 +34,20 @@ namespace DotJEM.Json.Index.Visitors
         protected override void VisitString(JValue json, IDocumentBuilderContext context)
         {
             string str = json.ToString(CultureInfo.InvariantCulture);
-            if (str.Contains(" "))
-            {
-                //context.AddField(new Field(context.Path, str, Field.Store.NO, Field.Index.ANALYZED));
-                AddField(new Field(context.Path, str, Field.Store.NO, Field.Index.NOT_ANALYZED));
-            }
-            else
-            {
-                AddField(new Field(context.Path, str, Field.Store.NO, Field.Index.NOT_ANALYZED));
-            }
+            AddField(new Field(context.Path, str, Field.Store.NO, Field.Index.ANALYZED));
+            AddField(new Field(context.Path, str, Field.Store.NO, Field.Index.NOT_ANALYZED));
+
+            // Consider to stor it as
+            //if (str.Contains(" "))
+            //{
+            //    AddField(new Field(context.Path, str, Field.Store.NO, Field.Index.ANALYZED));
+            //    AddField(new Field(context.Path, str, Field.Store.NO, Field.Index.NOT_ANALYZED));
+            //}
+            //else
+            //{
+            //    AddField(new Field(context.Path, str, Field.Store.NO, Field.Index.ANALYZED));
+            //    AddField(new Field(context.Path, str, Field.Store.NO, Field.Index.NOT_ANALYZED));
+            //}
 
             base.VisitString(json, context);
         }

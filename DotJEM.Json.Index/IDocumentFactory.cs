@@ -48,12 +48,12 @@ namespace DotJEM.Json.Index
             IDocumentBuilder builder = new DefaultDocumentBuilder(index);
             Document document = builder.Build(value);
 
-            //Document document = enumarator
-            //    .Enumerate(value)
-            //    .Where(node => node.IsLeaf)
-            //    .SelectMany(node => factory.Create(node.Path, contentType, node.Token as JValue))
-            //    .Aggregate(new Document(), (doc, field) => doc.Put(field));
-            
+            Document document2 = enumarator
+                .Enumerate(value)
+                .Where(node => node.IsLeaf)
+                .SelectMany(node => factory.Create(node.Path, contentType, node.Token as JValue))
+                .Aggregate(new Document(), (doc, field) => doc.Put(field));
+
             document.Add(new Field(index.Configuration.RawField, value.ToString(Formatting.None), Field.Store.YES, Field.Index.NO));
             return document;
         }
