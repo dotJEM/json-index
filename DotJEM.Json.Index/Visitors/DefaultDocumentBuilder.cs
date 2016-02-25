@@ -8,8 +8,8 @@ namespace DotJEM.Json.Index.Visitors
 {
     public class DefaultDocumentBuilder : AbstractDocumentBuilder
     {
-        public DefaultDocumentBuilder(IStorageIndex index) 
-            : base(index)
+        public DefaultDocumentBuilder(IStorageIndex index, string contentType) 
+            : base(index, contentType)
         {
         }
 
@@ -22,8 +22,8 @@ namespace DotJEM.Json.Index.Visitors
         protected override void VisitInteger(JValue json, IDocumentBuilderContext context)
         {
             long value = json.Value<long>();
-            //if (context.Strategy.Visit(AddField, json, value, context))
-            //    return;
+            if (context.Strategy.Visit(AddField, json, value, context))
+                return;
 
             AddField(new NumericField(context.Path, Field.Store.NO, true).SetLongValue(value));
             base.VisitInteger(json, context);
@@ -32,8 +32,8 @@ namespace DotJEM.Json.Index.Visitors
         protected override void VisitFloat(JValue json, IDocumentBuilderContext context)
         {
             double value = json.Value<double>();
-            //if (context.Strategy.Visit(AddField, json, value, context))
-            //    return;
+            if (context.Strategy.Visit(AddField, json, value, context))
+                return;
 
             AddField(new NumericField(context.Path, Field.Store.NO, true).SetDoubleValue(value));
             base.VisitFloat(json, context);
@@ -42,8 +42,8 @@ namespace DotJEM.Json.Index.Visitors
         protected override void VisitString(JValue json, IDocumentBuilderContext context)
         {
             string str = json.ToString(CultureInfo.InvariantCulture);
-            //if (context.Strategy.Visit(AddField, json, str, context))
-            //    return;
+            if (context.Strategy.Visit(AddField, json, str, context))
+                return;
  
             AddField(new Field(context.Path, str, Field.Store.NO, Field.Index.ANALYZED));
             AddField(new Field(context.Path, str, Field.Store.NO, Field.Index.NOT_ANALYZED));
@@ -72,8 +72,8 @@ namespace DotJEM.Json.Index.Visitors
         protected override void VisitBoolean(JValue json, IDocumentBuilderContext context)
         {
             bool value = json.Value<bool>();
-            //if (context.Strategy.Visit(AddField, json, value, context))
-            //    return;
+            if (context.Strategy.Visit(AddField, json, value, context))
+                return;
 
             AddField(new Field(context.Path, value.ToString(), Field.Store.NO, Field.Index.NOT_ANALYZED));
             base.VisitBoolean(json, context);
@@ -81,8 +81,8 @@ namespace DotJEM.Json.Index.Visitors
 
         protected override void VisitNull(JValue json, IDocumentBuilderContext context)
         {
-            //if (context.Strategy.VisitNull(AddField, json, context))
-            //    return;
+            if (context.Strategy.VisitNull(AddField, json, context))
+                return;
 
             AddField(new Field(context.Path, "$$NULL$$", Field.Store.NO, Field.Index.NOT_ANALYZED));
             base.VisitNull(json, context);
@@ -90,8 +90,8 @@ namespace DotJEM.Json.Index.Visitors
 
         protected override void VisitUndefined(JValue json, IDocumentBuilderContext context)
         {
-            //if (context.Strategy.VisitUndefined(AddField, json, context))
-            //    return;
+            if (context.Strategy.VisitUndefined(AddField, json, context))
+                return;
 
             AddField(new Field(context.Path, "$$UNDEFINED$$", Field.Store.NO, Field.Index.NOT_ANALYZED));
             base.VisitUndefined(json, context);
@@ -100,8 +100,8 @@ namespace DotJEM.Json.Index.Visitors
         protected override void VisitDate(JValue json, IDocumentBuilderContext context)
         {
             DateTime value = json.Value<DateTime>();
-            //if (context.Strategy.Visit(AddField, json, value, context))
-            //    return;
+            if (context.Strategy.Visit(AddField, json, value, context))
+                return;
 
             AddField(new NumericField(context.Path + ".@ticks", Field.Store.NO, true).SetLongValue(value.Ticks));
 
@@ -122,8 +122,8 @@ namespace DotJEM.Json.Index.Visitors
         protected override void VisitGuid(JValue json, IDocumentBuilderContext context)
         {
             Guid value = json.Value<Guid>();
-            //if (context.Strategy.Visit(AddField, json, value, context))
-            //    return;
+            if (context.Strategy.Visit(AddField, json, value, context))
+                return;
 
             AddField(new Field(context.Path, value.ToString(), Field.Store.NO, Field.Index.NOT_ANALYZED));
             base.VisitGuid(json, context);
@@ -132,8 +132,8 @@ namespace DotJEM.Json.Index.Visitors
         protected override void VisitUri(JValue json, IDocumentBuilderContext context)
         {
             Uri value = (Uri) json;
-            //if (context.Strategy.Visit(AddField, json, value, context))
-            //    return;
+            if (context.Strategy.Visit(AddField, json, value, context))
+                return;
 
             AddField(new Field(context.Path, value.ToString(), Field.Store.NO, Field.Index.NOT_ANALYZED));
             base.VisitGuid(json, context);
@@ -142,8 +142,8 @@ namespace DotJEM.Json.Index.Visitors
         protected override void VisitTimeSpan(JValue json, IDocumentBuilderContext context)
         {
             TimeSpan value = json.Value<TimeSpan>();
-            //if (context.Strategy.Visit(AddField, json, value, context))
-            //    return;
+            if (context.Strategy.Visit(AddField, json, value, context))
+                return;
 
             AddField(new NumericField(context.Path + ".@ticks", Field.Store.NO, true).SetLongValue(value.Ticks));
 

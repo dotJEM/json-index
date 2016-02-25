@@ -59,7 +59,7 @@ namespace DotJEM.Json.Index.Configuration.FieldStrategies
 
     public class TermFieldStrategy : FieldStrategy
     {
-        public override IIndexingVisitorStrategy IndexingStrategy => new NullFieldIndexingVisitorStrategy();
+        public override IIndexingVisitorStrategy IndexingStrategy => new TermFieldIndexingVisitorStrategy();
 
         public override Query BuildQuery(string field, string value)
         {
