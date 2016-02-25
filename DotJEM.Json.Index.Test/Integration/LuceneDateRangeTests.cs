@@ -21,9 +21,9 @@ namespace DotJEM.Json.Index.Test.Integration
                 .SetTypeResolver("type")
                 .SetAreaResolver("area")
                 .ForAll().SetIdentity("id");
+
             index = TestObjects(1000).Aggregate(
                 index, (idx, json) => idx.Write(json));
-
         }
 
         [Test]

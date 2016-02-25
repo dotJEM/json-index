@@ -9,35 +9,34 @@ namespace DotJEM.Json.Index.Visitors
     {
         Document Document { get; }
         Document Build(JObject json);
+
         void AddField(IFieldable field);
     }
 
     public abstract class AbstractDocumentBuilder : AbstractJTokenVisitor<IDocumentBuilderContext>, IDocumentBuilder
     {
+        private readonly string contentType;
+        private readonly IIndexConfiguration configuration;
+
         public Document Document { get; }
 
-        protected IIndexConfiguration Config { get; }
-
-        protected AbstractDocumentBuilder(IStorageIndex index)
+        protected AbstractDocumentBuilder(IStorageIndex index, string contentType)
         {
+            this.contentType = contentType;
             Document = new Document();
 
-            this.Config = index.Configuration;
+            configuration = index.Configuration;
         }
 
-        public void AddField(IFieldable field)
-        {
-            Document.Add(field);
-        }
+        public void AddField(IFieldable field) => Document.Add(field);
 
         public Document Build(JObject json)
         {
-            DocumentBuilderContext context = new DocumentBuilderContext(json);
-            Document.Add(new Field(Config.RawField, json.ToString(Formatting.None), Field.Store.YES, Field.Index.NO));
+            DocumentBuilderContext context = new DocumentBuilderContext(configuration, contentType, json);
+            Document.Add(new Field(configuration.RawField, json.ToString(Formatting.None), Field.Store.YES, Field.Index.NO));
             Visit(json, context);
             return Document;
         }
-
 
         protected override void VisitProperty(JProperty json, IDocumentBuilderContext context)
         {

@@ -9,6 +9,23 @@ using Newtonsoft.Json.Schema;
 
 namespace DotJEM.Json.Index
 {
+    public interface IDocumentBuilderFactory
+    {
+        IDocumentBuilder Create(string contentType);
+    }
+
+    public class DefaultDocumentBuilderFactory : IDocumentBuilderFactory
+    {
+        private readonly IStorageIndex index;
+
+        public DefaultDocumentBuilderFactory(IStorageIndex index)
+        {
+            this.index = index;
+        }
+
+        public IDocumentBuilder Create(string contentType) => new DefaultDocumentBuilder(index, contentType);
+    }
+
     public interface IDocumentFactory
     {
         Document Create(JObject value);
@@ -16,21 +33,19 @@ namespace DotJEM.Json.Index
 
     public class LuceneDocumentFactory : IDocumentFactory
     {
-        private readonly IFieldFactory factory;
         private readonly IStorageIndex index;
-        private readonly IJObjectEnumarator enumarator;
+        private readonly IDocumentBuilderFactory factory;
         private readonly IJSchemaGenerator generator;
 
         public LuceneDocumentFactory(IStorageIndex index)
-            : this(index, new FieldFactory(index), new JObjectEnumerator(), new JSchemaGenerator())
+            : this(index, new DefaultDocumentBuilderFactory(index), new JSchemaGenerator())
         {
         }
 
-        public LuceneDocumentFactory(IStorageIndex index, IFieldFactory factory, IJObjectEnumarator enumarator, IJSchemaGenerator generator)
+        public LuceneDocumentFactory(IStorageIndex index, IDocumentBuilderFactory factory, IJSchemaGenerator generator)
         {
             this.index = index;
             this.factory = factory;
-            this.enumarator = enumarator;
             this.generator = generator;
         }
 
@@ -44,9 +59,10 @@ namespace DotJEM.Json.Index
                 ? generator.Generate(value, contentType, storageArea)
                 : schema.Merge(generator.Generate(value, contentType, storageArea));
             index.Schemas[contentType] = schema;
-            
-            IDocumentBuilder builder = new DefaultDocumentBuilder(index);
-            Document document = builder.Build(value);
+
+            Document document = factory
+                .Create(contentType)
+                .Build(value);
 
             document.Add(new Field(index.Configuration.RawField, value.ToString(Formatting.None), Field.Store.YES, Field.Index.NO));
             return document;
