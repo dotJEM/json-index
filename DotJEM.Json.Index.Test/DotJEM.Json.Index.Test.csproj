@@ -138,6 +138,9 @@
     <Content Include="Data\ipsums\samueljackson.txt" />
     <Content Include="Data\simple.js" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Unit\Builder\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

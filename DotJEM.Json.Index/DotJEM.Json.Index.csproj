@@ -95,7 +95,6 @@
     <Compile Include="Configuration\IdentityStrategies\FieldIdentityResolver.cs" />
     <Compile Include="Configuration\IdentityStrategies\IIdentityResolver.cs" />
     <Compile Include="Configuration\IIndexConfiguration.cs" />
-    <Compile Include="IFieldFactory.cs" />
     <Compile Include="IDocumentFactory.cs" />
     <Compile Include="Schema\ISchemaCollection.cs" />
     <Compile Include="IStorageIndex.cs" />
@@ -130,6 +129,7 @@
     <Compile Include="Visitors\AbstractJTokenVisitor.cs" />
     <Compile Include="Visitors\DefaultDocumentBuilder.cs" />
     <Compile Include="Visitors\DocumentBuilderContext.cs" />
+    <Compile Include="Visitors\DefaultIndexingVisitorStrategy.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="DotJEM.Json.Index.nuspec" />
