@@ -75,7 +75,9 @@ namespace DotJEM.Json.Index.Visitors
             if (context.Strategy.Visit(AddField, json, value, context))
                 return;
 
-            AddField(new Field(context.Path, value.ToString(), Field.Store.NO, Field.Index.NOT_ANALYZED));
+            string str = json.ToString(CultureInfo.InvariantCulture);
+            AddField(new Field(context.Path, str, Field.Store.NO, Field.Index.NOT_ANALYZED));
+            AddField(new Field(context.Path, str, Field.Store.NO, Field.Index.ANALYZED));
             base.VisitBoolean(json, context);
         }
 
@@ -125,7 +127,9 @@ namespace DotJEM.Json.Index.Visitors
             if (context.Strategy.Visit(AddField, json, value, context))
                 return;
 
-            AddField(new Field(context.Path, value.ToString(), Field.Store.NO, Field.Index.NOT_ANALYZED));
+            string str = json.ToString(CultureInfo.InvariantCulture);
+            AddField(new Field(context.Path, str, Field.Store.NO, Field.Index.NOT_ANALYZED));
+            AddField(new Field(context.Path, str, Field.Store.NO, Field.Index.ANALYZED));
             base.VisitGuid(json, context);
         }
 
@@ -135,7 +139,9 @@ namespace DotJEM.Json.Index.Visitors
             if (context.Strategy.Visit(AddField, json, value, context))
                 return;
 
-            AddField(new Field(context.Path, value.ToString(), Field.Store.NO, Field.Index.NOT_ANALYZED));
+            string str = json.ToString(CultureInfo.InvariantCulture);
+            AddField(new Field(context.Path, str, Field.Store.NO, Field.Index.NOT_ANALYZED));
+            AddField(new Field(context.Path, str, Field.Store.NO, Field.Index.ANALYZED));
             base.VisitGuid(json, context);
         }
 
