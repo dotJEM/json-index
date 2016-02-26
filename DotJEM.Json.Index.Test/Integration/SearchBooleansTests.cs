@@ -1,16 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using DotJEM.Json.Index.Searching;
 using DotJEM.Json.Index.Test.Data;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 
-namespace DotJEM.Json.Index.Test.Integration
+namespace DotJEM.Json.Index.Test.Integration.Types
 {
-    public class LuceneDateRangeTests
+    public class SearchBooleansTests
     {
         private IStorageIndex index = new LuceneStorageIndex();
 
@@ -26,40 +24,51 @@ namespace DotJEM.Json.Index.Test.Integration
                 index, (idx, json) => idx.Write(json));
         }
 
-        [Test]
-        public void Search_FixedRange()
-        {
-            ISearchResult result = index.Search("created: [2000-01-10 TO 2000-01-14]");
-            result.Any();
+        //[TestCase("[0 TO 10]", 200)]
+        //[TestCase("[10 TO 20]", 200)]
+        //[TestCase("[0 TO 20]", 300)]
+        //[TestCase("[0 TO 9]", 100)]
+        //[TestCase("[1 TO 9]", 0)]
+        //[TestCase("[* TO 40]", 500)]
+        //[TestCase("[* TO *]", 1000)]
+        //[TestCase("[50 TO *]", 500)]
+        //public void Search_Range_ReturnsPercent(string range, int count)
+        //{
+        //    ISearchResult result = index.Search($"arr.@count: {range}");
+        //    result.Any();
+        //    Assert.That(result.TotalCount, Is.EqualTo(count));
+        //}
 
-            Assert.That(result.TotalCount, Is.EqualTo(5));
+        [Test]
+        public void Search_Boolean_Debug()
+        {
+            ISearchResult result = index.Search($"evenDay: true");
+            result.Any();
+            Assert.That(result.TotalCount, Is.EqualTo(490));
         }
 
         [Test]
-        public void Search_RelativeRange()
+        public void Search_Boolean_FalseDebug()
         {
-            ISearchResult result = index.Search("updated: [+2days TO +7days]");
+            ISearchResult result = index.Search($"evenDay: false");
             result.Any();
-
-            Assert.That(result.TotalCount, Is.EqualTo(5));
+            Assert.That(result.TotalCount, Is.EqualTo(510));
         }
 
         [Test]
-        public void Search_RelativeRangeWithNow()
+        public void Search_Boolean_InverseDebug()
         {
-            ISearchResult result = index.Search("updated: [Now+2days TO Now+7days]");
+            ISearchResult result = index.Search($"evenDay: (*:* NOT true)");
             result.Any();
-
-            Assert.That(result.TotalCount, Is.EqualTo(5));
+            Assert.That(result.TotalCount, Is.EqualTo(510));
         }
 
         [Test]
-        public void Search_RelativeRangeFromNow()
+        public void Search_Boolean_InverseleapYearDebug()
         {
-            ISearchResult result = index.Search("updated: [Now TO +7days]");
+            ISearchResult result = index.Search($"leapYear: true");
             result.Any();
-
-            Assert.That(result.TotalCount, Is.EqualTo(7));
+            Assert.That(result.TotalCount, Is.EqualTo(365));
         }
 
         private IEnumerable<JObject> TestObjects(int count)
@@ -78,7 +87,12 @@ namespace DotJEM.Json.Index.Test.Integration
                     id,
                     created = fixedDate = fixedDate.AddDays(1),
                     updated = now = now.AddDays(1),
-                    area = "Test"
+                    area = "Test",
+                    evenDay = fixedDate.Day % 2 == 0,
+                    unevenDay = fixedDate.Day % 2 == 1,
+                    evenMonth = fixedDate.Month % 2 == 0,
+                    unevenMonth = fixedDate.Month % 2 == 1,
+                    leapYear = DateTime.IsLeapYear(fixedDate.Year)
                 })
                 .Select(JObject.FromObject)
                 .Select(v => decorators[rnd.Next(decorators.Length - 1)].Decorate(v, rnd));

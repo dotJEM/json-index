@@ -107,8 +107,9 @@
     <Compile Include="Data\DataDecorators.cs" />
     <Compile Include="Data\FlowerDataDecorator.cs" />
     <Compile Include="Data\PersonDataDecorator.cs" />
-    <Compile Include="Integration\LuceneArrayCountTests.cs" />
-    <Compile Include="Integration\LuceneDateRangeTests.cs" />
+    <Compile Include="Integration\SearchBooleansTests.cs" />
+    <Compile Include="Integration\SearchArrayCountTests.cs" />
+    <Compile Include="Integration\SearchDatesTests.cs" />
     <Compile Include="Integration\LuceneSearcherSortingTest.cs" />
     <Compile Include="Integration\LuceneSearcherSimpleDataTest.cs" />
     <Compile Include="Unit\Schema\JSchemaCollectionTest.cs" />

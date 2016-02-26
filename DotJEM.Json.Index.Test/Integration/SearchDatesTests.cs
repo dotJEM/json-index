@@ -10,7 +10,7 @@ using NUnit.Framework;
 
 namespace DotJEM.Json.Index.Test.Integration
 {
-    public class LuceneArrayCountTests
+    public class SearchDatesTests
     {
         private IStorageIndex index = new LuceneStorageIndex();
 
@@ -26,19 +26,40 @@ namespace DotJEM.Json.Index.Test.Integration
                 index, (idx, json) => idx.Write(json));
         }
 
-        [TestCase("[0 TO 10]", 200)]
-        [TestCase("[10 TO 20]", 200)]
-        [TestCase("[0 TO 20]", 300)]
-        [TestCase("[0 TO 9]", 100)]
-        [TestCase("[1 TO 9]", 0)]
-        [TestCase("[* TO 40]", 500)]
-        [TestCase("[* TO *]", 1000)]
-        [TestCase("[50 TO *]", 500)]
-        public void Search_Range_ReturnsPercent(string range, int count)
+        [Test]
+        public void Search_FixedRange()
         {
-            ISearchResult result = index.Search($"arr.@count: {range}");
+            ISearchResult result = index.Search("created: [2000-01-10 TO 2000-01-14]");
             result.Any();
-            Assert.That(result.TotalCount, Is.EqualTo(count));
+
+            Assert.That(result.TotalCount, Is.EqualTo(5));
+        }
+
+        [Test]
+        public void Search_RelativeRange()
+        {
+            ISearchResult result = index.Search("updated: [+2days TO +7days]");
+            result.Any();
+
+            Assert.That(result.TotalCount, Is.EqualTo(5));
+        }
+
+        [Test]
+        public void Search_RelativeRangeWithNow()
+        {
+            ISearchResult result = index.Search("updated: [Now+2days TO Now+7days]");
+            result.Any();
+
+            Assert.That(result.TotalCount, Is.EqualTo(5));
+        }
+
+        [Test]
+        public void Search_RelativeRangeFromNow()
+        {
+            ISearchResult result = index.Search("updated: [Now TO +7days]");
+            result.Any();
+
+            Assert.That(result.TotalCount, Is.EqualTo(7));
         }
 
         private IEnumerable<JObject> TestObjects(int count)
@@ -46,7 +67,6 @@ namespace DotJEM.Json.Index.Test.Integration
             DateTime now = DateTime.Now;
             DateTime fixedDate = new DateTime(2000, 1, 1);
             Random rnd = new Random();
-            int arrCount = 0;
 
             ITestDataDecorator[] decorators = { new PersonDataDecorator(), new CarDataDecorator(), new AnimalDataDecorator(), new FlowerDataDecorator() };
 
@@ -58,8 +78,7 @@ namespace DotJEM.Json.Index.Test.Integration
                     id,
                     created = fixedDate = fixedDate.AddDays(1),
                     updated = now = now.AddDays(1),
-                    area = "Test",
-                    arr = Enumerable.Range(0, arrCount = (arrCount + 10) % 100).ToArray()
+                    area = "Test"
                 })
                 .Select(JObject.FromObject)
                 .Select(v => decorators[rnd.Next(decorators.Length - 1)].Decorate(v, rnd));

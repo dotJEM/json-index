@@ -23,7 +23,7 @@ namespace DotJEM.Json.Index
             this.index = index;
         }
 
-        public IDocumentBuilder Create(string contentType) => new DefaultDocumentBuilder(index, contentType);
+        public virtual IDocumentBuilder Create(string contentType) => new DefaultDocumentBuilder(index, contentType);
     }
 
     public interface IDocumentFactory
@@ -31,25 +31,25 @@ namespace DotJEM.Json.Index
         Document Create(JObject value);
     }
 
-    public class LuceneDocumentFactory : IDocumentFactory
+    public class DefaultDocumentFactory : IDocumentFactory
     {
         private readonly IStorageIndex index;
         private readonly IDocumentBuilderFactory factory;
         private readonly IJSchemaGenerator generator;
 
-        public LuceneDocumentFactory(IStorageIndex index)
+        public DefaultDocumentFactory(IStorageIndex index)
             : this(index, new DefaultDocumentBuilderFactory(index), new JSchemaGenerator())
         {
         }
 
-        public LuceneDocumentFactory(IStorageIndex index, IDocumentBuilderFactory factory, IJSchemaGenerator generator)
+        public DefaultDocumentFactory(IStorageIndex index, IDocumentBuilderFactory factory, IJSchemaGenerator generator)
         {
             this.index = index;
             this.factory = factory;
             this.generator = generator;
         }
 
-        public Document Create(JObject value)
+        public virtual Document Create(JObject value)
         {
             string contentType = index.Configuration.TypeResolver.Resolve(value);
             string storageArea = index.Configuration.AreaResolver.Resolve(value);

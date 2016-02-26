@@ -24,7 +24,7 @@ namespace DotJEM.Json.Index
         private readonly LuceneStorageIndex index;
 
         public LuceneWriter(LuceneStorageIndex index) 
-            : this(index, new LuceneDocumentFactory(index))
+            : this(index, new DefaultDocumentFactory(index))
         {
         }
 
