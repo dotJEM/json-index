@@ -46,12 +46,13 @@ namespace DotJEM.Json.Index
 
     public class LuceneStorageIndex : IStorageIndex
     {
-        public Version Version { get; private set; }
-        public Analyzer Analyzer { get; private set; }
+        public Version Version { get; }
+        public Analyzer Analyzer { get; }
 
-        public ISchemaCollection Schemas { get; private set; }
-        public IIndexStorage Storage { get; private set; }
-        public IIndexConfiguration Configuration { get; private set; }
+        public ISchemaCollection Schemas { get; }
+        public IIndexStorage Storage { get; }
+        public IIndexConfiguration Configuration { get; }
+        public IServiceFactory Factory { get; }
 
         #region Constructor Overloads
         public LuceneStorageIndex()
@@ -60,46 +61,29 @@ namespace DotJEM.Json.Index
         }
 
         public LuceneStorageIndex(string path)
-            : this(new IndexConfiguration(), new LuceneCachedMemmoryIndexStorage(path))
+            : this(new IndexConfiguration(), new LuceneFileIndexStorage(path))
         {
         }
 
-        public LuceneStorageIndex(IIndexStorage storage)
-            : this(new IndexConfiguration(), storage)
-        {
-        }
-
-        public LuceneStorageIndex(IIndexStorage storage, Analyzer analyzer)
-            : this(new IndexConfiguration(), storage, analyzer)
-        {
-        }
-
-        public LuceneStorageIndex(IIndexConfiguration configuration)
-            : this(configuration, new LuceneMemmoryIndexStorage(), new DotJemAnalyzer(Version.LUCENE_30, configuration))
-        {
-        }
-
-        public LuceneStorageIndex(IIndexConfiguration configuration, IIndexStorage storage)
-            : this(configuration, storage, new DotJemAnalyzer(Version.LUCENE_30, configuration))
+        public LuceneStorageIndex(IIndexStorage storage, Analyzer analyzer = null)
+            : this(new IndexConfiguration(), storage, analyzer: analyzer)
         {
         }
         #endregion
 
-        public LuceneStorageIndex(IIndexConfiguration configuration, IIndexStorage storage, Analyzer analyzer)
+        public LuceneStorageIndex(IIndexConfiguration configuration = null, IIndexStorage storage= null, IServiceFactory factory = null, Analyzer analyzer = null)
         {
-            if (configuration == null) throw new ArgumentNullException("configuration");
-            if (storage == null) throw new ArgumentNullException("storage");
-            if (analyzer == null) throw new ArgumentNullException("analyzer");
-
-            Schemas = new SchemaCollection();
-            Analyzer = analyzer;
+            //TODO: Version should come from outside
             Version = Version.LUCENE_30;
 
-            Storage = storage;
-            Configuration = configuration;
+            Factory = factory ?? new DefaultServiceFactory();
+            Schemas = Factory.CreateSchemaCollection(this);
+            writer = new Lazy<ILuceneWriter>(() => new LuceneWriter(this, Factory.CreateDocumentFactory(this)));
+            searcher = new Lazy<ILuceneSearcher>(() => Factory.CreateSearcher(this));
 
-            writer = new Lazy<ILuceneWriter>(() => new LuceneWriter(this));
-            searcher = new Lazy<ILuceneSearcher>(() => new LuceneSearcher(this));
+            Analyzer = analyzer ?? new DotJemAnalyzer(Version.LUCENE_30, configuration);
+            Storage = storage ?? new LuceneMemmoryIndexStorage();
+            Configuration = configuration ?? new IndexConfiguration();
         }
 
         //TODO: Do we need to be able to release these?

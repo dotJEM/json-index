@@ -84,6 +84,7 @@
   <ItemGroup>
     <Compile Include="Analyzation\DotJemAnalyzer.cs" />
     <Compile Include="Configuration\As.cs" />
+    <Compile Include="Configuration\Factories.cs" />
     <Compile Include="Configuration\FieldStrategies\Querying\DateRangeFieldQueryFactory.cs" />
     <Compile Include="Configuration\FieldStrategies\Querying\FieldQueryBuilder.cs" />
     <Compile Include="Configuration\FieldStrategies\IFieldStrategy.cs" />
