@@ -88,8 +88,9 @@ namespace DotJEM.Json.Index.Visitors
             if (context.Strategy.Visit(AddField, json, value, context))
                 return;
 
+            //Note: For sorting.
+            AddField(new Field(context.Path, value.ToString("s"), Field.Store.NO, Field.Index.NOT_ANALYZED_NO_NORMS));
             AddField(new NumericField(context.Path + ".@ticks", Field.Store.NO, true).SetLongValue(value.Ticks));
-
             //TODO: It is likely that we can switch to a better format such as lucene it self uses, this is very short and should therefore probably
             //      perform even better.
             //
@@ -134,6 +135,8 @@ namespace DotJEM.Json.Index.Visitors
             if (context.Strategy.Visit(AddField, json, value, context))
                 return;
 
+            //Note: For sorting.
+            AddField(new Field(context.Path, value.ToString("g"), Field.Store.NO, Field.Index.NOT_ANALYZED_NO_NORMS));
             AddField(new NumericField(context.Path + ".@ticks", Field.Store.NO, true).SetLongValue(value.Ticks));
 
             AddField(new NumericField(context.Path + ".@days", Field.Store.NO, true).SetIntValue(value.Days));
