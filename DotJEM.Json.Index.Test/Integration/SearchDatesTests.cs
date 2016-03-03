@@ -36,6 +36,23 @@ namespace DotJEM.Json.Index.Test.Integration
         }
 
         [Test]
+        public void Search_FixedToInfinite()
+        {
+            ISearchResult result = index.Search("created: [2002-09-20 TO *]");
+            result.Any();
+
+            Assert.That(result.TotalCount, Is.EqualTo(8));
+        }
+        [Test]
+        public void Search_InfiniteToFixed()
+        {
+            ISearchResult result = index.Search("created: [* TO 2000-01-20]");
+            result.Any();
+
+            Assert.That(result.TotalCount, Is.EqualTo(19));
+        }
+
+        [Test]
         public void Search_RelativeRange()
         {
             ISearchResult result = index.Search("updated: [+2days TO +7days]");
@@ -62,6 +79,15 @@ namespace DotJEM.Json.Index.Test.Integration
             Assert.That(result.TotalCount, Is.EqualTo(7));
         }
 
+        [Test]
+        public void Search_RelativeRangeToInfinite()
+        {
+            ISearchResult result = index.Search("updated: [* TO +2d]");
+            result.Any();
+
+            Assert.That(result.TotalCount, Is.EqualTo(2));
+        }
+
         private IEnumerable<JObject> TestObjects(int count)
         {
             DateTime now = DateTime.Now;
@@ -81,6 +107,16 @@ namespace DotJEM.Json.Index.Test.Integration
                     area = "Test"
                 })
                 .Select(JObject.FromObject)
+                .Union(new[]
+                {
+                    JObject.FromObject(new
+                    {
+                        id = Guid.NewGuid(),
+                        area = "Test",
+                        created = "FUBAR",
+                        updated = "TAFU"
+                    })
+                })
                 .Select(v => decorators[rnd.Next(decorators.Length - 1)].Decorate(v, rnd));
 
         }

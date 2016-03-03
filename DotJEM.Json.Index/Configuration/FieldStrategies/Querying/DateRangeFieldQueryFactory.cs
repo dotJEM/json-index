@@ -54,30 +54,32 @@ namespace DotJEM.Json.Index.Configuration.FieldStrategies.Querying
 
             if (lower == null || upper == null)
             {
-                decomp.Add(NumericRangeQuery.NewIntRange(field + ".@year", lower?.Year, upper?.Year, true, true), Occur.MUST);
-                decomp.Add(NumericRangeQuery.NewIntRange(field + ".@month", lower?.Month, upper?.Month, true, true), Occur.MUST);
-                decomp.Add(NumericRangeQuery.NewIntRange(field + ".@day", lower?.Day, upper?.Day, true, true), Occur.MUST);
-                return decomp.Append(absoluteRange);
+                return decomp
+                    .Append(NumericRangeQuery.NewIntRange(field + ".@year", lower?.Year, upper?.Year, true, true))
+                    .Append(NumericRangeQuery.NewIntRange(field + ".@month", lower?.Month, upper?.Month, true, true))
+                    .Append(NumericRangeQuery.NewIntRange(field + ".@day", lower?.Day, upper?.Day, true, true))
+                    .Append(absoluteRange);
             }
 
-            decomp.Add(NumericRangeQuery.NewIntRange(field + ".@year", lower?.Year, upper?.Year, true, true), Occur.MUST);
+            decomp = decomp.Append(NumericRangeQuery.NewIntRange(field + ".@year", lower?.Year, upper?.Year, true, true));
             if (lower.Value.Year != upper.Value.Year)
                 return decomp.Append(absoluteRange);
 
-            decomp.Add(NumericRangeQuery.NewIntRange(field + ".@month", lower?.Month, upper?.Month, true, true), Occur.MUST);
+            decomp = decomp.Append(NumericRangeQuery.NewIntRange(field + ".@month", lower?.Month, upper?.Month, true, true));
             if (lower.Value.Month != upper.Value.Month)
                 return decomp.Append(absoluteRange);
 
-            decomp.Add(NumericRangeQuery.NewIntRange(field + ".@day", lower?.Day, upper?.Day, true, true), Occur.MUST);
-            return decomp.Append(absoluteRange);
+            return decomp
+                .Append(NumericRangeQuery.NewIntRange(field + ".@day", lower?.Day, upper?.Day, true, true))
+                .Append(absoluteRange);
         }
     }
 
     public static class BooleanQueryExt
     {
-        public static BooleanQuery Append(this BooleanQuery self, Query absoluteRange)
+        public static BooleanQuery Append(this BooleanQuery self, Query absoluteRange, Occur occur = Occur.MUST)
         {
-            self.Add(absoluteRange, Occur.MUST);
+            self.Add(absoluteRange, occur);
             return self;
         }
 
