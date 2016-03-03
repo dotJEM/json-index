@@ -107,16 +107,6 @@ namespace DotJEM.Json.Index.Test.Integration
                     area = "Test"
                 })
                 .Select(JObject.FromObject)
-                .Union(new[]
-                {
-                    JObject.FromObject(new
-                    {
-                        id = Guid.NewGuid(),
-                        area = "Test",
-                        created = "FUBAR",
-                        updated = "TAFU"
-                    })
-                })
                 .Select(v => decorators[rnd.Next(decorators.Length - 1)].Decorate(v, rnd));
 
         }
