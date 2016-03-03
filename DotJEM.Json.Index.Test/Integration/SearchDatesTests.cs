@@ -26,6 +26,8 @@ namespace DotJEM.Json.Index.Test.Integration
                 index, (idx, json) => idx.Write(json));
         }
 
+        // Dates in this range is 2000-01-01 to 2002-09-27
+
         [Test]
         public void Search_FixedRange()
         {
@@ -36,13 +38,23 @@ namespace DotJEM.Json.Index.Test.Integration
         }
 
         [Test]
-        public void Search_FixedToInfinite()
+        public void Search_Fixed2002ToInfinite()
         {
             ISearchResult result = index.Search("created: [2002-09-20 TO *]");
             result.Any();
 
             Assert.That(result.TotalCount, Is.EqualTo(8));
         }
+
+        [Test]
+        public void Search_Fixed2001ToInfinite_ReturnsFullYear()
+        {
+            ISearchResult result = index.Search("created: [2001-09-28 TO *]");
+            result.Any();
+
+            Assert.That(result.TotalCount, Is.EqualTo(365));
+        }
+
         [Test]
         public void Search_InfiniteToFixed()
         {

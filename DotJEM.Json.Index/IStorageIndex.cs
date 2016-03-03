@@ -100,8 +100,8 @@ namespace DotJEM.Json.Index
             Storage.Flush();
         }
 
-        public ILuceneWriter Writer { get { return writer.Value; } }
-        public ILuceneSearcher Searcher { get { return searcher.Value; } }
+        public ILuceneWriter Writer => writer.Value;
+        public ILuceneSearcher Searcher => searcher.Value;
 
         #region Short hand helpers
 
