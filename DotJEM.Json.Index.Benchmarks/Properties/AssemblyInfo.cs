@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("N/A")]
-[assembly: AssemblyCopyright("Copyright © DotJEM A/S 2014-2015")]
+[assembly: AssemblyCopyright("Copyright © DotJEM 2014-2016")]
 [assembly: AssemblyProduct("DotJEM.Json.Index.Benchmarks")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
