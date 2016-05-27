@@ -35,7 +35,6 @@ namespace DotJEM.Json.Index.Searching
         private int take = 25, skip;
         private Filter filtering;
         private Sort sorting;
-        private Query query;
         private IndexSearcher searcher;
 
         private readonly IStorageIndex index;
@@ -44,12 +43,14 @@ namespace DotJEM.Json.Index.Searching
         public TimeSpan SearchTime { get; private set; }
         public TimeSpan TotalTime { get; private set; }
         public TimeSpan LoadTime => TotalTime - SearchTime;
+        public Query Query { get; }
 
         public IEnumerable<dynamic> Documents { get { return this.Select(hit => hit.Json); } }
 
+
         public SearchResultCollector(Query query, IStorageIndex index)
         {
-            this.query = query;
+            this.Query = query;
             this.index = index;
         }
         
@@ -96,7 +97,7 @@ namespace DotJEM.Json.Index.Searching
             Stopwatch timer = Stopwatch.StartNew();
             using (searcher = new IndexSearcher(index.Storage.OpenReader()))
             {
-                query = searcher.Rewrite(query);
+                Query query = searcher.Rewrite(Query);
                 TopDocs hits = sorting == null
                     ? searcher.Search(query, filtering, take + skip)
                     : searcher.Search(query, filtering, take + skip, sorting);
