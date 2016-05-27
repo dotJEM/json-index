@@ -1,5 +1,7 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Lucene.Net.Documents;
 using Lucene.Net.Search;
@@ -10,6 +12,9 @@ namespace DotJEM.Json.Index.Searching
     public interface ISearchResult : IEnumerable<IHit>
     {
         long TotalCount { get; }
+        TimeSpan SearchTime { get; }
+        TimeSpan LoadTime { get; }
+        TimeSpan TotalTime { get; }
         IEnumerable<dynamic> Documents { get; }
 
         ISearchResult Take(int count);
@@ -36,6 +41,9 @@ namespace DotJEM.Json.Index.Searching
         private readonly IStorageIndex index;
 
         public long TotalCount { get; private set; }
+        public TimeSpan SearchTime { get; private set; }
+        public TimeSpan TotalTime { get; private set; }
+        public TimeSpan LoadTime => TotalTime - SearchTime;
 
         public IEnumerable<dynamic> Documents { get { return this.Select(hit => hit.Json); } }
 
@@ -85,19 +93,21 @@ namespace DotJEM.Json.Index.Searching
             if(!index.Storage.Exists)
                 yield break;
 
+            Stopwatch timer = Stopwatch.StartNew();
             using (searcher = new IndexSearcher(index.Storage.OpenReader()))
             {
                 query = searcher.Rewrite(query);
-
                 TopDocs hits = sorting == null
                     ? searcher.Search(query, filtering, take + skip)
                     : searcher.Search(query, filtering, take + skip, sorting);
-
                 TotalCount = hits.TotalHits;
+
+                SearchTime = timer.Elapsed;
 
                 foreach (ScoreDoc hit in hits.ScoreDocs.Skip(skip))
                     yield return new Hit(hit.Doc, hit.Score, ResolveJObject);
             }
+            TotalTime = timer.Elapsed;
         }
 
         IEnumerator IEnumerable.GetEnumerator()
