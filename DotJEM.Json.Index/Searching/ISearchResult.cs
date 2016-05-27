@@ -15,6 +15,8 @@ namespace DotJEM.Json.Index.Searching
         TimeSpan SearchTime { get; }
         TimeSpan LoadTime { get; }
         TimeSpan TotalTime { get; }
+        Query Query { get; }
+
         IEnumerable<dynamic> Documents { get; }
 
         ISearchResult Take(int count);
