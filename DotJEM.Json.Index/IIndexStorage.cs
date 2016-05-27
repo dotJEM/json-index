@@ -25,6 +25,7 @@ namespace DotJEM.Json.Index
         public virtual bool Exists => Directory.ListAll().Any();
 
         private IndexWriter writer;
+        private IndexReader reader;
 
         protected AbstractLuceneIndexStorage(Directory directory)
         {
@@ -42,7 +43,13 @@ namespace DotJEM.Json.Index
 
         public IndexReader OpenReader()
         {
-            return Exists ? IndexReader.Open(Directory, true) : null;
+            if (Exists)
+                return null;
+
+            lock (padlock)
+            {
+                return reader = reader?.Reopen() ?? IndexReader.Open(Directory, true);
+            }
         }
 
         public void Close()
