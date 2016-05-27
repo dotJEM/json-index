@@ -43,7 +43,7 @@ namespace DotJEM.Json.Index
 
         public IndexReader OpenReader()
         {
-            if (Exists)
+            if (!Exists)
                 return null;
 
             lock (padlock)
