@@ -41,25 +41,47 @@ namespace DotJEM.Json.Index
             writer.Commit();
         }
 
+        private static int InternalUpdateDocument(IndexWriter writer, Term term, Document doc)
+        {
+            try
+            {
+                writer.UpdateDocument(term, doc);
+                return 0;
+            }
+            catch (Exception)
+            {
+                return 1;
+            }
+        }
+
+        private Document InternalCreateDocument(JObject entity)
+        {
+            try
+            {
+                return factory.Create(entity);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+
+        }
+
         public void WriteAll(IEnumerable<JObject> entities)
         {
             IndexWriter writer = index.Storage.GetWriter(index.Analyzer);
-            foreach (JObject entity in entities)
-            {
-                try
-                {
-                    Term term = CreateIdentityTerm(entity);
-                    Document document = factory.Create(entity);
-                    writer.UpdateDocument(term, document);
-                }
-                catch (Exception)
-                {
-                    //ignore
-                }
 
-            }
+            ParallelQuery<int> executed = from entity in entities.AsParallel()
+                let term = CreateIdentityTerm(entity)
+                where term != null
+                let document = InternalCreateDocument(entity)
+                where document != null
+                select InternalUpdateDocument(writer, term, document);
+            int failed = executed.Sum();
+
             writer.Commit();
         }
+
 
         public void Delete(JObject entity)
         {

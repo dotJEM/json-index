@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using DotJEM.Json.Index.Configuration.FieldStrategies;
@@ -39,8 +40,8 @@ namespace DotJEM.Json.Index.Configuration
 
     public class IndexConfiguration : IIndexConfiguration
     {
-        private readonly IDictionary<string, IContentTypeConfiguration> configurations
-            = new Dictionary<string, IContentTypeConfiguration>(StringComparer.InvariantCultureIgnoreCase);
+        private readonly ConcurrentDictionary<string, IContentTypeConfiguration> configurations
+            = new ConcurrentDictionary<string, IContentTypeConfiguration>(StringComparer.InvariantCultureIgnoreCase);
 
         public string RawField { get; private set; }
         public string ScoreField { get; private set; }
@@ -48,7 +49,7 @@ namespace DotJEM.Json.Index.Configuration
         public IFieldResolver TypeResolver { get; private set; }
         public IFieldResolver AreaResolver { get; private set; }
 
-        public IIdentityResolver IdentityResolver { get { return ForAll().IndentityResolver; } }
+        public IIdentityResolver IdentityResolver => ForAll().IndentityResolver;
 
         public IndexConfiguration()
         {
@@ -125,22 +126,17 @@ namespace DotJEM.Json.Index.Configuration
 
         private IContentTypeConfiguration InternalFor(string contentType)
         {
-            if (!configurations.ContainsKey(contentType))
-                configurations[contentType] = new ContentTypeConfiguration();
-
-            return configurations[contentType];
+            return configurations.GetOrAdd(contentType, new ContentTypeConfiguration());
         }
 
         public IContentTypeConfiguration For(params string[] contentTypes)
         {
-            if (contentTypes.Length == 0)
+            switch (contentTypes.Length)
             {
-                return ForAll();
-            }
-
-            if (contentTypes.Length == 1)
-            {
-                return InternalFor(contentTypes[0]);
+                case 0:
+                    return ForAll();
+                case 1:
+                    return InternalFor(contentTypes[0]);
             }
 
             return new MultiTargetContentTypeConfiguration(contentTypes.Select(InternalFor));
