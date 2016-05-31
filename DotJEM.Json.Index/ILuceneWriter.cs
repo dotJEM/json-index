@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Lucene.Net.Analysis.Standard;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
@@ -16,6 +17,147 @@ namespace DotJEM.Json.Index
         void Delete(JObject entity);
         void DeleteAll(IEnumerable<JObject> entities);
         void Optimize();
+        ILuceneWriteContext WriteContext();
+    }
+
+    public interface ILuceneWriteContext : IDisposable
+    {
+        Task Create(JObject entity);
+        Task CreateAll(IEnumerable<JObject> entities);
+        Task Write(JObject entity);
+        Task WriteAll(IEnumerable<JObject> entities);
+        Task Delete(JObject entity);
+        Task DeleteAll(IEnumerable<JObject> entities);
+    }
+
+    internal class LuceneWriteContext : ILuceneWriteContext
+    {
+        private readonly IndexWriter writer;
+        private readonly LuceneStorageIndex index;
+        private readonly IDocumentFactory factory;
+
+        public LuceneWriteContext(IndexWriter writer, IDocumentFactory factory, LuceneStorageIndex index)
+        {
+            this.writer = writer;
+            this.factory = factory;
+            this.index = index;
+        }
+
+        public async Task Create(JObject entity)
+        {
+            await Task.Run(() =>
+            {
+                writer.AddDocument(factory.Create(entity));
+            });
+        }
+
+        public async Task CreateAll(IEnumerable<JObject> entities)
+        {
+            await Task.Run(() =>
+            {
+                ParallelQuery<int> executed = from entity in entities.AsParallel()
+                                              let document = InternalCreateDocument(entity)
+                                              where document != null
+                                              select InternalAddDocument(document);
+                return executed.Sum();
+            });
+        }
+
+
+        public async Task Write(JObject entity)
+        {
+            await Task.Run(() =>
+            {
+                writer.UpdateDocument(CreateIdentityTerm(entity), factory.Create(entity));
+            });
+        }
+
+        public async Task WriteAll(IEnumerable<JObject> entities)
+        {
+            await Task.Run(() =>
+            {
+                ParallelQuery<int> executed = from entity in entities.AsParallel()
+                                              let term = CreateIdentityTerm(entity)
+                                              where term != null
+                                              let document = InternalCreateDocument(entity)
+                                              where document != null
+                                              select InternalUpdateDocument(term, document);
+                return executed.Sum();
+            });
+        }
+
+        public async Task Delete(JObject entity)
+        {
+            await Task.Run(() =>
+            {
+                writer.DeleteDocuments(CreateIdentityTerm(entity));
+            });
+        }
+
+        public async Task DeleteAll(IEnumerable<JObject> entities)
+        {
+            await Task.Run(() =>
+            {
+                writer.DeleteDocuments(entities.Select(CreateIdentityTerm).Where(x => x != null).ToArray());
+            });
+        }
+
+        public void Dispose()
+        {
+            writer.Commit();
+        }
+
+        private Term CreateIdentityTerm(JObject entity)
+        {
+            try
+            {
+                return index.Configuration.IdentityResolver.CreateTerm(entity);
+            }
+            catch (Exception)
+            {
+                //ignore
+                return null;
+            }
+        }
+
+        private int InternalAddDocument(Document document)
+        {
+            try
+            {
+                writer.AddDocument(document);
+                return 0;
+            }
+            catch (Exception)
+            {
+                return 1;
+            }
+        }
+
+        private int InternalUpdateDocument(Term term, Document document)
+        {
+            try
+            {
+                writer.UpdateDocument(term, document);
+                return 0;
+            }
+            catch (Exception)
+            {
+                return 1;
+            }
+        }
+
+        private Document InternalCreateDocument(JObject entity)
+        {
+            try
+            {
+                return factory.Create(entity);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+
+        }
     }
 
     internal class LuceneWriter : ILuceneWriter
@@ -32,6 +174,11 @@ namespace DotJEM.Json.Index
         {
             this.index = index;
             this.factory = factory;
+        }
+
+        public ILuceneWriteContext WriteContext()
+        {
+            return new LuceneWriteContext(index.Storage.GetWriter(index.Analyzer), factory, index);
         }
 
         public void Write(JObject entity)
