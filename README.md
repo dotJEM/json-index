@@ -28,3 +28,5 @@ Assert.That(
 ```
 
 Note that `$id` is a GUID, but this is obmitted with `...` in the above for readability. This is a strategy that can be replaced with e.g. a more simple int/long strategy. The name of reserved fields like `$id` and `$contentType` can also be configured with other strategies enabling a high degree of flexibility.
+
+This is a Work in progress and many lessons has been learned for the first version which the a next version will use.
