@@ -58,7 +58,8 @@ namespace DotJEM.Json.Index.Searching
         
         private JObject ResolveJObject(IHit hit)
         {
-            return JObject.Parse(searcher.Doc(hit.Doc).GetField(index.Configuration.RawField).StringValue);
+            return index.Configuration.Serializer.Deserialize(index.Configuration.RawField, searcher.Doc(hit.Doc));
+                
         }
 
         public ISearchResult Take(int count)

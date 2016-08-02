@@ -43,6 +43,7 @@ namespace DotJEM.Json.Index.Searching
             return DebugLog(parser.Parse(query));
         }
 
+        [Obsolete("Use Query(string) with Lucene Query syntax.")]
         //TODO: Remove content type.
         public Query Build(JObject queryobj, string contentType = null)
         {

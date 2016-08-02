@@ -36,6 +36,7 @@ namespace DotJEM.Json.Index.Test.Util
         {
             this.index = index;
             index.Configuration.SetTypeResolver("contentType").ForAll().SetIdentity("id");
+
         }
 
         public TestIndexBuilder Document(Func<TestDocumentBuilder, TestDocumentBuilder> build)

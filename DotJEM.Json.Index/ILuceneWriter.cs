@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Lucene.Net.Analysis.Standard;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Version = Lucene.Net.Util.Version;
 
@@ -255,7 +258,7 @@ namespace DotJEM.Json.Index
             {
                 return index.Configuration.IdentityResolver.CreateTerm(entity);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 //ignore
                 return null;

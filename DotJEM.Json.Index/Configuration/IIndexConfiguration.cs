@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using DotJEM.Json.Index.Configuration.FieldStrategies;
 using DotJEM.Json.Index.Configuration.IdentityStrategies;
+using Lucene.Net.Documents;
 using Newtonsoft.Json.Linq;
 
 namespace DotJEM.Json.Index.Configuration
@@ -24,6 +25,7 @@ namespace DotJEM.Json.Index.Configuration
         IIndexConfiguration SetIdentity(IIdentityResolver resolver);
         IIndexConfiguration SetAreaResolver(string field);
         IIndexConfiguration SetAreaResolver(IFieldResolver resolver);
+        IIndexConfiguration SetSerializer(IJsonDocumentSerializer serializer);
 
         IContentTypeConfiguration ForAll();
         IContentTypeConfiguration For(params string[] contentType);
@@ -33,9 +35,16 @@ namespace DotJEM.Json.Index.Configuration
 
         IFieldResolver TypeResolver { get; }
         IFieldResolver AreaResolver { get; }
+        IJsonDocumentSerializer Serializer { get; }
 
         IIdentityResolver IdentityResolver { get; }
         IStrategyResolver<IFieldStrategy> Field { get; }
+    }
+
+    public interface IJsonDocumentSerializer
+    {
+        IFieldable Serialize(string rawfield, JObject value);
+        JObject Deserialize(string rawfield, Document document);
     }
 
     public class IndexConfiguration : IIndexConfiguration
@@ -48,6 +57,7 @@ namespace DotJEM.Json.Index.Configuration
 
         public IFieldResolver TypeResolver { get; private set; }
         public IFieldResolver AreaResolver { get; private set; }
+        public IJsonDocumentSerializer Serializer { get; private set; }
 
         public IIdentityResolver IdentityResolver => ForAll().IndentityResolver;
 
@@ -58,6 +68,7 @@ namespace DotJEM.Json.Index.Configuration
             SetTypeResolver("$contentType");
             SetAreaResolver("$area");
             SetIdentity("$id");
+            SetSerializer(new DefaultJsonDocumentSerializer());
         }
 
         public string ResolveIdentity(JObject value)
@@ -78,6 +89,12 @@ namespace DotJEM.Json.Index.Configuration
             ForAll().Index(field, As.Term);
 
             return SetAreaResolver(new FieldResolver(field));
+        }
+
+        public IIndexConfiguration SetSerializer(IJsonDocumentSerializer serializer)
+        {
+            Serializer = serializer;
+            return this;
         }
 
         public IIndexConfiguration SetTypeResolver(IFieldResolver resolver)

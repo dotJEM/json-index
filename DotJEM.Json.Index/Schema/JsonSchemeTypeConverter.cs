@@ -124,8 +124,8 @@ namespace DotJEM.Json.Index.Schema
             schema.ContentType = (string)json["contentType"];
             schema.Area = (string)json["area"];
 
-            schema.Items = json["items"] != null ? json["items"].ToObject<JSchema>() : null;
-            schema.Properties = json["properties"] != null ? json["properties"].ToObject<JSchemaProperties>() : null;
+            schema.Items = json["items"]?.ToObject<JSchema>();
+            schema.Properties = json["properties"]?.ToObject<JSchemaProperties>();
 
             json.Remove("type");
             json.Remove("extendedType");

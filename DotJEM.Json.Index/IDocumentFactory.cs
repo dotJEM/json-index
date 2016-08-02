@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using DotJEM.Json.Index.Configuration;
 using DotJEM.Json.Index.Schema;
 using DotJEM.Json.Index.Visitors;
 using Lucene.Net.Documents;
@@ -36,6 +37,7 @@ namespace DotJEM.Json.Index
         private readonly IStorageIndex index;
         private readonly IDocumentBuilderFactory factory;
         private readonly IJSchemaGenerator generator;
+        private readonly IJsonDocumentSerializer serializer;
 
         public DefaultDocumentFactory(IStorageIndex index)
             : this(index, new DefaultDocumentBuilderFactory(index), new JSchemaGenerator())
@@ -47,6 +49,7 @@ namespace DotJEM.Json.Index
             this.index = index;
             this.factory = factory;
             this.generator = generator;
+            this.serializer = index.Configuration.Serializer;
         }
 
         public virtual Document Create(JObject value)
@@ -64,8 +67,22 @@ namespace DotJEM.Json.Index
                 .Create(contentType)
                 .Build(value);
 
-            document.Add(new Field(index.Configuration.RawField, value.ToString(Formatting.None), Field.Store.YES, Field.Index.NO));
+
+            document.Add(serializer.Serialize(index.Configuration.RawField, value));
             return document;
+        }
+    }
+
+    public class DefaultJsonDocumentSerializer : IJsonDocumentSerializer
+    {
+        public IFieldable Serialize(string rawfield, JObject value)
+        {
+            return new Field(rawfield, value.ToString(Formatting.None), Field.Store.YES, Field.Index.NO);
+        }
+
+        public JObject Deserialize(string rawfield, Document document)
+        {
+            return JObject.Parse(document.GetField(rawfield).StringValue);
         }
     }
 }

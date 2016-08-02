@@ -1,14 +1,18 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using DotJEM.Json.Index.Configuration;
 using DotJEM.Json.Index.Configuration.FieldStrategies;
 using DotJEM.Json.Index.Schema;
 using DotJEM.Json.Index.Searching;
+using Lucene.Net.Analysis.Standard;
 using Lucene.Net.QueryParsers;
+using Lucene.Net.Search;
 using Moq;
 using Moq.AutoMock;
 using NUnit.Framework;
 using MultiFieldQueryParser = DotJEM.Json.Index.Searching.MultiFieldQueryParser;
+using Version = Lucene.Net.Util.Version;
 
 namespace DotJEM.Json.Index.Test.Unit
 {
@@ -117,6 +121,35 @@ namespace DotJEM.Json.Index.Test.Unit
             Assert.That(queryParser.Parse("Created: [2014-09-10T11:00 TO Hest]").ToString(), 
                 Is.EqualTo("Created:[2014-09-10t11:00 TO hest]"));
         }
+
+        //[TestCase("+name:peter -name:anne^4~0.3")]
+        //[TestCase("name:+peter -name:anne^4~0.3")]
+        //[TestCase("+peter -name:anne^4~0.3")]
+        //[TestCase("+peter -name:anne~0.3^4")]
+        //[TestCase("+peter -name:anne~0.3^4^5")]
+        //[TestCase("+peter -pan +carly AND orla -dante")]
+        //[TestCase("(+peter -pan +carly) AND orla -dante")]
+        //[TestCase("(+peter -pan +carly AND orla) -dante")]
+
+        //[TestCase("\"peter foo\"~5")]
+        //[TestCase("\"peter foo\"^3~5")]
+        //[TestCase("\"peter foo\"~5^3")]
+        //[TestCase("(peter foo)~5")]
+        //public void BuiltIn_Test(string query)
+        //{
+        //    try
+        //    {
+        //        QueryParser parser = new QueryParser(Version.LUCENE_30, "name", new StandardAnalyzer(Version.LUCENE_30));
+
+        //        Console.WriteLine(parser.Parse(query));
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine("FAILED: " + query + " " + ex.Message);
+        //        Assert.Fail("FAILED: " + query + " " + ex.Message);
+        //    }
+        //}
+
     }
 
     public class StrategyResolverFake<TStrategy> : IStrategyResolver<TStrategy> where TStrategy : class

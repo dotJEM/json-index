@@ -33,7 +33,7 @@ namespace DotJEM.Json.Index.Visitors
         public Document Build(JObject json)
         {
             DocumentBuilderContext context = new DocumentBuilderContext(configuration, contentType, json);
-            Document.Add(new Field(configuration.RawField, json.ToString(Formatting.None), Field.Store.YES, Field.Index.NO));
+            Document.Add(configuration.Serializer.Serialize(configuration.RawField, json));
             Visit(json, context);
             return Document;
         }
