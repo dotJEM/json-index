@@ -107,6 +107,7 @@
     <Compile Include="Data\DataDecorators.cs" />
     <Compile Include="Data\FlowerDataDecorator.cs" />
     <Compile Include="Data\PersonDataDecorator.cs" />
+    <Compile Include="Integration\LuceneWriterContextTest.cs" />
     <Compile Include="Integration\SearchBooleansTests.cs" />
     <Compile Include="Integration\SearchArrayCountTests.cs" />
     <Compile Include="Integration\SearchDatesTests.cs" />

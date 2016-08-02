@@ -13,6 +13,8 @@ using Version = Lucene.Net.Util.Version;
 
 namespace DotJEM.Json.Index
 {
+    // TODO: Need to work in a async full implementation instead of this.
+
     public interface ILuceneWriter
     {
         void Write(JObject entity);
@@ -20,7 +22,7 @@ namespace DotJEM.Json.Index
         void Delete(JObject entity);
         void DeleteAll(IEnumerable<JObject> entities);
         void Optimize();
-        ILuceneWriteContext WriteContext();
+        ILuceneWriteContext WriteContext(int buffersize = 512);
     }
 
     public interface ILuceneWriteContext : IDisposable
@@ -37,13 +39,18 @@ namespace DotJEM.Json.Index
     {
         private readonly IndexWriter writer;
         private readonly LuceneStorageIndex index;
+        private readonly double buffersize;
         private readonly IDocumentFactory factory;
 
-        public LuceneWriteContext(IndexWriter writer, IDocumentFactory factory, LuceneStorageIndex index)
+        public LuceneWriteContext(IndexWriter writer, IDocumentFactory factory, LuceneStorageIndex index, double buffersize)
         {
+            this.buffersize = writer.GetRAMBufferSizeMB();
+
             this.writer = writer;
             this.factory = factory;
             this.index = index;
+
+            writer.SetRAMBufferSizeMB(buffersize);
         }
 
         public async Task Create(JObject entity)
@@ -108,6 +115,7 @@ namespace DotJEM.Json.Index
         public void Dispose()
         {
             writer.Commit();
+            writer.SetRAMBufferSizeMB(buffersize);
         }
 
         private Term CreateIdentityTerm(JObject entity)
@@ -179,9 +187,9 @@ namespace DotJEM.Json.Index
             this.factory = factory;
         }
 
-        public ILuceneWriteContext WriteContext()
+        public ILuceneWriteContext WriteContext(int buffersize = 512)
         {
-            return new LuceneWriteContext(index.Storage.GetWriter(index.Analyzer), factory, index);
+            return new LuceneWriteContext(index.Storage.GetWriter(index.Analyzer), factory, index, buffersize);
         }
 
         public void Write(JObject entity)
