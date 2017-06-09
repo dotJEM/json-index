@@ -59,6 +59,6 @@ config
 What is next?
 =============
 
-So far this framework has proved to simplify allot of things for us, but parts of it are still viewed as a prototype from our perspective, the core works and we use that in production but there are allot of unfinished edges.
+So far this framework has proved to simplify allot of things for us, but parts of it are still viewed as a prototype from our perspective, the core works well and we use that in production but there are allot of unfinished edges.
 
-The plan going forward is to move up to Lucene 4.8 and with the allot of changes will happen, we are looking into making the framework more mudular and flexible and give patterns than provide better means to extend it with own query parser logic, document creation etc...
+The plan going forward is to move up to Lucene 4.8 and with the allot of changes will happen, I am looking into making the framework more mudular in terms of packages and give patterns than provide better means to extend it with own query parser logic, document creation etc...
