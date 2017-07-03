@@ -13,10 +13,12 @@ using Version = Lucene.Net.Util.Version;
 
 namespace DotJEM.Json.Index
 {
-    // TODO: Need to work in a async full implementation instead of this.
 
     public interface ILuceneWriter
     {
+        //TODO: Need a better design, but similar to lucene's info streams.
+        event EventHandler<IndexWriterInfoEventArgs> InfoEvent;
+
         void Write(JObject entity);
         void WriteAll(IEnumerable<JObject> entities);
         void Delete(JObject entity);
@@ -25,8 +27,12 @@ namespace DotJEM.Json.Index
         ILuceneWriteContext WriteContext(int buffersize = 512);
     }
 
+    // TODO: Need to work in a async full implementation instead of this.
     public interface ILuceneWriteContext : IDisposable
     {
+        //TODO: Need a better design, but similar to lucene's info streams.
+        event EventHandler<IndexWriterInfoEventArgs> InfoEvent;
+
         Task Create(JObject entity);
         Task CreateAll(IEnumerable<JObject> entities);
         Task Write(JObject entity);
@@ -37,6 +43,8 @@ namespace DotJEM.Json.Index
 
     internal class LuceneWriteContext : ILuceneWriteContext
     {
+        public event EventHandler<IndexWriterInfoEventArgs> InfoEvent;
+
         private readonly IndexWriter writer;
         private readonly LuceneStorageIndex index;
         private readonly double buffersize;
@@ -53,6 +61,7 @@ namespace DotJEM.Json.Index
             writer.SetRAMBufferSizeMB(buffersize);
         }
 
+
         public async Task Create(JObject entity)
         {
             await Task.Run(() =>
@@ -65,7 +74,7 @@ namespace DotJEM.Json.Index
         {
             await Task.Run(() =>
             {
-                ParallelQuery<int> executed = from entity in entities.AsParallel()
+                IEnumerable<int> executed = from entity in entities
                                               let document = InternalCreateDocument(entity)
                                               where document != null
                                               select InternalAddDocument(document);
@@ -86,7 +95,9 @@ namespace DotJEM.Json.Index
         {
             await Task.Run(() =>
             {
-                ParallelQuery<int> executed = from entity in entities.AsParallel()
+                //Note: We cannot do this in paralel as it could potentially apply two updates for the same document in the wrong order.
+                //      So we have to group by "ID"'s before we can consider doing it in paralel.
+                IEnumerable<int> executed = from entity in entities
                                               let term = CreateIdentityTerm(entity)
                                               where term != null
                                               let document = InternalCreateDocument(entity)
@@ -124,8 +135,9 @@ namespace DotJEM.Json.Index
             {
                 return index.Configuration.IdentityResolver.CreateTerm(entity);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                OnInfoEvent(new IndexWriterExceptionEventArgs("Failed to create identity term from entity: " + entity, ex));
                 //ignore
                 return null;
             }
@@ -138,8 +150,9 @@ namespace DotJEM.Json.Index
                 writer.AddDocument(document);
                 return 0;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                OnInfoEvent(new IndexWriterExceptionEventArgs("Failed to add document: " + document, ex));
                 return 1;
             }
         }
@@ -151,8 +164,9 @@ namespace DotJEM.Json.Index
                 writer.UpdateDocument(term, document);
                 return 0;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                OnInfoEvent(new IndexWriterExceptionEventArgs("Failed to update document: " + document, ex));
                 return 1;
             }
         }
@@ -163,16 +177,24 @@ namespace DotJEM.Json.Index
             {
                 return factory.Create(entity);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                OnInfoEvent(new IndexWriterExceptionEventArgs("Failed to create document from entity: " + entity, ex));
                 return null;
             }
 
+        }
+
+        protected virtual void OnInfoEvent(IndexWriterInfoEventArgs e)
+        {
+            InfoEvent?.Invoke(this, e);
         }
     }
 
     internal class LuceneWriter : ILuceneWriter
     {
+        public event EventHandler<IndexWriterInfoEventArgs> InfoEvent;
+
         private readonly IDocumentFactory factory;
         private readonly LuceneStorageIndex index;
 
@@ -199,15 +221,16 @@ namespace DotJEM.Json.Index
             writer.Commit();
         }
 
-        private static int InternalUpdateDocument(IndexWriter writer, Term term, Document doc)
+        private int InternalUpdateDocument(IndexWriter writer, Term term, Document doc)
         {
             try
             {
                 writer.UpdateDocument(term, doc);
                 return 0;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                OnInfoEvent(new IndexWriterExceptionEventArgs("Failed to update document from entity: " + doc, ex));
                 return 1;
             }
         }
@@ -229,14 +252,13 @@ namespace DotJEM.Json.Index
         {
             IndexWriter writer = index.Storage.GetWriter(index.Analyzer);
 
-            ParallelQuery<int> executed = from entity in entities.AsParallel()
+            var executed = from entity in entities
                 let term = CreateIdentityTerm(entity)
                 where term != null
                 let document = InternalCreateDocument(entity)
                 where document != null
                 select InternalUpdateDocument(writer, term, document);
             int failed = executed.Sum();
-
             writer.Commit();
         }
 
@@ -268,9 +290,14 @@ namespace DotJEM.Json.Index
             }
             catch (Exception ex)
             {
+                OnInfoEvent(new IndexWriterExceptionEventArgs("Failed to create identity term from entity: " + entity, ex));
                 //ignore
                 return null;
             }
+        }
+        protected virtual void OnInfoEvent(IndexWriterInfoEventArgs e)
+        {
+            InfoEvent?.Invoke(this, e);
         }
     }
 }
