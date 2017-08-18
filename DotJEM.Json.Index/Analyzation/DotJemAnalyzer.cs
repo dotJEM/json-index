@@ -9,7 +9,7 @@ namespace DotJEM.Json.Index.Analyzation
 {
     public class DotJemAnalyzer : Analyzer
     {
-        private readonly ISet<string> stopSet = StopAnalyzer.ENGLISH_STOP_WORDS_SET;
+        private readonly ISet<string> stopSet;
         private readonly bool replaceInvalidAcronym;
         private readonly bool enableStopPositionIncrements;
         private readonly Version matchVersion;
@@ -18,17 +18,18 @@ namespace DotJEM.Json.Index.Analyzation
 
         public int MaxTokenLength { get; set; }
 
-        public DotJemAnalyzer(Version matchVersion, IIndexConfiguration configuration = null)
+        public DotJemAnalyzer(Version matchVersion, IIndexConfiguration configuration = null, ISet<string> stopwords = null)
         {
             MaxTokenLength = byte.MaxValue;
 
             enableStopPositionIncrements = StopFilter.GetEnablePositionIncrementsVersionDefault(matchVersion);
             replaceInvalidAcronym = matchVersion.OnOrAfter(Version.LUCENE_24);
-          
+
+            this.stopSet = stopwords ?? StopAnalyzer.ENGLISH_STOP_WORDS_SET;
+
             this.matchVersion = matchVersion;
             this.configuration = configuration;
         }
-
 
         public override TokenStream TokenStream(string fieldName, TextReader reader)
         {

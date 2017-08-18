@@ -241,8 +241,9 @@ namespace DotJEM.Json.Index
             {
                 return factory.Create(entity);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                OnInfoEvent(new IndexWriterExceptionEventArgs("Failed to create document from entity: " + entity, ex));
                 return null;
             }
 
