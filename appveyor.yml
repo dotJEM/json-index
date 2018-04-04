@@ -1,7 +1,7 @@
 version: 0.0.{build}
       
 init:
-- ps: Update-AppveyorBuild -Version "0.0.$env:appveyor_build_number+sha.$($env:appveyor_repo_commit.substring(0,7))"
+- ps: Update-AppveyorBuild -Version "{version}+sha.$($env:appveyor_repo_commit.substring(0,7))"
 
 nuget:
   disable_publish_on_pr: true
@@ -49,11 +49,11 @@ for:
     only:
       - Lucene-v4.8
   
-  version: 0.1.{build}
+  version: 0.1.0-beta.{build}
   
   assembly_info:
     patch: true
     file: AssemblyInfo.*
-    assembly_version: '0.1.{build}'
-    assembly_file_version: '0.1.{build}'
+    assembly_version: '0.1.0'
+    assembly_file_version: '0.1.0'
     assembly_informational_version: '{version}'
