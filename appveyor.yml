@@ -54,6 +54,6 @@ deploy:
   assembly_info:
     patch: true
     file: AssemblyInfo.*
-    assembly_version: '0.0.{build}'
-    assembly_file_version: '0.0.{build}'
+    assembly_version: '0.1.{build}'
+    assembly_file_version: '0.1.{build}'
     assembly_informational_version: '{version}'
