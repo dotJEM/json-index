@@ -43,7 +43,7 @@ deploy:
   on:
     branch: master 
 
-
+for:
 -
   branches:
     only:
