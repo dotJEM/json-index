@@ -1,7 +1,7 @@
 version: 0.0.{build}
       
 init:
-- ps: Update-AppveyorBuild -Version "{version}+sha.$($env:appveyor_repo_commit.substring(0,7))"
+- ps: Update-AppveyorBuild -Version "($env:appveyor_build_version)+sha.$($env:appveyor_repo_commit.substring(0,7))"
 
 nuget:
   disable_publish_on_pr: true
