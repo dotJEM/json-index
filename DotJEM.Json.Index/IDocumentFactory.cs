@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using DotJEM.Json.Index.Configuration;
 using DotJEM.Json.Index.Schema;
@@ -67,10 +69,10 @@ namespace DotJEM.Json.Index
                 .Create(contentType)
                 .Build(value);
 
-
             document.Add(serializer.Serialize(index.Configuration.RawField, value));
             return document;
         }
+
     }
 
     public class DefaultJsonDocumentSerializer : IJsonDocumentSerializer
