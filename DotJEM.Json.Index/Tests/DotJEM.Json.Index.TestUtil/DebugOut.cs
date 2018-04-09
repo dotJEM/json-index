@@ -3,14 +3,16 @@ using System.Collections.Generic;
 using System.Dynamic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
+using YamlDotNet.Serialization;
 
 namespace DotJEM.Json.Index.TestUtil
 {
-    public static class TestUtil
+    public static class DebugOut
     {
         public static string WriteYaml<T>(T value)
         {
@@ -18,6 +20,7 @@ namespace DotJEM.Json.Index.TestUtil
             Console.WriteLine(yaml);
             return yaml;
         }
+
         public static string WriteJson<T>(T value)
         {
             string json = ToJson(value).ToString(Formatting.Indented);

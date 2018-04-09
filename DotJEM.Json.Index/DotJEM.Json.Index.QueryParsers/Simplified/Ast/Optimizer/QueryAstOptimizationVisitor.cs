@@ -151,37 +151,29 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast.Optimizer
                  *
                  * if we search for: age > 60 and age < 90, the above is actually a hit... this may be counter intuitive, but
                  * age = 50 satisfies age < 90 while age = 100 satisfies age > 60...
-                 * So we NEED an actual range query!..
+                 * So we NEED an actual range query!?!?..
+                 *
+                 * Extra Note: It actually looks like Lucene it self fails here, have to do further verifications, but so far it looks like two range queries
+                 * that fits the above won't yield the results we would expect.
                  */
 
                 switch (key)
                 {
                     case FieldOperator.None:
-                        break;
                     case FieldOperator.Equals:
-                        break;
                     case FieldOperator.NotEquals:
-                        break;
                     case FieldOperator.GreaterThan:
-                        break;
                     case FieldOperator.GreaterThanOrEquals:
-                        break;
                     case FieldOperator.LessThan:
-                        break;
                     case FieldOperator.LessThanOrEquals:
-                        break;
                     case FieldOperator.In:
-                        break;
                     case FieldOperator.NotIt:
-                        break;
                     case FieldOperator.Similar:
-                        break;
                     case FieldOperator.NotSimilar:
-                        break;
+                        return fieldsArr;
                     default:
                         return fieldsArr;
                 }
-                 return fieldsArr;
             }
 
         }

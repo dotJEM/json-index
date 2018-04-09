@@ -69,8 +69,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Class1.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SimplifiedQueryParserIntegrationTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\DotJEM.Json.Index.Contexts\DotJEM.Json.Index.Contexts.csproj">
@@ -84,6 +84,10 @@
     <ProjectReference Include="..\..\..\DotJEM.Json.Index\DotJEM.Json.Index.csproj">
       <Project>{2987D5EB-2353-42F3-AE2E-B166B5093EEF}</Project>
       <Name>DotJEM.Json.Index</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\DotJEM.Json.Index.TestUtil\DotJEM.Json.Index.TestUtil.csproj">
+      <Project>{830E00FB-4B44-4D72-BD16-89EAE9DFBC88}</Project>
+      <Name>DotJEM.Json.Index.TestUtil</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

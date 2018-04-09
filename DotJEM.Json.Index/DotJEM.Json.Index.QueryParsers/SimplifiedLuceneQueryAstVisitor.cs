@@ -88,27 +88,35 @@ namespace DotJEM.Json.Index.QueryParsers
                 case FieldOperator.Equals:
                     query.Add(CreateSimpleQuery(ast.Name, ast.Value), Occur.MUST);
                     break;
+
                 case FieldOperator.NotEquals:
                     query.Add(CreateSimpleQuery(ast.Name, ast.Value), Occur.MUST_NOT);
                     break;
+
                 case FieldOperator.GreaterThan:
                     query.Add(CreateGreaterThanQuery(ast.Name, ast.Value, false), Occur.MUST);
                     break;
+
                 case FieldOperator.GreaterThanOrEquals:
                     query.Add(CreateGreaterThanQuery(ast.Name, ast.Value, true), Occur.MUST);
                     break;
+
                 case FieldOperator.LessThan:
                     query.Add(CreateLessThanQuery(ast.Name, ast.Value, false), Occur.MUST);
                     break;
+
                 case FieldOperator.LessThanOrEquals:
                     query.Add(CreateLessThanQuery(ast.Name, ast.Value, true), Occur.MUST);
                     break;
+
                 case FieldOperator.Similar:
                     query.Add(CreateFuzzyQuery(ast.Name, ast.Value), Occur.MUST);
                     break;
+
                 case FieldOperator.NotSimilar:
                     query.Add(CreateFuzzyQuery(ast.Name, ast.Value), Occur.MUST_NOT);
                     break;
+
                 case FieldOperator.In:
                     if (!(ast.Value is ListValue inList))
                         throw new Exception();
@@ -118,6 +126,7 @@ namespace DotJEM.Json.Index.QueryParsers
                         inClause.Add(CreateSimpleQuery(ast.Name, value), Occur.SHOULD);
                     query.Add(inClause, Occur.MUST);
                     break;
+
                 case FieldOperator.NotIt:
                     if (!(ast.Value is ListValue notInList))
                         throw new Exception();
@@ -156,6 +165,7 @@ namespace DotJEM.Json.Index.QueryParsers
 
             LuceneQuery CreateGreaterThanQuery(string field, Value val, bool inclusive)
             {
+                //TODO: fix...
                 field = field ?? "gender";
                 switch (val)
                 {

@@ -45,7 +45,7 @@ value       : TERM                                  #Term
 
 andOperator : WS? AND;
 orOperator  : WS? OR;
-notOperator : WS? NOT;
+notOperator : WS? (AND WS)? NOT;
 
 operator : EQ       #Equals
          | COLON    #Equals

@@ -22,8 +22,23 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast
 
         public IEnumerable<(string, object)> MetaData => metaData.Select(kv => (kv.Key, kv.Value));
 
-        public TData Get<TData>(string key) where TData : class => metaData[key] as TData;
-        public void Put<TData>(string key, TData value) where TData : class => metaData[key] = value;
+        public object Get(string key) => metaData[key];
+        public bool TryGetValue(string key, out object value) => metaData.TryGetValue(key, out value);
+        public void Add(string key, object value) => metaData.Add(key, value);
+        public bool ContainsKey(string key) => metaData.ContainsKey(key);
+
+
+        public object GetAs<TData>(string key) => (TData)metaData[key];
+        public bool TryGetAs<TData>(string key, out TData value)
+        {
+            if (metaData.TryGetValue(key, out object val))
+            {
+                value = (TData) val;
+                return true;
+            }
+            value = default(TData);
+            return false;
+        }
 
         public abstract TResult Accept<TResult, TContext>(ISimplifiedQueryAstVisitor<TResult, TContext> visitor, TContext context);
     }
@@ -157,6 +172,7 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast
         {
         }
     }
+
     public class PhraseValue : Value
     {
         public string Value { get; }
@@ -201,7 +217,6 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast
         public string Raw { get; }
         public DateTime Now { get; }
         public TimeSpan Offset { get; }
-
         public DateTime Value { get; }
 
 
@@ -222,9 +237,9 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast
             if (!match.Success)
                 throw new ArgumentException($"Could not parse OffsetDateTime: {text}");
 
-            string r = match.Groups['r']?.Value;
-            string s = match.Groups['s']?.Value;
-            string v = match.Groups['v']?.Value;
+            string r = match.Groups["r"]?.Value;
+            string s = match.Groups["s"]?.Value;
+            string v = match.Groups["v"]?.Value;
 
             TimeSpan offset = parser.Parse(v);
             offset = s == "+" ? offset : offset.Negate();
