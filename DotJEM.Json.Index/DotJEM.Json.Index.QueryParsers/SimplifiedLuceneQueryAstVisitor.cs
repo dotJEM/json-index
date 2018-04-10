@@ -70,7 +70,6 @@ namespace DotJEM.Json.Index.QueryParsers
             if (ast.Name != null)
             {
                 IReadOnlyFieldinformation fieldInfo = fields.Lookup(ast.Name);
-
             }
 
 
@@ -142,13 +141,14 @@ namespace DotJEM.Json.Index.QueryParsers
                         return NumericRangeQuery.NewInt64Range(field + ".@ticks", null, dateTimeValue.Value.Ticks, inclusive, inclusive);
 
                     case OffsetDateTime offsetDateTime:
-                        //TODO: Include package.
-                        break;
+                        return NumericRangeQuery.NewInt64Range(field + ".@ticks", null, offsetDateTime.Value.Ticks, inclusive, inclusive);
 
                     case NumberValue numberValue:
                         return NumericRangeQuery.NewDoubleRange(field, null, numberValue.Value, inclusive, inclusive);
+
                     case IntegerValue integerValue:
                         return NumericRangeQuery.NewInt64Range(field, null, integerValue.Value, inclusive, inclusive);
+
                     case StringValue stringValue:
                         return TermRangeQuery.NewStringRange(field, null, stringValue.Value, inclusive, inclusive);
                 }
