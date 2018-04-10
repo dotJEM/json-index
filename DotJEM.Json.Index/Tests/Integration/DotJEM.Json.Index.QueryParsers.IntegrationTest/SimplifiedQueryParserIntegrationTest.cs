@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Mime;
+using DotJEM.Json.Index.TestData;
 using DotJEM.Json.Index.TestUtil;
 using Lucene.Net.Search;
 using Newtonsoft.Json.Linq;
@@ -33,11 +34,15 @@ namespace DotJEM.Json.Index.QueryParsers.IntegrationTest
         [TestCase("name = * ORDER BY age DESC", "DOC_004,DOC_003,DOC_002,DOC_001,DOC_006,DOC_005")]
         [TestCase("updated > -2days", "DOC_001,DOC_002")]
         [TestCase("name = Peter OR name = John OR num = 10", "DOC_001,DOC_003,DOC_004")]
+
+        [TestCase("$contentType: person AND name = *", "DOC_004,DOC_003,DOC_002,DOC_001,DOC_006,DOC_005")]
+        [TestCase("($contentType: person AND name = *) OR ($contenttype: car and foo = x)", "DOC_004,DOC_003,DOC_002,DOC_001,DOC_006,DOC_005")]
         public void Search_Persons_YieldDocuments(string query, string expected)
         {
             bool orderMatters = query.IndexOf("ORDER", StringComparison.OrdinalIgnoreCase) != -1;
 
-            ILuceneJsonIndex index = BuildPersonIndex()
+            ILuceneJsonIndex index = new TestIndexBuilder()
+                .With(TestObjects.Persons)
                 .Defaults(defaults => defaults.Services.UseSimplifiedLuceneQueryParser())
                 .Build().Result;
 
@@ -51,11 +56,31 @@ namespace DotJEM.Json.Index.QueryParsers.IntegrationTest
             Assert.That(results, Is.EqualTo(expected));
         }
 
-        private ITestIndexBuilder BuildPersonIndex()
+        [TestCase("username: Bret", "1")]
+        public void Search_JsonPlaceholder_YieldDocuments(string query, string expected)
         {
-            return new TestIndexBuilder()
-                .With(TestObjects.Persons);
+            bool orderMatters = query.IndexOf("ORDER", StringComparison.OrdinalIgnoreCase) != -1;
+
+            ILuceneJsonIndex index = new TestIndexBuilder()
+                .With(JsonPlaceholder.Albums.Select(data => new TestObject("album", (JObject)data)))
+                .With(JsonPlaceholder.Comments.Select(data => new TestObject("comment", (JObject)data)))
+                .With(JsonPlaceholder.Photos.Select(data => new TestObject("photo", (JObject)data)))
+                .With(JsonPlaceholder.Posts.Select(data => new TestObject("post", (JObject)data)))
+                .With(JsonPlaceholder.Todos.Select(data => new TestObject("todo", (JObject)data)))
+                .With(JsonPlaceholder.Users.Select(data => new TestObject("user", (JObject)data)))
+                .Defaults(defaults => defaults.Services.UseSimplifiedLuceneQueryParser())
+                .Build().Result;
+
+            IEnumerable<string> keys = index.Search(query).Result.Select(hit => (string)hit.Json.id);
+            if (!orderMatters)
+            {
+                keys = keys.OrderBy(key => key);
+                expected = string.Join(",", expected.Split(',').OrderBy(key => key));
+            }
+            string results = string.Join(",", keys);
+            Assert.That(results, Is.EqualTo(expected));
         }
+
     }
 
 

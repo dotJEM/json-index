@@ -6,6 +6,7 @@ using DotJEM.Json.Index.Documents.Info;
 using DotJEM.Json.Index.QueryParsers.Simplified;
 using DotJEM.Json.Index.QueryParsers.Simplified.Ast;
 using DotJEM.Json.Index.QueryParsers.Simplified.Ast.Optimizer;
+using DotJEM.Json.Index.QueryParsers.Simplified.Ast.Scanner;
 using Lucene.Net.Analysis;
 using Lucene.Net.Search;
 using LuceneQuery = Lucene.Net.Search.Query;
@@ -33,15 +34,17 @@ namespace DotJEM.Json.Index.QueryParsers
 
     public class SimplifiedLuceneQueryParser : ILuceneQueryParser
     {
-        private readonly IAstParser<QueryAst> astParser;
-        private readonly ISimplifiedQueryAstVisitor<LuceneQueryInfo, FieldContext> visitor;
+        private readonly IAstParser<BaseQuery> astParser;
+        private readonly ISimplifiedQueryAstVisitor<LuceneQueryInfo, ContentTypeContext> visitor;
+        private readonly IFieldInformationManager fields;
 
-        public SimplifiedLuceneQueryParser(IFieldInformationManager fields, IFieldResolver resolver, Analyzer analyzer, IAstParser<QueryAst> astParser = null)
-            : this(new SimplifiedLuceneQueryAstVisitor(fields, resolver, analyzer), astParser) { }
+        public SimplifiedLuceneQueryParser(IFieldInformationManager fields, Analyzer analyzer, IAstParser<BaseQuery> astParser = null)
+            : this(new SimplifiedLuceneQueryAstVisitor(fields, analyzer), fields, astParser) { }
 
-        public SimplifiedLuceneQueryParser(ISimplifiedQueryAstVisitor<LuceneQueryInfo, FieldContext> visitor, IAstParser<QueryAst> astParser = null)
+        public SimplifiedLuceneQueryParser(ISimplifiedQueryAstVisitor<LuceneQueryInfo, ContentTypeContext> visitor, IFieldInformationManager fields, IAstParser<BaseQuery> astParser = null)
         {
             this.visitor = visitor ?? throw new ArgumentNullException(nameof(visitor));
+            this.fields = fields ?? throw new ArgumentNullException(nameof(fields));
             this.astParser = astParser ?? new SimplifiedQueryAstParser();
         }
 
@@ -51,7 +54,8 @@ namespace DotJEM.Json.Index.QueryParsers
             return astParser
                 .Parse(query)
                 .Optimize()
-                .Accept(visitor, new FieldContext(FieldOperator.None));
+                .DecorateWithContentTypes(fields)
+                .Accept(visitor, new ContentTypeContext(fields.ContentTypes));
         }
     }
 
@@ -61,9 +65,9 @@ namespace DotJEM.Json.Index.QueryParsers
     }
 
 
-    public class SimplifiedQueryAstParser : IAstParser<QueryAst>
+    public class SimplifiedQueryAstParser : IAstParser<BaseQuery>
     {
-        public QueryAst Parse(string query)
+        public BaseQuery Parse(string query)
         {
             if (string.IsNullOrWhiteSpace(query)) throw new ArgumentException("message", nameof(query));
 
@@ -80,7 +84,7 @@ namespace DotJEM.Json.Index.QueryParsers
             SimplifiedParserVisitor visitor = new SimplifiedParserVisitor();
             SimplifiedParser.QueryContext queryContext = parser.query();
 
-            QueryAst result = visitor.Visit(queryContext);
+            BaseQuery result = visitor.Visit(queryContext);
             if (!errors.IsValid)
                 throw new Exception($"Error at col {errors.ErrorLocation}: {errors.ErrorMessage}");
 

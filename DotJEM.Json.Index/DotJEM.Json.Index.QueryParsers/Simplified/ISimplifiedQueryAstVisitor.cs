@@ -5,7 +5,7 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified
 {
     public interface ISimplifiedQueryAstVisitor<out TResult, in TContext>
     {
-        TResult Visit(QueryAst ast, TContext context);
+        TResult Visit(BaseQuery ast, TContext context);
         TResult Visit(NotQuery ast, TContext context);
 
         TResult Visit(OrderedQuery ast, TContext context);

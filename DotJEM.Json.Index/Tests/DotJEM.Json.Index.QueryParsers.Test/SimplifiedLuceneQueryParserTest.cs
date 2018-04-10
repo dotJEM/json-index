@@ -16,7 +16,7 @@ namespace DotJEM.Json.Index.QueryParsers.Test
         public void Parse_Input_Query(string query, string result)
         {
             SimplifiedLuceneQueryParser parser = new SimplifiedLuceneQueryParser(
-                new FakeFieldsInformationManager(), new FieldResolver(), new StandardAnalyzer(LuceneVersion.LUCENE_48, CharArraySet.EMPTY_SET));
+                new FakeFieldsInformationManager(),  new StandardAnalyzer(LuceneVersion.LUCENE_48, CharArraySet.EMPTY_SET));
 
             LuceneQueryInfo queryInfo = parser.Parse(query);
             Assert.That(queryInfo.Query.ToString(), Is.EqualTo(result));
@@ -25,6 +25,8 @@ namespace DotJEM.Json.Index.QueryParsers.Test
 
     public class FakeFieldsInformationManager : IFieldInformationManager
     {
+        public IFieldResolver Resolver { get; }
+
         public IEnumerable<string> ContentTypes { get; }
         public IEnumerable<string> AllFields { get; }
 

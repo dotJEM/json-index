@@ -4,29 +4,7 @@ using System.Linq;
 
 namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast.Optimizer
 {
-    public enum DefaultOperator
-    {
-        And, Or
-    }
-
-    public static class SimplifiedQueryOptimizationExtensions
-    {
-        public static QueryAst Optimize(this QueryAst ast, DefaultOperator defaultOperator = DefaultOperator.And)
-        {
-            return ast.Optimize(new SimplifiedQueryOptimizationVisitor(defaultOperator));
-        }
-
-        public static QueryAst Optimize(this QueryAst ast, ISimplifiedQueryOptimizationVisitor optimizer)
-        {
-            return ast.Accept(optimizer, null);
-        }
-    }
-
-    public interface ISimplifiedQueryOptimizationVisitor : ISimplifiedQueryAstVisitor<QueryAst, object>
-    {
-    }
-
-    public class SimplifiedQueryOptimizationVisitor : SimplifiedQueryAstVisitor<QueryAst, object>, ISimplifiedQueryOptimizationVisitor
+    public class SimplifiedQueryOptimizationVisitor : SimplifiedQueryAstVisitor<BaseQuery, object>, ISimplifiedQueryOptimizationVisitor
     {
         private readonly DefaultOperator defaultOperator;
 
@@ -35,14 +13,14 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast.Optimizer
             this.defaultOperator = defaultOperator;
         }
 
-        public override QueryAst Visit(QueryAst ast, object context) => ast;
+        public override BaseQuery Visit(BaseQuery ast, object context) => ast;
 
-        public override QueryAst Visit(NotQuery ast, object context)
+        public override BaseQuery Visit(NotQuery ast, object context)
         {
             return ast.Not is NotQuery nq ? nq.Not : ast;
         }
 
-        public override QueryAst Visit(OrQuery ast, object context)
+        public override BaseQuery Visit(OrQuery ast, object context)
         {
             /* Note: collect similar fields.
              *
@@ -50,12 +28,12 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast.Optimizer
              *  - field: x OR field: y OR field: z => field IN (x, y, z);
              *  - field != x OR field != y OR field != z => field NOT IN (x, y, z);
              */
-            string GroupName(QueryAst q) => q is FieldQuery fq ? fq.Name : null;
-            QueryAst[] optimized =
-                (from query in ast.Queries.Select(q => q.Optimize(this))
-                group query by GroupName(query) into fieldGroup
-                from query in OptimizeFieldGroup(fieldGroup.Key, fieldGroup)
-                select query).ToArray();
+            string GroupName(BaseQuery q) => q is FieldQuery fq ? fq.Name : null;
+            BaseQuery[] optimized =
+                (from query in ast.Queries.Select(q => SimplifiedQueryOptimizationExtensions.Optimize(q, this))
+                    group query by GroupName(query) into fieldGroup
+                    from query in OptimizeFieldGroup(fieldGroup.Key, fieldGroup)
+                    select query).ToArray();
             //TODO: Currently we do a double optimize here, this is in order to catch a Eq => In along side of a regular In.
             //      Instead of grouping on FieldOperator, we should group on a targeted FieldOperator.
             return optimized.Length > 1 ? new OrQuery(optimized) : optimized[0];
@@ -73,7 +51,7 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast.Optimizer
                 }
             }
 
-            IEnumerable<QueryAst> OptimizeFieldGroup(string field, IEnumerable<QueryAst> queries)
+            IEnumerable<BaseQuery> OptimizeFieldGroup(string field, IEnumerable<BaseQuery> queries)
             {
                 return field == null 
                     ? queries.SelectMany(q => q is OrQuery or ? or.Queries : new[] { q })
@@ -110,7 +88,7 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast.Optimizer
             }
         }
 
-        public override QueryAst Visit(AndQuery ast, object context)
+        public override BaseQuery Visit(AndQuery ast, object context)
         {
             /* Note: collect similar fields.
              *
@@ -118,15 +96,15 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast.Optimizer
              *  - field > 0 AND field < 100 => field: [0 TO 100]; (Range Query, even though the Parser does not support it.
              * 
              */
-            string GroupName(QueryAst q) => q is FieldQuery fq ? fq.Name : null;
-            QueryAst[] optimized =
+            string GroupName(BaseQuery q) => q is FieldQuery fq ? fq.Name : null;
+            BaseQuery[] optimized =
                 (from query in ast.Queries.Select(q => q.Optimize(this))
-                 group query by GroupName(query) into fieldGroup
-                 from query in OptimizeFieldGroup(fieldGroup.Key, fieldGroup)
-                 select query).ToArray();
+                    group query by GroupName(query) into fieldGroup
+                    from query in OptimizeFieldGroup(fieldGroup.Key, fieldGroup)
+                    select query).ToArray();
             return optimized.Length > 1 ? new AndQuery(optimized) : optimized[0];
 
-            IEnumerable<QueryAst> OptimizeFieldGroup(string field, IEnumerable<QueryAst> queries)
+            IEnumerable<BaseQuery> OptimizeFieldGroup(string field, IEnumerable<BaseQuery> queries)
             {
                 return field == null
                     ? queries.SelectMany(q => q is AndQuery or ? or.Queries : new[] { q })
@@ -178,7 +156,7 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast.Optimizer
 
         }
 
-        public override QueryAst Visit(ImplicitCompositeQuery ast, object context)
+        public override BaseQuery Visit(ImplicitCompositeQuery ast, object context)
         {
             switch (defaultOperator)
             {
@@ -189,48 +167,11 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast.Optimizer
                 default:
                     throw new ArgumentOutOfRangeException();
             }
-
         }
-    }
 
-    public static class EnumerableExtentions
-    {
-        public static (IEnumerable<TOut1>, IEnumerable<TOut2>)  Split<TIn, TOut1, TOut2>(this IEnumerable<TIn> source, Func<TIn, (TOut1, TOut2)> splitter)
+        public override BaseQuery Visit(OrderedQuery ast, object context)
         {
-            TwinConsumerCollection<TIn, TOut1, TOut2> twin = new TwinConsumerCollection<TIn, TOut1, TOut2>(source, splitter);
-            return (twin.Out1, twin.Out2);
+            return new OrderedQuery(ast.Query.Optimize(this), ast.Ordering);
         }
     }
-
-    public class TwinConsumerCollection<TIn, TOut1, TOut2>
-    {
-        //private IEnumerable<TIn> source;
-        //private readonly Func<TIn, (TOut1, TOut2)> splitter;
-
-        public IEnumerable<TOut1> Out1 { get; }
-        public IEnumerable<TOut2> Out2 { get; }
-
-        public TwinConsumerCollection(IEnumerable<TIn> source, Func<TIn, (TOut1, TOut2)> splitter)
-        {
-            //this.source = source;
-            //this.splitter = splitter;
-            //TODO: Candidate for some sort of coordinated Producer/Consumer implementation where the Source is the consumer and it produces for the two outputs using the splitter.
-
-            List<TOut1> out1 = new List<TOut1>();
-            List<TOut2> out2 = new List<TOut2>();
-            foreach (TIn @in in source)
-            {
-                (TOut1 o1, TOut2 o2) = splitter(@in);
-                out1.Add(o1);
-                out2.Add(o2);
-            }
-
-            Out1 = out1;
-            Out2 = out2;
-        }
-
-
-
-    }
-
 }

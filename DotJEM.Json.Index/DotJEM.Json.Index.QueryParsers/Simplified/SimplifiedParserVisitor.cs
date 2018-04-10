@@ -8,11 +8,11 @@ using DotJEM.Json.Index.QueryParsers.Simplified.Ast;
 
 namespace DotJEM.Json.Index.QueryParsers.Simplified
 {
-    public class SimplifiedParserVisitor : SimplifiedBaseVisitor<QueryAst>
+    public class SimplifiedParserVisitor : SimplifiedBaseVisitor<BaseQuery>
     {
         private DateTime now;
 
-        protected override QueryAst AggregateResult(QueryAst aggregate, QueryAst nextResult)
+        protected override BaseQuery AggregateResult(BaseQuery aggregate, BaseQuery nextResult)
         {
             // TODO: what should we actually do here!?
             if (aggregate != null && nextResult != null)
@@ -22,35 +22,35 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified
             return aggregate ?? nextResult;
         }
 
-        public override QueryAst VisitQuery(SimplifiedParser.QueryContext context)
+        public override BaseQuery VisitQuery(SimplifiedParser.QueryContext context)
         {
             now = DateTime.Now;
-            QueryAst query = context.clause.Accept(this);
-            QueryAst order = context.order?.Accept(this);
+            BaseQuery query = context.clause.Accept(this);
+            BaseQuery order = context.order?.Accept(this);
             return new OrderedQuery(query, order);
         }
 
-        public override QueryAst VisitOrClause(SimplifiedParser.OrClauseContext context)
+        public override BaseQuery VisitOrClause(SimplifiedParser.OrClauseContext context)
         {
-            List<QueryAst> fragments = Visit(context.children);
+            List<BaseQuery> fragments = Visit(context.children);
             // Note: If we only have a single fragment, there was no OR, just return the fragment.
             if (fragments.Count < 2)
                 return fragments.SingleOrDefault();
             return new OrQuery(fragments.ToArray());
         }
 
-        public override QueryAst VisitAndClause(SimplifiedParser.AndClauseContext context)
+        public override BaseQuery VisitAndClause(SimplifiedParser.AndClauseContext context)
         {
-            List<QueryAst> fragments = Visit(context.children);
+            List<BaseQuery> fragments = Visit(context.children);
             // Note: If we only have a single fragment, there was no AND, just return the fragment.
             if (fragments.Count < 2)
                 return fragments.SingleOrDefault();
             return new AndQuery(fragments.ToArray());
         }
 
-        public override QueryAst VisitNotClause(SimplifiedParser.NotClauseContext context)
+        public override BaseQuery VisitNotClause(SimplifiedParser.NotClauseContext context)
         {
-            List<QueryAst> fragments = Visit(context.children);
+            List<BaseQuery> fragments = Visit(context.children);
             //Note: There was actually no Not Clause.
             if (fragments.Count < 2)
                 return fragments.SingleOrDefault();
@@ -61,9 +61,9 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified
             return new AndQuery(fragments.ToArray());
         }
 
-        public override QueryAst VisitDefaultClause(SimplifiedParser.DefaultClauseContext context)
+        public override BaseQuery VisitDefaultClause(SimplifiedParser.DefaultClauseContext context)
         {
-            List<QueryAst> fragments = Visit(context.children);
+            List<BaseQuery> fragments = Visit(context.children);
             // Note: If we only have a single fragment, just return that.
             if (fragments.Count < 2)
                 return fragments.SingleOrDefault();
@@ -110,19 +110,19 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified
         //    return base.Visit(tree);
         //}
         
-        public override QueryAst VisitValue(SimplifiedParser.ValueContext context)
+        public override BaseQuery VisitValue(SimplifiedParser.ValueContext context)
         {
             return new FieldQuery(null, FieldOperator.None, Value(context));
         }
         
-        public override QueryAst VisitTerm(SimplifiedParser.TermContext context) => VisitValue(context);
-        public override QueryAst VisitWildcard(SimplifiedParser.WildcardContext context) => VisitValue(context);
-        public override QueryAst VisitIntegerNumber(SimplifiedParser.IntegerNumberContext context) => VisitValue(context);
-        public override QueryAst VisitDecimalNumber(SimplifiedParser.DecimalNumberContext context) => VisitValue(context);
-        public override QueryAst VisitPhrase(SimplifiedParser.PhraseContext context) => VisitValue(context);
-        public override QueryAst VisitMatchAll(SimplifiedParser.MatchAllContext context) => VisitValue(context);
+        public override BaseQuery VisitTerm(SimplifiedParser.TermContext context) => VisitValue(context);
+        public override BaseQuery VisitWildcard(SimplifiedParser.WildcardContext context) => VisitValue(context);
+        public override BaseQuery VisitIntegerNumber(SimplifiedParser.IntegerNumberContext context) => VisitValue(context);
+        public override BaseQuery VisitDecimalNumber(SimplifiedParser.DecimalNumberContext context) => VisitValue(context);
+        public override BaseQuery VisitPhrase(SimplifiedParser.PhraseContext context) => VisitValue(context);
+        public override BaseQuery VisitMatchAll(SimplifiedParser.MatchAllContext context) => VisitValue(context);
 
-        public override QueryAst VisitField(SimplifiedParser.FieldContext context)
+        public override BaseQuery VisitField(SimplifiedParser.FieldContext context)
         {
             string name = context.TERM().GetText();
             switch (context.@operator())
@@ -157,7 +157,7 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified
             throw new Exception("Unknown value type.");
         }
 
-        public override QueryAst VisitInClause(SimplifiedParser.InClauseContext context)
+        public override BaseQuery VisitInClause(SimplifiedParser.InClauseContext context)
         {
             string name = context.TERM().GetText();
             Value[] values = context.children.OfType<SimplifiedParser.ValueContext>()
@@ -165,7 +165,7 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified
             return new FieldQuery(name, FieldOperator.In, new ListValue(values));
         }
 
-        public override QueryAst VisitNotInClause(SimplifiedParser.NotInClauseContext context)
+        public override BaseQuery VisitNotInClause(SimplifiedParser.NotInClauseContext context)
         {
             string name = context.TERM().GetText();
             Value[] values = context.children.OfType<SimplifiedParser.ValueContext>()
@@ -173,7 +173,7 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified
             return new FieldQuery(name, FieldOperator.NotIt, new ListValue(values));
         }
 
-        public override QueryAst VisitOrderingClause(SimplifiedParser.OrderingClauseContext context)
+        public override BaseQuery VisitOrderingClause(SimplifiedParser.OrderingClauseContext context)
         {
             OrderField[] orders = context.children
                 .Select(Visit)
@@ -183,7 +183,7 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified
             return new OrderBy(orders);
         }
 
-        public override QueryAst VisitOrderingField(SimplifiedParser.OrderingFieldContext context)
+        public override BaseQuery VisitOrderingField(SimplifiedParser.OrderingFieldContext context)
         {
             string field = context.TERM().GetText();
             FieldOrder order = context.ASC() != null
@@ -194,7 +194,7 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified
             return new OrderField(field, order);
         }
 
-        private List<QueryAst> Visit(IList<IParseTree> items) => items
+        private List<BaseQuery> Visit(IList<IParseTree> items) => items
             .Select(Visit)
             .Where(ast => ast != null)
             .ToList();
