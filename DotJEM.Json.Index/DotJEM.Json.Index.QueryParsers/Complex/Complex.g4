@@ -1,4 +1,4 @@
-﻿grammar Extended;
+﻿grammar Complex;
 
 /* Inspired by: https://github.com/lrowe/lucenequery and JIRA */
 
@@ -28,7 +28,7 @@ atom
   ;
 
 
-joinClause     : TERM_NORMAL sep IN sep? LPARAN sep? value 
+joinClause     : TERM_NORMAL sep IN sep? LPAREN sep? defaultClause sep? RPAREN;
 inClause       : TERM_NORMAL sep IN sep? LPAREN sep? value ( sep? COMMA sep? value )* sep? RPAREN;
 notInClause    : TERM_NORMAL sep NOT sep IN sep? LPAREN sep? value ( sep? COMMA sep? value )* sep? RPAREN;
 

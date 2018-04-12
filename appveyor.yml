@@ -6,13 +6,6 @@ init:
 nuget:
   disable_publish_on_pr: true
 
-assembly_info:
-  patch: true
-  file: AssemblyInfo.*
-  assembly_version: '0.0.{build}'
-  assembly_file_version: '0.0.{build}'
-  assembly_informational_version: '{version}'
-
 matrix:
   fast_finish: true # fail fast!
 
@@ -23,6 +16,10 @@ pull_requests:
 
 before_build:
   nuget restore
+
+before_build:
+  - cmd: dotnet restore DotJEM.Json.Index\DotJEM.Json.Index.sln
+  - cmd: nuget restore DotJEM.Json.Index\DotJEM.Json.Index.sln
 
 build:
   publish_nuget: true
@@ -47,13 +44,27 @@ for:
 -
   branches:
     only:
-      - Lucene-v4.8
-  
-  version: 0.1.0-beta.{build}
+      - Master
   
   assembly_info:
     patch: true
     file: AssemblyInfo.*
-    assembly_version: '0.1.0'
-    assembly_file_version: '0.1.0'
+    assembly_version: '0.0.{build}'
+    assembly_file_version: '0.0.{build}'
     assembly_informational_version: '{version}'
+
+-
+  branches:
+    only:
+      - Lucene-v4.8
+  
+  version: 0.1.0-beta.{build}
+  
+  dotnet_csproj:
+    patch: true
+    file: '**\*.csproj'
+    version: '{version}'
+    package_version: '0.1.{build}'
+    assembly_version: '0.1.{build}'
+    file_version: '0.1.{build}'
+    informational_version: '{version}'
