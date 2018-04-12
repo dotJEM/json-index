@@ -34,8 +34,6 @@ deploy:
   api_key:
     secure: KEHWtW02rf5aCAlwchP0Siow5EA24hwtm09uvsR58bMWirJ8uXl1SidBnNCfJ3cw
   skip_symbols: false
-  on:
-    branch: master 
 
 for:
 -
