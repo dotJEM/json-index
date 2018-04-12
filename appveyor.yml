@@ -1,5 +1,6 @@
 version: 0.0.{build}
-      
+image: Visual Studio 2017
+
 init:
 - ps: Update-AppveyorBuild -Version "$env:appveyor_build_version+sha.$($env:appveyor_repo_commit.substring(0,7))"
 
