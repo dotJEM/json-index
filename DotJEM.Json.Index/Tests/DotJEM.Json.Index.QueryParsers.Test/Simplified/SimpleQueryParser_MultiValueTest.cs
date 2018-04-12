@@ -22,19 +22,6 @@ namespace DotJEM.Json.Index.QueryParsers.Test.Simplified
     }
 
     [TestFixture]
-    public class SimplifiedParser_MultiValueTest
-    {
-        [TestCase("field: (A OR B)")]
-        [TestCase("field: (A OR B NOT C)")]
-        public void Parse_RunTest(string query)
-        {
-            BaseQuery ast = new SimplifiedQueryAstParser().Parse(query);
-            DebugOut.WriteJson(ast);
-            Assert.That(ast, Is.Not.Null);
-        }
-    }
-
-    [TestFixture]
     public class SimplifiedParser_EqualsTest
     {
         [TestCase("field = value")]

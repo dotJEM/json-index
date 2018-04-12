@@ -12,7 +12,7 @@ namespace DotJEM.Json.Index.QueryParsers.Test
     [TestFixture]
     public class SimplifiedLuceneQueryParserTest
     {
-        [TestCase("value", "")]
+        [TestCase("value", ""), Ignore("Requires implementation.")]
         public void Parse_Input_Query(string query, string result)
         {
             SimplifiedLuceneQueryParser parser = new SimplifiedLuceneQueryParser(
@@ -25,10 +25,10 @@ namespace DotJEM.Json.Index.QueryParsers.Test
 
     public class FakeFieldsInformationManager : IFieldInformationManager
     {
-        public IFieldResolver Resolver { get; }
+        public IFieldResolver Resolver { get; } = new FieldResolver();
 
-        public IEnumerable<string> ContentTypes { get; }
-        public IEnumerable<string> AllFields { get; }
+        public IEnumerable<string> ContentTypes { get; } = new[] {"person"};
+        public IEnumerable<string> AllFields { get; } = new[] { "person" };
 
         public Task Merge(string contentType, IFieldInformationCollection information)
         {
