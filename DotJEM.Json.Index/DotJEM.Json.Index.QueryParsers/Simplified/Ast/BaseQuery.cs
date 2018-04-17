@@ -16,19 +16,40 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast
         None, Ascending, Descending
     }
 
-    public abstract class QueryAst
+    public abstract class BaseQuery
     {
         private readonly Dictionary<string, object> metaData = new Dictionary<string, object>();
 
         public IEnumerable<(string, object)> MetaData => metaData.Select(kv => (kv.Key, kv.Value));
 
-        public TData Get<TData>(string key) where TData : class => metaData[key] as TData;
-        public void Put<TData>(string key, TData value) where TData : class => metaData[key] = value;
+        public object Get(string key) => metaData[key];
+        public bool TryGetValue(string key, out object value) => metaData.TryGetValue(key, out value);
+
+        public TData Add<TData>(string key, TData value)
+        {
+            metaData.Add(key, value);
+            return value;
+        }
+
+        public bool ContainsKey(string key) => metaData.ContainsKey(key);
+
+
+        public object GetAs<TData>(string key) => (TData)metaData[key];
+        public bool TryGetAs<TData>(string key, out TData value)
+        {
+            if (metaData.TryGetValue(key, out object val))
+            {
+                value = (TData) val;
+                return true;
+            }
+            value = default(TData);
+            return false;
+        }
 
         public abstract TResult Accept<TResult, TContext>(ISimplifiedQueryAstVisitor<TResult, TContext> visitor, TContext context);
     }
 
-    public class OrderBy : QueryAst
+    public class OrderBy : BaseQuery
     {
         private readonly OrderField[] orderFields;
         public int Count => orderFields.Length;
@@ -42,7 +63,7 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast
         public override TResult Accept<TResult, TContext>(ISimplifiedQueryAstVisitor<TResult, TContext> visitor, TContext context) => visitor.Visit(this, context);
     }
 
-    public class OrderField : QueryAst
+    public class OrderField : BaseQuery
     {
         public string Name { get; }
 
@@ -56,12 +77,12 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast
         public override TResult Accept<TResult, TContext>(ISimplifiedQueryAstVisitor<TResult, TContext> visitor, TContext context) => visitor.Visit(this, context);
     }
 
-    public class OrderedQuery : QueryAst
+    public class OrderedQuery : BaseQuery
     {
-        public QueryAst Query { get; }
-        public QueryAst Ordering { get; }
+        public BaseQuery Query { get; }
+        public BaseQuery Ordering { get; }
 
-        public OrderedQuery(QueryAst query, QueryAst order)
+        public OrderedQuery(BaseQuery query, BaseQuery order)
         {
             this.Query = query;
             this.Ordering = order;
@@ -70,14 +91,14 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast
         public override TResult Accept<TResult, TContext>(ISimplifiedQueryAstVisitor<TResult, TContext> visitor, TContext context) => visitor.Visit(this, context);
     }
 
-    public abstract class CompositeQuery : QueryAst
+    public abstract class CompositeQuery : BaseQuery
     {
-        private readonly QueryAst[] queries;
+        private readonly BaseQuery[] queries;
 
         public int Count => queries.Length;
-        public IEnumerable<QueryAst> Queries => queries;
+        public IEnumerable<BaseQuery> Queries => queries;
 
-        protected CompositeQuery(QueryAst[] queries)
+        protected CompositeQuery(BaseQuery[] queries)
         {
             this.queries = queries;
         }
@@ -85,7 +106,7 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast
 
     public class ImplicitCompositeQuery : CompositeQuery
     {
-        public ImplicitCompositeQuery(QueryAst[] queries) : base(queries)
+        public ImplicitCompositeQuery(BaseQuery[] queries) : base(queries)
         {
         }
 
@@ -93,7 +114,7 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast
     }
 
     public class OrQuery : CompositeQuery {
-        public OrQuery(QueryAst[] queries) 
+        public OrQuery(BaseQuery[] queries) 
             : base(queries)
         {
         }
@@ -103,18 +124,18 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast
     
     public class AndQuery : CompositeQuery
     {
-        public AndQuery(QueryAst[] queries) : base(queries)
+        public AndQuery(BaseQuery[] queries) : base(queries)
         {
         }
 
         public override TResult Accept<TResult, TContext>(ISimplifiedQueryAstVisitor<TResult, TContext> visitor, TContext context) => visitor.Visit(this, context);
     }
 
-    public class NotQuery : QueryAst
+    public class NotQuery : BaseQuery
     {
-        public QueryAst Not { get; }
+        public BaseQuery Not { get; }
 
-        public NotQuery(QueryAst not)
+        public NotQuery(BaseQuery not)
         {
             Not = not;
         }
@@ -122,7 +143,7 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast
         public override TResult Accept<TResult, TContext>(ISimplifiedQueryAstVisitor<TResult, TContext> visitor, TContext context) => visitor.Visit(this, context);
     }
 
-    public class FieldQuery : QueryAst
+    public class FieldQuery : BaseQuery
     {
         public string Name { get; }
         public FieldOperator Operator { get; }
@@ -157,6 +178,7 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast
         {
         }
     }
+
     public class PhraseValue : Value
     {
         public string Value { get; }
@@ -201,7 +223,6 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast
         public string Raw { get; }
         public DateTime Now { get; }
         public TimeSpan Offset { get; }
-
         public DateTime Value { get; }
 
 
@@ -222,9 +243,9 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast
             if (!match.Success)
                 throw new ArgumentException($"Could not parse OffsetDateTime: {text}");
 
-            string r = match.Groups['r']?.Value;
-            string s = match.Groups['s']?.Value;
-            string v = match.Groups['v']?.Value;
+            string r = match.Groups["r"]?.Value;
+            string s = match.Groups["s"]?.Value;
+            string v = match.Groups["v"]?.Value;
 
             TimeSpan offset = parser.Parse(v);
             offset = s == "+" ? offset : offset.Negate();
