@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="_resources\*.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="_resources\jsonplaceholder.typicode.com.albums.json" />
+    <None Remove="_resources\jsonplaceholder.typicode.com.comments.json" />
+    <None Remove="_resources\jsonplaceholder.typicode.com.photos.json" />
+    <None Remove="_resources\jsonplaceholder.typicode.com.todos.json" />
+    <None Remove="_resources\jsonplaceholder.typicode.com.users.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
+  </ItemGroup>
+
+</Project>

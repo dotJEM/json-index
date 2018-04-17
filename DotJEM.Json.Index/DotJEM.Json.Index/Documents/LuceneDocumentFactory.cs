@@ -23,20 +23,18 @@ namespace DotJEM.Json.Index.Documents
 
     public class LuceneDocumentFactory : ILuceneDocumentFactory
     {
-        private readonly IFieldResolver resolver;
-        private readonly IFieldInformationManager fieldsInformationManager;
+        private readonly IFieldInformationManager fieldsInfo;
         private readonly IFactory<ILuceneDocumentBuilder> builderFactory;
 
-        public LuceneDocumentFactory()
-            : this(new FieldResolver(), new DefaultFieldInformationManager(), new FuncFactory<ILuceneDocumentBuilder>(() => new LuceneDocumentBuilder()))
+        public LuceneDocumentFactory(IFieldInformationManager fieldsInformationManager)
+            : this(fieldsInformationManager, new FuncFactory<ILuceneDocumentBuilder>(() => new LuceneDocumentBuilder()))
         {
         }
 
-        public LuceneDocumentFactory(IFieldResolver resolver, IFieldInformationManager fieldsInformationManager, IFactory<ILuceneDocumentBuilder> builderFactory)
+        public LuceneDocumentFactory(IFieldInformationManager fieldsInformationManager, IFactory<ILuceneDocumentBuilder> builderFactory)
         {
-            this.resolver = resolver;
-            this.fieldsInformationManager = fieldsInformationManager;
-            this.builderFactory = builderFactory;
+            this.fieldsInfo = fieldsInformationManager ?? throw new ArgumentNullException(nameof(fieldsInformationManager));
+            this.builderFactory = builderFactory ?? throw new ArgumentNullException(nameof(builderFactory));
         }
 
         public async Task<LuceneDocumentEntry> Create(JObject entity)
@@ -44,14 +42,12 @@ namespace DotJEM.Json.Index.Documents
             return await Task.Run(async () =>
             {
                 ILuceneDocumentBuilder builder = builderFactory.Create();
-
-                string contentType = resolver.ContentType(entity);
-                //await fieldsInformationManager.Merge(contentType, entity);
+                string contentType = fieldsInfo.Resolver.ContentType(entity);
 
                 Document doc = builder.Build(entity);
-                await fieldsInformationManager.Merge(contentType, builder.FieldInfo);
+                await fieldsInfo.Merge(contentType, builder.FieldInfo);
 
-                return new LuceneDocumentEntry(resolver.Identity(entity), contentType, doc);
+                return new LuceneDocumentEntry(fieldsInfo.Resolver.Identity(entity), contentType, doc);
             });
         }
 
@@ -107,6 +103,7 @@ namespace DotJEM.Json.Index.Documents
                     }
                     catch (Exception e)
                     {
+                        Console.WriteLine(e);
                     }
 
                     if (value != null)

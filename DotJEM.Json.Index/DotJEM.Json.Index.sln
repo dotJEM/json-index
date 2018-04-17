@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27428.2015
+VisualStudioVersion = 15.0.27130.2036
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotJEM.Json.Index", "DotJEM.Json.Index\DotJEM.Json.Index.csproj", "{2987D5EB-2353-42F3-AE2E-B166B5093EEF}"
 EndProject
@@ -23,7 +23,18 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotJEM.Json.Index.QueryPars
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotJEM.Json.Index.QueryParsers.IntegrationTest", "Tests\Integration\DotJEM.Json.Index.QueryParsers.IntegrationTest\DotJEM.Json.Index.QueryParsers.IntegrationTest.csproj", "{0321F054-AE90-4F65-82AA-91FA0ECF4CE9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotJEM.Json.Index.TestUtil", "Tests\DotJEM.Json.Index.TestUtil\DotJEM.Json.Index.TestUtil.csproj", "{830E00FB-4B44-4D72-BD16-89EAE9DFBC88}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotJEM.Json.Index.TestUtil", "Tests\DotJEM.Json.Index.TestUtil\DotJEM.Json.Index.TestUtil.csproj", "{830E00FB-4B44-4D72-BD16-89EAE9DFBC88}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Data", "Data", "{6FF309D7-88B6-4342-A36F-7026048AC458}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotJEM.Json.Index.TestData", "Tests\Data\DotJEM.Json.Index.TestData\DotJEM.Json.Index.TestData.csproj", "{F1FD3ECE-5341-450B-9EF0-A5067C387B0D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionItems", "{E2681591-636A-499A-8494-5FF1384D2EBD}"
+	ProjectSection(SolutionItems) = preProject
+		..\.gitignore = ..\.gitignore
+		..\appveyor.yml = ..\appveyor.yml
+		..\README.md = ..\README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -67,6 +78,10 @@ Global
 		{830E00FB-4B44-4D72-BD16-89EAE9DFBC88}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{830E00FB-4B44-4D72-BD16-89EAE9DFBC88}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{830E00FB-4B44-4D72-BD16-89EAE9DFBC88}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F1FD3ECE-5341-450B-9EF0-A5067C387B0D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F1FD3ECE-5341-450B-9EF0-A5067C387B0D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F1FD3ECE-5341-450B-9EF0-A5067C387B0D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F1FD3ECE-5341-450B-9EF0-A5067C387B0D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -79,6 +94,8 @@ Global
 		{C3B8595D-6CA9-42A1-B515-743A701FEBA0} = {D212FCF5-0168-42AE-AA78-2CA01AB591CE}
 		{0321F054-AE90-4F65-82AA-91FA0ECF4CE9} = {ECDF9B33-264F-4C50-9700-9D826E48EA22}
 		{830E00FB-4B44-4D72-BD16-89EAE9DFBC88} = {D212FCF5-0168-42AE-AA78-2CA01AB591CE}
+		{6FF309D7-88B6-4342-A36F-7026048AC458} = {D212FCF5-0168-42AE-AA78-2CA01AB591CE}
+		{F1FD3ECE-5341-450B-9EF0-A5067C387B0D} = {6FF309D7-88B6-4342-A36F-7026048AC458}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {4F04E371-C858-41CF-9D6B-E410C9041C9E}

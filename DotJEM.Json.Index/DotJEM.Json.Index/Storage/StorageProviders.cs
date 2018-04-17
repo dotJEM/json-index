@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using DotJEM.Index.Searching;
 using DotJEM.Json.Index.IO;
+using DotJEM.Json.Index.Searching;
 using Lucene.Net.Analysis;
 using Lucene.Net.Analysis.Standard;
 using Lucene.Net.Index;

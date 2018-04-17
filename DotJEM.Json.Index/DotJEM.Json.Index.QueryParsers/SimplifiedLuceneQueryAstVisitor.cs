@@ -7,6 +7,7 @@ using DotJEM.Json.Index.Documents.Fields;
 using DotJEM.Json.Index.Documents.Info;
 using DotJEM.Json.Index.QueryParsers.Simplified;
 using DotJEM.Json.Index.QueryParsers.Simplified.Ast;
+using DotJEM.Json.Index.QueryParsers.Simplified.Ast.Scanner;
 using Lucene.Net.Analysis;
 using Lucene.Net.Analysis.TokenAttributes;
 using Lucene.Net.Index;
@@ -18,69 +19,59 @@ using LuceneQuery = Lucene.Net.Search.Query;
 
 namespace DotJEM.Json.Index.QueryParsers
 {
-    public class FieldContext
+    public class ContentTypeContext
     {
-        public FieldOperator Operator { get; }
-        private readonly string[] fields;
-        public int FieldCount => fields.Length;
-        public IEnumerable<string> Fields => fields;
-        public FieldContext(FieldOperator @operator, IEnumerable<string> fields)
-            : this(@operator, fields.ToArray()) { }
+        private readonly List<string> contentTypes;
 
-        public FieldContext(FieldOperator @operator, params string[] fields)
+        public IEnumerable<string> ContentTypes => contentTypes.AsReadOnly();
+
+        public ContentTypeContext(IEnumerable<string> enumerable)
         {
-            Operator = @operator;
-            this.fields = fields;
+            this.contentTypes = enumerable.ToList();
         }
     }
 
-    public class SimplifiedLuceneQueryAstVisitor : SimplifiedQueryAstVisitor<LuceneQueryInfo, FieldContext>
+    public class SimplifiedLuceneQueryAstVisitor : SimplifiedQueryAstVisitor<LuceneQueryInfo, ContentTypeContext>
     {
         private readonly Analyzer analyzer;
         private readonly IFieldInformationManager fields;
-        private readonly IFieldResolver resolver;
 
-        public SimplifiedLuceneQueryAstVisitor(IFieldInformationManager fields, IFieldResolver resolver, Analyzer analyzer)
+        public SimplifiedLuceneQueryAstVisitor(IFieldInformationManager fields, Analyzer analyzer)
         {
             this.fields = fields;
-            this.resolver = resolver;
             this.analyzer = analyzer;
         }
 
-        public override LuceneQueryInfo Visit(QueryAst ast, FieldContext context) => throw new NotImplementedException();
+        public override LuceneQueryInfo Visit(BaseQuery ast, ContentTypeContext context) => throw new NotImplementedException();
 
-        public override LuceneQueryInfo Visit(OrderedQuery ast, FieldContext context)
+        public override LuceneQueryInfo Visit(OrderedQuery ast, ContentTypeContext context)
         {
             LuceneQueryInfo query = ast.Query.Accept(this, context);
             LuceneQueryInfo order = ast.Ordering?.Accept(this, context);
             return new LuceneQueryInfo(query.Query, order?.Sort);
         }
 
-        public override LuceneQueryInfo Visit(OrderBy ast, FieldContext context)
+        public override LuceneQueryInfo Visit(OrderBy ast, ContentTypeContext context)
         {
             IEnumerable<SortField> sort = ast.OrderFields
                 .SelectMany(of => of.Accept(this, context).Sort.GetSort());
             return new LuceneQueryInfo(null, new Sort(sort.ToArray()));
         }
 
-        public override LuceneQueryInfo Visit(OrderField ast, FieldContext context)
+        public override LuceneQueryInfo Visit(OrderField ast, ContentTypeContext context)
         {
             return new LuceneQueryInfo(null, new Sort(new SortField(ast.Name, SortFieldType.INT64, ast.SpecifiedOrder == FieldOrder.Descending)));
         }
 
-        public override LuceneQueryInfo Visit(FieldQuery ast, FieldContext context)
+        public override LuceneQueryInfo Visit(FieldQuery ast, ContentTypeContext context)
         {
             BooleanQuery query = new BooleanQuery(true);
 
-            bool isContentTypeField = resolver.ContentTypeField.Equals(ast.Name);
+            if (ast.Name != null)
+            {
+                IReadOnlyFieldinformation fieldInfo = fields.Lookup(ast.Name);
+            }
 
-            //IReadOnlyFieldinformation fieldInfo = fields.Lookup(ast.Name);
-            //if (fieldInfo != null)
-            //{
-                
-
-               
-            //}
 
             switch (ast.Operator)
             {
@@ -88,27 +79,35 @@ namespace DotJEM.Json.Index.QueryParsers
                 case FieldOperator.Equals:
                     query.Add(CreateSimpleQuery(ast.Name, ast.Value), Occur.MUST);
                     break;
+
                 case FieldOperator.NotEquals:
                     query.Add(CreateSimpleQuery(ast.Name, ast.Value), Occur.MUST_NOT);
                     break;
+
                 case FieldOperator.GreaterThan:
                     query.Add(CreateGreaterThanQuery(ast.Name, ast.Value, false), Occur.MUST);
                     break;
+
                 case FieldOperator.GreaterThanOrEquals:
                     query.Add(CreateGreaterThanQuery(ast.Name, ast.Value, true), Occur.MUST);
                     break;
+
                 case FieldOperator.LessThan:
                     query.Add(CreateLessThanQuery(ast.Name, ast.Value, false), Occur.MUST);
                     break;
+
                 case FieldOperator.LessThanOrEquals:
                     query.Add(CreateLessThanQuery(ast.Name, ast.Value, true), Occur.MUST);
                     break;
+
                 case FieldOperator.Similar:
                     query.Add(CreateFuzzyQuery(ast.Name, ast.Value), Occur.MUST);
                     break;
+
                 case FieldOperator.NotSimilar:
                     query.Add(CreateFuzzyQuery(ast.Name, ast.Value), Occur.MUST_NOT);
                     break;
+
                 case FieldOperator.In:
                     if (!(ast.Value is ListValue inList))
                         throw new Exception();
@@ -118,6 +117,7 @@ namespace DotJEM.Json.Index.QueryParsers
                         inClause.Add(CreateSimpleQuery(ast.Name, value), Occur.SHOULD);
                     query.Add(inClause, Occur.MUST);
                     break;
+
                 case FieldOperator.NotIt:
                     if (!(ast.Value is ListValue notInList))
                         throw new Exception();
@@ -141,13 +141,14 @@ namespace DotJEM.Json.Index.QueryParsers
                         return NumericRangeQuery.NewInt64Range(field + ".@ticks", null, dateTimeValue.Value.Ticks, inclusive, inclusive);
 
                     case OffsetDateTime offsetDateTime:
-                        //TODO: Include package.
-                        break;
+                        return NumericRangeQuery.NewInt64Range(field + ".@ticks", null, offsetDateTime.Value.Ticks, inclusive, inclusive);
 
                     case NumberValue numberValue:
                         return NumericRangeQuery.NewDoubleRange(field, null, numberValue.Value, inclusive, inclusive);
+
                     case IntegerValue integerValue:
                         return NumericRangeQuery.NewInt64Range(field, null, integerValue.Value, inclusive, inclusive);
+
                     case StringValue stringValue:
                         return TermRangeQuery.NewStringRange(field, null, stringValue.Value, inclusive, inclusive);
                 }
@@ -156,6 +157,7 @@ namespace DotJEM.Json.Index.QueryParsers
 
             LuceneQuery CreateGreaterThanQuery(string field, Value val, bool inclusive)
             {
+                //TODO: fix...
                 field = field ?? "gender";
                 switch (val)
                 {
@@ -248,10 +250,10 @@ namespace DotJEM.Json.Index.QueryParsers
             return query;
         }
 
-        private LuceneQueryInfo VisitComposite(CompositeQuery ast, Func<FieldContext> contextProvider, Occur occur)
+        private LuceneQueryInfo VisitComposite(CompositeQuery ast, Func<ContentTypeContext> contextProvider, Occur occur)
         {
             BooleanQuery query = new BooleanQuery();
-            foreach (QueryAst child in ast.Queries)
+            foreach (BaseQuery child in ast.Queries)
             {
                 //TODO: Branch context.
                 query.Add(child.Accept(this, contextProvider()).Query, occur);
@@ -260,24 +262,29 @@ namespace DotJEM.Json.Index.QueryParsers
 
         }
 
-        public override LuceneQueryInfo Visit(OrQuery ast, FieldContext context)
+        public override LuceneQueryInfo Visit(OrQuery ast, ContentTypeContext context)
         {
             //TODO: Branch context.
-            return VisitComposite(ast, () => new FieldContext(context.Operator, context.Fields), Occur.SHOULD);
+            return VisitComposite(ast, () => context, Occur.SHOULD);
         }
 
-        public override LuceneQueryInfo Visit(AndQuery ast, FieldContext context)
+        public override LuceneQueryInfo Visit(AndQuery ast, ContentTypeContext context)
         {
+            if (ast.TryGetAs("contentTypes", out string[] contentTypes))
+            {
+                context = new ContentTypeContext(contentTypes);
+            }
             return VisitComposite(ast, () => context, Occur.MUST);
         }
 
-        public override LuceneQueryInfo Visit(ImplicitCompositeQuery ast, FieldContext context)
+        public override LuceneQueryInfo Visit(ImplicitCompositeQuery ast, ContentTypeContext context)
         {
+            throw new NotSupportedException("ImplicitCompositeQuery not supported by SimplifiedLuceneQueryAstVisitor, use an optimizer to remove these.");
             //field: x field2:y -> implicit AND (Make configureable)
-            return VisitComposite(ast, () => context, Occur.MUST);
+            //return VisitComposite(ast, () => context, Occur.MUST);
         }
 
-        public override LuceneQueryInfo Visit(NotQuery ast, FieldContext context)
+        public override LuceneQueryInfo Visit(NotQuery ast, ContentTypeContext context)
         {
             LuceneQuery not = ast.Not.Accept(this, context).Query;
 

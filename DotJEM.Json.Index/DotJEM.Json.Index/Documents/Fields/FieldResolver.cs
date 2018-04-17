@@ -33,7 +33,7 @@ namespace DotJEM.Json.Index.Documents.Fields
 
             contentTypeFieldLookup = UseSelect(contentTypeField)
                 ? new Func<JObject, string>(obj => (string)obj.SelectToken(contentTypeField))
-                : new Func<JObject, string>(obj => (string)obj[indentityField]);
+                : new Func<JObject, string>(obj => (string)obj[contentTypeField]);
         }
 
         private static bool UseSelect(string indentityField)

@@ -1,17 +1,11 @@
 version: 0.0.{build}
-      
+image: Visual Studio 2017
+
 init:
 - ps: Update-AppveyorBuild -Version "$env:appveyor_build_version+sha.$($env:appveyor_repo_commit.substring(0,7))"
 
 nuget:
   disable_publish_on_pr: true
-
-assembly_info:
-  patch: true
-  file: AssemblyInfo.*
-  assembly_version: '0.0.{build}'
-  assembly_file_version: '0.0.{build}'
-  assembly_informational_version: '{version}'
 
 matrix:
   fast_finish: true # fail fast!
@@ -22,7 +16,8 @@ pull_requests:
   do_not_increment_build_number: true
 
 before_build:
-  nuget restore
+  - cmd: dotnet restore DotJEM.Json.Index\DotJEM.Json.Index.sln
+  - cmd: nuget restore DotJEM.Json.Index\DotJEM.Json.Index.sln
 
 build:
   publish_nuget: true
@@ -40,10 +35,20 @@ deploy:
   api_key:
     secure: KEHWtW02rf5aCAlwchP0Siow5EA24hwtm09uvsR58bMWirJ8uXl1SidBnNCfJ3cw
   skip_symbols: false
-  on:
-    branch: master 
 
 for:
+-
+  branches:
+    only:
+      - Master
+  
+  assembly_info:
+    patch: true
+    file: AssemblyInfo.*
+    assembly_version: '0.0.{build}'
+    assembly_file_version: '0.0.{build}'
+    assembly_informational_version: '{version}'
+
 -
   branches:
     only:
@@ -51,9 +56,11 @@ for:
   
   version: 0.1.0-beta.{build}
   
-  assembly_info:
+  dotnet_csproj:
     patch: true
-    file: AssemblyInfo.*
-    assembly_version: '0.1.0'
-    assembly_file_version: '0.1.0'
-    assembly_informational_version: '{version}'
+    file: '**\*.csproj'
+    version: '{version}'
+    package_version: '0.1.{build}'
+    assembly_version: '0.1.{build}'
+    file_version: '0.1.{build}'
+    informational_version: '{version}'

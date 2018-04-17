@@ -3,7 +3,7 @@ using DotJEM.Json.Index.IO;
 using DotJEM.Json.Index.Util;
 using Lucene.Net.Search;
 
-namespace DotJEM.Index.Searching
+namespace DotJEM.Json.Index.Searching
 {
     public interface IIndexSearcherManager : IDisposable
     {
@@ -13,6 +13,7 @@ namespace DotJEM.Index.Searching
     public class IndexSearcherManager : Disposable, IIndexSearcherManager
     {
         private readonly SearcherManager manager;
+
 
         public IndexSearcherManager(IIndexWriterManager writerManager)
         {

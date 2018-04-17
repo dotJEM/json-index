@@ -2,7 +2,7 @@ using System;
 using DotJEM.Json.Index.Util;
 using Lucene.Net.Search;
 
-namespace DotJEM.Index.Searching
+namespace DotJEM.Json.Index.Searching
 {
     public interface IIndexSearcherContext : IDisposable
     {
