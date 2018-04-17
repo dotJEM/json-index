@@ -1,9 +1,9 @@
 ﻿using System;
-using DotJEM.Index.Searching;
 using DotJEM.Json.Index.Configuration;
 using DotJEM.Json.Index.Documents;
 using DotJEM.Json.Index.IO;
 using DotJEM.Json.Index.Results;
+using DotJEM.Json.Index.Searching;
 using DotJEM.Json.Index.Storage;
 using Lucene.Net.Search;
 
@@ -16,7 +16,7 @@ namespace DotJEM.Json.Index
         IJsonIndexConfiguration Configuration { get; }
 
         IJsonIndexWriter CreateWriter();
-        IJsonIndexSearcher CreateSearcher();
+        ILuceneJsonIndexSearcher CreateSearcher();
     }
     public class LuceneJsonIndex : ILuceneJsonIndex
     {
@@ -55,9 +55,9 @@ namespace DotJEM.Json.Index
             //Configuration.Services.Use<ILuceneJsonIndex>(this);
         }
 
-        public IJsonIndexSearcher CreateSearcher()
+        public ILuceneJsonIndexSearcher CreateSearcher()
         {
-            return new JsonIndexSearcher(this, Storage.SearcherManager);
+            return new LuceneJsonIndexSearcher(this, Storage.SearcherManager);
         }
 
 

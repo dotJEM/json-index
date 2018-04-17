@@ -1,8 +1,17 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using DotJEM.Json.Index;
 using DotJEM.Json.Index.Configuration;
+using DotJEM.Json.Index.Diagnostics;
+using DotJEM.Json.Index.Results;
+using DotJEM.Json.Index.Searching;
 using DotJEM.Json.Index.Storage;
+using DotJEM.Json.Index.Util;
+using Lucene.Net.Index;
+using Lucene.Net.Search;
 
 namespace DotJEM.Json.Index.Contexts
 {
@@ -29,6 +38,7 @@ namespace DotJEM.Json.Index.Contexts
             return this;
         }
     }
+
     public interface ILuceneIndexContext
     {
         ILuceneIndexBuilderDefaults Defaults { get; }
@@ -79,6 +89,34 @@ namespace DotJEM.Json.Index.Contexts
 
         private readonly ConcurrentDictionary<string, IJsonIndexBuilder> builders
             = new ConcurrentDictionary<string, IJsonIndexBuilder>();
+
+        public ILuceneJsonIndexSearcher CreateSearcher()
+        {
+            return new LuceneJsonMultiIndexSearcher(indices.Values);
+        }
+    }
+
+    public class LuceneJsonMultiIndexSearcher : Disposable, ILuceneJsonIndexSearcher
+    {
+        public ILuceneJsonIndex Index { get; }
+        public IInfoStream InfoStream { get; } = new InfoStream();
+
+        private readonly IIndexSearcherManager manager;
+
+        public LuceneJsonMultiIndexSearcher(IEnumerable<ILuceneJsonIndex> indicies)
+        {
+            IndexReader[] readers = indicies
+                .Select(idx => (IndexReader)idx.Storage.WriterManager.Writer.GetReader(true))
+                .ToArray();
+            MultiReader reader = new MultiReader(readers, false);
+            IndexSearcher searcher = new IndexSearcher(reader);
+
+        }
+
+        public Search Search(Query query)
+        {
+            return new Search(null, InfoStream, query);
+        }
     }
 
     public class ContextedJsonIndexBuilder : JsonIndexBuilder
@@ -166,4 +204,6 @@ namespace DotJEM.Json.Index.Contexts
             return base.TryObtainFactory(key, out value) || contextCollection.TryObtainFactory(key, out value);
         }
     }
+
+
 }

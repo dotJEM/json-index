@@ -1,7 +1,7 @@
 ﻿using System;
-using DotJEM.Index.Searching;
 using DotJEM.Json.Index.Configuration;
 using DotJEM.Json.Index.Results;
+using DotJEM.Json.Index.Searching;
 
 namespace DotJEM.Json.Index.QueryParsers
 {
@@ -18,7 +18,7 @@ namespace DotJEM.Json.Index.QueryParsers
             return self;
         }
 
-        public static Search Search(this IJsonIndexSearcher self, string query)
+        public static Search Search(this ILuceneJsonIndexSearcher self, string query)
         {
             ILuceneQueryParser parser = self.Index.ResolveParser();
             LuceneQueryInfo queryInfo = parser.Parse(query);

@@ -7,7 +7,8 @@ using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using DotJEM.Index.Searching;
+using DotJEM.Json.Index.Diagnostics;
+using DotJEM.Json.Index.Searching;
 using DotJEM.Json.Index.Serialization;
 using Lucene.Net.Documents;
 using Lucene.Net.Search;
@@ -25,10 +26,10 @@ namespace DotJEM.Json.Index.Results
 
     public class SearchHit : ISearchHit
     {
-        public SearchHit(float score, byte[] value)
+        public SearchHit(float score, JObject entity)
         {
             Score = score;
-            Entity = new GZipJsonSerialier().Deserialize(value);
+            Entity = entity;
         }
 
         public float Score { get; }
@@ -41,9 +42,10 @@ namespace DotJEM.Json.Index.Results
     {
     }
 
-    public sealed  class Search : ISearch
+    public sealed class Search : ISearch
     {
         private readonly IIndexSearcherManager manager;
+        private readonly IInfoStream info;
 
         private readonly int skip, take;
         private readonly Query query;
@@ -52,23 +54,26 @@ namespace DotJEM.Json.Index.Results
         private readonly bool doMaxScores;
         private readonly Sort sort;
 
-        public Search Take(int newTake) => new Search(manager, query, skip, newTake, sort, filter, doDocScores, doMaxScores);
-        public Search Skip(int newSkip) => new Search(manager, query, newSkip, take, sort, filter, doDocScores, doMaxScores);
-        public Search Query(Query newQuery) => new Search(manager, newQuery, skip, take, sort, filter, doDocScores, doMaxScores);
-        public Search OrderBy(Sort newSort) => new Search(manager, query, skip, take, newSort, filter, doDocScores, doMaxScores);
-        public Search Filter(Filter newFilter) => new Search(manager, query, skip, take, sort, newFilter, doDocScores, doMaxScores);
+        public Guid CorrelationId { get; } = Guid.NewGuid();
 
-        public Search WithoutDocScores() => new Search(manager, query, skip, take, sort, filter, false, doMaxScores);
-        public Search WithoutMaxScores() => new Search(manager, query, skip, take, sort, filter, doDocScores, false);
-        public Search WithoutScores() => new Search(manager, query, skip, take, sort, filter, false, false);
+        public Search Take(int newTake) => new Search(manager, info, query, skip, newTake, sort, filter, doDocScores, doMaxScores);
+        public Search Skip(int newSkip) => new Search(manager, info, query, newSkip, take, sort, filter, doDocScores, doMaxScores);
+        public Search Query(Query newQuery) => new Search(manager, info, newQuery, skip, take, sort, filter, doDocScores, doMaxScores);
+        public Search OrderBy(Sort newSort) => new Search(manager, info, query, skip, take, newSort, filter, doDocScores, doMaxScores);
+        public Search Filter(Filter newFilter) => new Search(manager, info, query, skip, take, sort, newFilter, doDocScores, doMaxScores);
 
-        public Search WithDocScores() => new Search(manager, query, skip, take, sort, filter, true, doMaxScores);
-        public Search WithMaxScores() => new Search(manager, query, skip, take, sort, filter, doDocScores, true);
-        public Search WithScores() => new Search(manager, query, skip, take, sort, filter, true, true);
+        public Search WithoutDocScores() => new Search(manager, info, query, skip, take, sort, filter, false, doMaxScores);
+        public Search WithoutMaxScores() => new Search(manager, info, query, skip, take, sort, filter, doDocScores, false);
+        public Search WithoutScores() => new Search(manager, info, query, skip, take, sort, filter, false, false);
 
-        public Search(IIndexSearcherManager manager, Query query = null, int skip = 0, int take = 25, Sort sort = null, Filter filter = null, bool doDocScores = true, bool doMaxScores = true)
+        public Search WithDocScores() => new Search(manager, info, query, skip, take, sort, filter, true, doMaxScores);
+        public Search WithMaxScores() => new Search(manager, info, query, skip, take, sort, filter, doDocScores, true);
+        public Search WithScores() => new Search(manager, info, query, skip, take, sort, filter, true, true);
+
+        public Search(IIndexSearcherManager manager, IInfoStream info, Query query = null, int skip = 0, int take = 25, Sort sort = null, Filter filter = null, bool doDocScores = true, bool doMaxScores = true)
         {
             this.manager = manager;
+            this.info = info;
             this.skip = skip;
             this.take = take;
             this.query = query;
@@ -78,37 +83,55 @@ namespace DotJEM.Json.Index.Results
             this.sort = sort ?? Sort.RELEVANCE;
         }
 
-        public int Count => Execute(manager, query, 0, 1, null, filter, false, false).TotalHits;
-        public SearchResults Result => Execute(manager, query, skip, take, sort, filter, doDocScores, doMaxScores);
+        public Task<int> Count => Execute(query, 0, 1, null, filter, false, false).ContinueWith(t => t.Result.TotalHits);
+        public Task<SearchResults> Result => Execute(query, skip, take, sort, filter, doDocScores, doMaxScores);
 
-        private static SearchResults Execute(IIndexSearcherManager manager, Query query, int skip, int take, Sort sort, Filter filter, bool doDocScores, bool doMaxScores)
+        private async Task<SearchResults> Execute(Query query, int skip, int take, Sort sort, Filter filter, bool doDocScores, bool doMaxScores)
         {
-            Stopwatch timer = Stopwatch.StartNew();
-            using (IIndexSearcherContext context = manager.Acquire())
+            using (var scope = this.info.Scope(GetType(), CorrelationId))
             {
-                IndexSearcher s = context.Searcher;
-                query = s.Rewrite(query);
-                //TODO: Remove or replace with INFO stream.
-                Console.WriteLine(query);
-                TopFieldDocs results = Task.Run(() => s.Search(query, filter, take, sort, doDocScores, doMaxScores)).Result;
-                var searchTime = timer.Elapsed;
-                IEnumerable<Task<ISearchHit>> tasks = results.ScoreDocs.Skip(skip).Select(hit =>
+                scope.Debug($"Execute Search for query: {query}", new object[] { query, skip, take, sort, filter, doDocScores, doMaxScores });
+
+                Stopwatch timer = Stopwatch.StartNew();
+                using (IIndexSearcherContext context = manager.Acquire())
                 {
-                    return Task.Run(() =>
-                    {
-                        //TODO: Lazy + Fetch serializer
-                        Document document = s.Doc(hit.Doc);
-                        return (ISearchHit)new SearchHit(hit.Score, document.GetBinaryValue("$$RAW").Bytes);
-                    });
-                });
-                ISearchHit[] r = Task.WhenAll(tasks).ConfigureAwait(false).GetAwaiter().GetResult();
-                return new SearchResults(r, results.TotalHits, searchTime, timer.Elapsed);
+                    IndexSearcher s = context.Searcher;
+                    query = s.Rewrite(query);
+                    scope.Debug($"Query Rewrite: {query}", new object[] { query });
+
+                    // https://issues.apache.org/jira/secure/attachment/12430688/PagingCollector.java
+
+                    TopFieldDocs results = await Task.Run(() => s.Search(query, filter, take, sort, doDocScores, doMaxScores));
+                    TimeSpan searchTime = timer.Elapsed;
+                    scope.Info($"Search took: {searchTime.TotalMilliseconds} ms", new object[] { searchTime });
+
+                    var loaded =
+                        from hit in results.ScoreDocs.Skip(skip)
+                        let document = s.Doc(hit.Doc)
+                        //TODO: Field Resolver
+                        let data = document.GetBinaryValue("$$RAW").Bytes
+                        select new { data, hit.Score };
+
+                    //TODO: We could throw in another measurement (Load vs Deserialization)...
+                    //      That would require us to force evaluate the above though (e.g. ToList it)....
+
+                    ParallelQuery<ISearchHit> hits =
+                        from hit in loaded.AsParallel().AsOrdered()
+                        //TODO: Require Service
+                        let json = new GZipJsonSerialier().Deserialize(hit.data)
+                        select (ISearchHit)new SearchHit(hit.Score, json);
+                    ISearchHit[] r = hits.ToArray();
+
+                    TimeSpan loadTime = timer.Elapsed;
+                    scope.Info($"Data load took: {loadTime.TotalMilliseconds} ms", new object[] { loadTime });
+                    return new SearchResults(r, results.TotalHits);
+                }
             }
         }
 
         public IEnumerator<ISearchHit> GetEnumerator()
         {
-            return Result.GetEnumerator();
+            return Result.ConfigureAwait(false).GetAwaiter().GetResult().GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
@@ -119,23 +142,15 @@ namespace DotJEM.Json.Index.Results
         public ISearchHit[] Hits { get; }
         public int TotalHits { get; }
 
-        //TODO: These should be in info streams.
-        public TimeSpan SearchTime { get; }
-        public TimeSpan LoadTime => TotalTime - SearchTime;
-        public TimeSpan TotalTime { get; }
-
-        public SearchResults(ISearchHit[] hits, int totalHits, TimeSpan searchTime, TimeSpan totalTime)
+        public SearchResults(ISearchHit[] hits, int totalHits)
         {
             Hits = hits;
             TotalHits = totalHits;
-            SearchTime = searchTime;
-            TotalTime = totalTime;
         }
-
-
+        
         public IEnumerator<ISearchHit> GetEnumerator() => Hits.AsEnumerable().GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        public static implicit operator SearchResults(Search search) => search.Result;
+        public static implicit operator SearchResults(Search search) => search.Result.Result;
     }
 }
