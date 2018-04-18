@@ -12,12 +12,7 @@ using Lucene.Net.Util;
 
 namespace DotJEM.Json.Index.Storage
 {
-    public static class StorageProviders
-    {
-        public static ILuceneStorageProvider RamStorage() => new LuceneRamStorageProvider();
-        public static ILuceneStorageProvider SimpleFileStorage(string path) => new LuceneSimpleFileSystemStorageProvider(path);
-    }
-    public interface ILuceneStorageProvider
+    public interface ILuceneStorageFactory
     {
         IJsonIndexStorage Create(ILuceneJsonIndex index, LuceneVersion version);
     }
@@ -33,15 +28,15 @@ namespace DotJEM.Json.Index.Storage
         void Delete();
     }
 
-    public class LuceneRamStorageProvider : ILuceneStorageProvider
+    public class LuceneRamStorageFactory : ILuceneStorageFactory
     {
         public IJsonIndexStorage Create(ILuceneJsonIndex index, LuceneVersion configurationVersion) => new JsonIndexStorage(index, new RAMDirectory());
     }
 
-    public class LuceneSimpleFileSystemStorageProvider : ILuceneStorageProvider
+    public class LuceneSimpleFileSystemStorageFactory : ILuceneStorageFactory
     {
         private readonly string path;
-        public LuceneSimpleFileSystemStorageProvider(string path) => this.path = path;
+        public LuceneSimpleFileSystemStorageFactory(string path) => this.path = path;
         public IJsonIndexStorage Create(ILuceneJsonIndex index, LuceneVersion configurationVersion) => new JsonIndexStorage(index, new SimpleFSDirectory(path));
     }
 

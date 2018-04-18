@@ -7,8 +7,9 @@ namespace DotJEM.Json.Index.QueryParsers
 {
     public static class IndexSearcherExtensions
     {
-        public static IJsonIndexConfigurator UseSimplifiedLuceneQueryParser(this IJsonIndexConfigurator self)
+        public static ILuceneJsonIndexBuilder UseSimplifiedLuceneQueryParser(this ILuceneJsonIndexBuilder self)
         {
+            
             self.Services.Use<ILuceneQueryParser, SimplifiedLuceneQueryParser>();
             return self;
         }

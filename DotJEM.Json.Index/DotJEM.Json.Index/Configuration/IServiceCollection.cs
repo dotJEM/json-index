@@ -29,14 +29,14 @@ namespace DotJEM.Json.Index.Configuration
         bool TryObtainFactory(Type key, out Func<IServiceResolver, object> value);
     }
 
-    public class DefaultServiceCollection : IServiceCollection
+    public class ServiceCollection : IServiceCollection
     {
         private readonly IServiceFactory factory;
         private readonly Dictionary<Type, Func<IServiceResolver, object>> factories = new Dictionary<Type, Func<IServiceResolver, object>>();
 
         public static IServiceCollection CreateDefault()
         {
-            return new DefaultServiceCollection()
+            return new ServiceCollection()
                 .Use<Analyzer>(() => new StandardAnalyzer(LuceneVersion.LUCENE_48, CharArraySet.EMPTY_SET))
                 .Use<IFieldResolver, FieldResolver>()
                 .Use<IFieldInformationManager, DefaultFieldInformationManager>()
@@ -44,10 +44,11 @@ namespace DotJEM.Json.Index.Configuration
                 .Use<IJsonSerializer, GZipJsonSerialier>();
         }
 
-        public DefaultServiceCollection(IServiceFactory factory = null)
+        public ServiceCollection(IServiceFactory factory = null)
         {
             this.factory = factory ?? new DefaultServiceFactory();
         }
+
         public bool TryObtainFactory<T>(out Func<IServiceResolver, T> value)
         {
             if (TryObtainFactory(typeof(T), out Func<IServiceResolver, object> fac))

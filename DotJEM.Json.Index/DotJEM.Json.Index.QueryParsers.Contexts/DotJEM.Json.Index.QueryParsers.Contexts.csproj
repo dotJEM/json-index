@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Version>0.2.0</Version>
+    <Description>Indexing of JSON in Lucene.net</Description>
+    <Copyright>Copyright © DotJEM 2018</Copyright>
+    <PackageLicenseUrl>https://github.com/dotJEM/json-index/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/dotJEM/json-index</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/dotJEM/json-index</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>Lucene Json Index Search</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DotJEM.Json.Index.Contexts\DotJEM.Json.Index.Contexts.csproj" />
+    <ProjectReference Include="..\DotJEM.Json.Index\DotJEM.Json.Index.csproj" />
+    <ProjectReference Include="..\DotJEM.Json.Index.QueryParsers\DotJEM.Json.Index.QueryParsers.csproj" />
+  </ItemGroup>
+
+</Project>
