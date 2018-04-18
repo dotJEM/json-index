@@ -38,6 +38,9 @@
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="DotJEM.Json.Visitor, Version=0.1.20.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\DotJEM.Json.Visitor.0.1.20\lib\netstandard1.3\DotJEM.Json.Visitor.dll</HintPath>
+    </Reference>
     <Reference Include="Lucene.Net, Version=4.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Lucene.Net.4.8.0-beta00005\lib\net45\Lucene.Net.dll</HintPath>
     </Reference>

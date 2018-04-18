@@ -88,7 +88,7 @@ namespace DotJEM.Json.Index.Results
 
         private async Task<SearchResults> Execute(Query query, int skip, int take, Sort sort, Filter filter, bool doDocScores, bool doMaxScores)
         {
-            using (var scope = this.info.Scope(GetType(), CorrelationId))
+            using (IInfoStreamCorrelationScope scope = info.Scope(GetType(), CorrelationId))
             {
                 scope.Debug($"Execute Search for query: {query}", new object[] { query, skip, take, sort, filter, doDocScores, doMaxScores });
 

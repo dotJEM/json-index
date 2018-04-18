@@ -17,13 +17,41 @@ namespace DotJEM.Json.Index.TestUtil
 
         ITestIndexBuilder Defaults(Action<ILuceneIndexBuilderDefaults> configurator);
 
-        Task<ILuceneJsonIndex> Build(string name = "main");
+        Task<ILuceneJsonIndex> Build();
+    }
+
+    public class TestIndexContextBuilder
+    {
+        private readonly ILuceneIndexContext context = new LuceneIndexContext();
+        private readonly Dictionary<string, TestIndexBuilder> indexBuilders = new Dictionary<string, TestIndexBuilder>();
+
+        public TestIndexContextBuilder WithIndex(string name, Action<TestIndexBuilder> builderConfig)
+        {
+            if (!indexBuilders.TryGetValue(name, out TestIndexBuilder builder))
+                indexBuilders.Add(name, builder = new TestIndexBuilder(name, context));
+            builderConfig(builder);
+            return this;
+        }
+
+        public async Task<ILuceneIndexContext> Build()
+        {
+            foreach (TestIndexBuilder builder in indexBuilders.Values)
+                await builder.Build();
+            return context;
+        }
     }
 
     public class TestIndexBuilder : ITestIndexBuilder
     {
-        private readonly ILuceneIndexContext context = new LuceneIndexContext();
+        private readonly string name;
+        private readonly ILuceneIndexContext context;
         private readonly List<JObject> objects = new List<JObject>();
+
+        public TestIndexBuilder(string name = "main", ILuceneIndexContext context = null)
+        {
+            this.name = name;
+            this.context = context ?? new LuceneIndexContext();
+        }
 
         public ITestIndexBuilder With(string contentType, object template) => With((contentType, template));
 
@@ -41,7 +69,7 @@ namespace DotJEM.Json.Index.TestUtil
             return this;
         }
 
-        public async Task<ILuceneJsonIndex> Build(string name = "main")
+        public async Task<ILuceneJsonIndex> Build()
         {
             context.Configure(name, config =>
             {

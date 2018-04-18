@@ -45,11 +45,14 @@ namespace DotJEM.Json.Index.Contexts
 
         ILuceneIndexContext Configure(string name, Action<IJsonIndexConfigurator> config);
         ILuceneJsonIndex Open(string name);
+
+        ILuceneJsonIndexSearcher CreateSearcher();
     }
 
     public class LuceneIndexContext : ILuceneIndexContext
     {
         private readonly ConcurrentDictionary<string, ILuceneJsonIndex> indices = new ConcurrentDictionary<string, ILuceneJsonIndex>();
+        private readonly ConcurrentDictionary<string, IJsonIndexBuilder> builders = new ConcurrentDictionary<string, IJsonIndexBuilder>();
 
         public LuceneIndexContext()
             : this(new LuceneIndexBuilderDefaults { Storage = new RamStorageFacility() }) { }
@@ -87,9 +90,6 @@ namespace DotJEM.Json.Index.Contexts
             return this;
         }
 
-        private readonly ConcurrentDictionary<string, IJsonIndexBuilder> builders
-            = new ConcurrentDictionary<string, IJsonIndexBuilder>();
-
         public ILuceneJsonIndexSearcher CreateSearcher()
         {
             return new LuceneJsonMultiIndexSearcher(indices.Values);
@@ -101,23 +101,57 @@ namespace DotJEM.Json.Index.Contexts
         public ILuceneJsonIndex Index { get; }
         public IInfoStream InfoStream { get; } = new InfoStream();
 
-        private readonly IIndexSearcherManager manager;
+        private readonly ILuceneJsonIndex[] indicies;
 
         public LuceneJsonMultiIndexSearcher(IEnumerable<ILuceneJsonIndex> indicies)
         {
-            IndexReader[] readers = indicies
-                .Select(idx => (IndexReader)idx.Storage.WriterManager.Writer.GetReader(true))
-                .ToArray();
-            MultiReader reader = new MultiReader(readers, false);
-            IndexSearcher searcher = new IndexSearcher(reader);
+            this.indicies = indicies.ToArray();
+        }
 
+        private IIndexSearcherManager CreateaOneTimeManager()
+        {
+            DirectoryReader[] readers = indicies
+                .Select(idx => idx.Storage.WriterManager.Writer.GetReader(true))
+                .ToArray();
+            return new MultiIndexJsonSearcherManager(readers);
         }
 
         public Search Search(Query query)
         {
-            return new Search(null, InfoStream, query);
+            return new Search(CreateaOneTimeManager(), InfoStream, query);
         }
     }
+
+    public class MultiIndexJsonSearcherManager : Disposable, IIndexSearcherManager
+    {
+        private readonly DirectoryReader[] readers;
+
+        public MultiIndexJsonSearcherManager(DirectoryReader[] readers)
+        {
+            this.readers = readers;
+        }
+
+        public IIndexSearcherContext Acquire()
+        {
+            MultiReader reader = new MultiReader(readers.Select(r => DirectoryReader.OpenIfChanged(r) ?? r).Cast<IndexReader>().ToArray(), false);
+            return new IndexSearcherContext(new IndexSearcher(reader), searcher => {});
+        }
+
+        //private readonly SearcherManager manager;
+
+
+        //public IndexSearcherManager(IIndexWriterManager writerManager)
+        //{
+        //    manager = new SearcherManager(writerManager.Writer, true, new SearcherFactory());
+        //}
+
+        //public IIndexSearcherContext Acquire()
+        //{
+        //    manager.MaybeRefreshBlocking();
+        //    return new IndexSearcherContext(manager.Acquire(), searcher => manager.Release(searcher));
+        //}
+    }
+
 
     public class ContextedJsonIndexBuilder : JsonIndexBuilder
     {
