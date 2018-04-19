@@ -10,6 +10,8 @@ namespace DotJEM.Json.Index.Contexts
 {
     public interface ILuceneIndexContext : ILuceneJsonIndexSearcherProvider
     {
+        IServiceResolver Services { get; }
+
         ILuceneJsonIndex Open(string name);
     }
 
@@ -64,7 +66,6 @@ namespace DotJEM.Json.Index.Contexts
     {
         private readonly ConcurrentDictionary<string, ILuceneJsonIndexBuilder> builders = new ConcurrentDictionary<string, ILuceneJsonIndexBuilder>();
 
-        //public ILuceneIndexBuilderDefaults Defaults { get; }
         public IServiceCollection Services { get; }
 
         private readonly ILuceneStorageFactoryProvider storage;

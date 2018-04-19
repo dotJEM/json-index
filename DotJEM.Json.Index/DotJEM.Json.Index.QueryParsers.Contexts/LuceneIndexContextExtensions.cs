@@ -15,9 +15,7 @@ namespace DotJEM.Json.Index.QueryParsers.Contexts
 
         private static ILuceneQueryParser ResolveParser(this ILuceneIndexContext self)
         {
-            //TODO: Fail and ask for configuration instead.
-            throw new NotImplementedException();
-            //return self.Defaults.Resolve<ILuceneQueryParser>() ?? throw new Exception("Query parser not configured.");
+            return self.Services.Resolve<ILuceneQueryParser>() ?? throw new Exception("Query parser not configured.");
         }
     }
 
