@@ -16,6 +16,23 @@ namespace DotJEM.Json.Index.IO
     {
         ILuceneJsonIndex Index { get; }
 
+        IJsonIndexWriter Create(JObject doc);
+        IJsonIndexWriter Create(IEnumerable<JObject> docs);
+        IJsonIndexWriter Update(JObject doc);
+        IJsonIndexWriter Update(IEnumerable<JObject> docs);
+        IJsonIndexWriter Delete(JObject doc);
+        IJsonIndexWriter Delete(IEnumerable<JObject> docs);
+
+        IJsonIndexWriter ForceMerge(int maxSegments);
+        IJsonIndexWriter ForceMerge(int maxSegments, bool wait);
+        IJsonIndexWriter ForceMergeDeletes();
+        IJsonIndexWriter ForceMergeDeletes(bool wait);
+        IJsonIndexWriter Flush(bool triggerMerge, bool applyDeletes);
+        IJsonIndexWriter Commit();
+        IJsonIndexWriter Rollback();
+        IJsonIndexWriter PrepareCommit();
+        IJsonIndexWriter SetCommitData(IDictionary<string, string> commitUserData);
+
         Task CreateAsync(JObject doc);
         Task CreateAsync(IEnumerable<JObject> docs);
         Task DeleteAsync(JObject doc);
@@ -23,20 +40,21 @@ namespace DotJEM.Json.Index.IO
         Task UpdateAsync(JObject doc);
         Task UpdateAsync(IEnumerable<JObject> docs);
 
-        Task CommitAsync();
         Task ForceMergeAsync(int maxSegments);
         Task ForceMergeAsync(int maxSegments, bool wait);
-        Task ForgeMergeDeletesAsync();
-        Task ForgeMergeDeletesAsync(bool wait);
+        Task ForceMergeDeletesAsync();
+        Task ForceMergeDeletesAsync(bool wait);
         Task RollbackAsync();
         Task FlushAsync(bool triggerMerge, bool applyDeletes);
+        Task CommitAsync();
+        Task PrepareCommitAsync();
+        Task SetCommitDataAsync(IDictionary<string, string> commitUserData);
     }
 
     public class JsonIndexWriter : Disposable, IJsonIndexWriter
     {
         private readonly IIndexWriterManager manager;
         private readonly ILuceneDocumentFactory factory;
-        private readonly ConcurrentDictionary<Guid, Task<Guid>> jobs = new ConcurrentDictionary<Guid, Task<Guid>>();
 
         public ILuceneJsonIndex Index { get; }
         public IndexWriter UnderlyingWriter => manager.Writer;
@@ -48,55 +66,104 @@ namespace DotJEM.Json.Index.IO
             this.manager = manager;
         }
 
+        public IJsonIndexWriter Create(JObject doc) => Create(new[] { doc });
+        public IJsonIndexWriter Create(IEnumerable<JObject> docs)
+        {
+            IEnumerable<Document> documents = factory
+                .Create(docs)
+                .Select(tuple => tuple.Document);
+            UnderlyingWriter.AddDocuments(documents);
+            return this;
+        }
+
+        public IJsonIndexWriter Update(JObject doc) => Update(new[] { doc });
+        public IJsonIndexWriter Update(IEnumerable<JObject> docs)
+        {
+            IEnumerable<LuceneDocumentEntry> documents = factory.Create(docs);
+            foreach ((Term key, Document doc) in documents)
+                UnderlyingWriter.UpdateDocument(key, doc);
+            return this;
+        }
+
+        public IJsonIndexWriter Delete(JObject doc) => Delete(new[] { doc });
+        public IJsonIndexWriter Delete(IEnumerable<JObject> docs)
+        {
+            IEnumerable<LuceneDocumentEntry> documents = factory.Create(docs);
+            foreach ((Term key, Document _) in documents)
+                UnderlyingWriter.DeleteDocuments(key);
+            return this;
+        }
+
+        public IJsonIndexWriter ForceMerge(int maxSegments)
+        {
+            UnderlyingWriter.ForceMerge(maxSegments);
+            return this;
+        }
+
+        public IJsonIndexWriter ForceMerge(int maxSegments, bool wait)
+        {
+            UnderlyingWriter.ForceMerge(maxSegments, wait);
+            return this;
+        }
+
+        public IJsonIndexWriter ForceMergeDeletes()
+        {
+            UnderlyingWriter.ForceMergeDeletes();
+            return this;
+        }
+
+        public IJsonIndexWriter ForceMergeDeletes(bool wait)
+        {
+            UnderlyingWriter.ForceMergeDeletes(wait);
+            return this;
+        }
+
+        public IJsonIndexWriter Rollback()
+        {
+            UnderlyingWriter.Rollback();
+            return this;
+        }
+
+        public IJsonIndexWriter Flush(bool triggerMerge, bool applyDeletes)
+        {
+            UnderlyingWriter.Flush(triggerMerge, applyDeletes);
+            return this;
+        }
+
+        public IJsonIndexWriter Commit()
+        {
+            UnderlyingWriter.Commit();
+            return this;
+        }
+
+        public IJsonIndexWriter PrepareCommit()
+        {
+            UnderlyingWriter.PrepareCommit();
+            return this;
+        }
+
+        public IJsonIndexWriter SetCommitData(IDictionary<string, string> commitUserData)
+        {
+            UnderlyingWriter.SetCommitData(commitUserData);
+            return this;
+        }
+
         public async Task CreateAsync(JObject doc) => await CreateAsync(new[] { doc });
-
-        public async Task CreateAsync(IEnumerable<JObject> docs)
-        {
-            await Async(writer =>
-            {
-                IEnumerable<Document> documents = factory
-                    .Create(docs)
-                    .Select(tuple => tuple.Document);
-                writer.AddDocuments(documents);
-            });
-        }
-
-        public async Task DeleteAsync(JObject doc) => await DeleteAsync(new[] { doc });
-
-        public async Task DeleteAsync(IEnumerable<JObject> docs)
-        {
-            await WhenAll(writer => {
-                IEnumerable<LuceneDocumentEntry> documents = factory.Create(docs);
-                foreach ((Term key, Document _) in documents)
-                {
-                    writer.DeleteDocuments(key);
-                }
-            });
-        }
-
+        public async Task CreateAsync(IEnumerable<JObject> docs) => await Task.Run(() => Create(docs));
         public async Task UpdateAsync(JObject doc) => await UpdateAsync(new[] { doc });
+        public async Task UpdateAsync(IEnumerable<JObject> docs) => await Task.Run(() => Update(docs));
+        public async Task DeleteAsync(JObject doc) => await DeleteAsync(new[] { doc });
+        public async Task DeleteAsync(IEnumerable<JObject> docs) => await Task.Run(() => Delete(docs));
 
-        public async Task UpdateAsync(IEnumerable<JObject> docs)
-        {
-            await WhenAll(writer => {
-                IEnumerable<LuceneDocumentEntry> documents = factory.Create(docs);
-                foreach ((Term key, Document doc) in documents)
-                {
-                    writer.UpdateDocument(key, doc);
-                }
-            });
-        }
-
-        public async Task CommitAsync() => await WhenAll(writer => writer.Commit());
-        public async Task ForceMergeAsync(int maxSegments) => await WhenAll(writer => writer.ForceMerge(maxSegments));
-        public async Task ForceMergeAsync(int maxSegments, bool wait) => await WhenAll(writer => writer.ForceMerge(maxSegments, wait));
-        public async Task ForgeMergeDeletesAsync() => await WhenAll(writer => writer.ForceMergeDeletes());
-        public async Task ForgeMergeDeletesAsync(bool wait) => await WhenAll(writer => writer.ForceMergeDeletes(wait));
-        public async Task RollbackAsync() => await WhenAll(writer => writer.Rollback());
-        public async Task FlushAsync(bool triggerMerge, bool applyDeletes) => await WhenAll(writer => writer.Flush(triggerMerge, applyDeletes));
-
-        public async Task SetCommitDataAsync(IDictionary<string, string> commitUserData) => await WhenAll(writer => writer.SetCommitData(commitUserData));
-        public async Task PrepareCommit() => await WhenAll(writer => writer.PrepareCommit());
+        public async Task CommitAsync() => await Task.Run(() => Commit());
+        public async Task ForceMergeAsync(int maxSegments) => await Task.Run(() => ForceMerge(maxSegments));
+        public async Task ForceMergeAsync(int maxSegments, bool wait) => await Task.Run(() => ForceMerge(maxSegments, wait));
+        public async Task ForceMergeDeletesAsync() => await Task.Run(() => ForceMergeDeletes());
+        public async Task ForceMergeDeletesAsync(bool wait) => await Task.Run(() => ForceMergeDeletes(wait));
+        public async Task RollbackAsync() => await Task.Run(() => Rollback());
+        public async Task FlushAsync(bool triggerMerge, bool applyDeletes) => await Task.Run(() => Flush(triggerMerge, applyDeletes));
+        public async Task SetCommitDataAsync(IDictionary<string, string> commitUserData) => await Task.Run(() => SetCommitData(commitUserData));
+        public async Task PrepareCommitAsync() => await Task.Run(() => PrepareCommit());
 
         protected override void Dispose(bool disposing)
         {
@@ -104,25 +171,9 @@ namespace DotJEM.Json.Index.IO
             {
                 //Note: CommitAsync data and release the writer.
                 //      The storage should handle the life cycle.
-                CommitAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+                Commit();
             }
             base.Dispose(disposing);
-        }
-
-        private async Task Async(Action<IndexWriter> action)
-        {
-            Task<Guid> task = jobs
-                .GetOrAdd(Guid.NewGuid(), key => Task.Run(() => action(UnderlyingWriter)).ThenReturn(key));
-            #pragma warning disable 4014
-            task.Then(id => jobs.TryRemove(id, out Task<Guid> _));
-            #pragma warning restore 4014
-            await task.ConfigureAwait(false);
-        }
-
-        private async Task WhenAll(Action<IndexWriter> action)
-        {
-            await Task.WhenAll(jobs.Values).ConfigureAwait(false);
-            await Async(action).ConfigureAwait(false);
         }
     }
 }
