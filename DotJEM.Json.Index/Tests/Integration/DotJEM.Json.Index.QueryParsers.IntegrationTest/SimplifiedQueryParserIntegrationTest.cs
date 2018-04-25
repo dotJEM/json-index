@@ -43,7 +43,7 @@ namespace DotJEM.Json.Index.QueryParsers.IntegrationTest
 
             ILuceneJsonIndex index = new TestIndexBuilder()
                 .With(TestObjects.Persons)
-                .Defaults(defaults => defaults.Services.UseSimplifiedLuceneQueryParser())
+                .With(services => services.UseSimplifiedLuceneQueryParser())
                 .Build().Result;
 
             IEnumerable<string> keys = index.Search(query).Result.Result.Select(hit => (string)hit.Json.key);
@@ -68,7 +68,7 @@ namespace DotJEM.Json.Index.QueryParsers.IntegrationTest
                 .With(JsonPlaceholder.Posts.Select(data => new TestObject("post", (JObject)data)))
                 .With(JsonPlaceholder.Todos.Select(data => new TestObject("todo", (JObject)data)))
                 .With(JsonPlaceholder.Users.Select(data => new TestObject("user", (JObject)data)))
-                .Defaults(defaults => defaults.Services.UseSimplifiedLuceneQueryParser())
+                .With(services => services.UseSimplifiedLuceneQueryParser())
                 .Build().Result;
 
             IEnumerable<string> keys = index.Search(query).Result.Result.Select(hit => (string)hit.Json.id);

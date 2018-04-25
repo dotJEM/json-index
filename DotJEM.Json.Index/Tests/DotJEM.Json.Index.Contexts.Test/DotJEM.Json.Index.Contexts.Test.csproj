@@ -38,6 +38,9 @@
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="DotJEM.Json.Visitor, Version=0.1.20.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\DotJEM.Json.Visitor.0.1.20\lib\netstandard1.3\DotJEM.Json.Visitor.dll</HintPath>
+    </Reference>
     <Reference Include="Lucene.Net, Version=4.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Lucene.Net.4.8.0-beta00005\lib\net45\Lucene.Net.dll</HintPath>
     </Reference>
@@ -60,11 +63,36 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Class1.cs" />
+    <Compile Include="LuceneIndexContextTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\DotJEM.Json.Index.Contexts\DotJEM.Json.Index.Contexts.csproj">
+      <Project>{BE6F0625-B23C-4CD1-9B7F-C0B6DB06A923}</Project>
+      <Name>DotJEM.Json.Index.Contexts</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\DotJEM.Json.Index.QueryParsers\DotJEM.Json.Index.QueryParsers.csproj">
+      <Project>{a7c92428-a327-4e1a-9cc4-341d9e3868a4}</Project>
+      <Name>DotJEM.Json.Index.QueryParsers</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\DotJEM.Json.Index\DotJEM.Json.Index.csproj">
+      <Project>{2987D5EB-2353-42F3-AE2E-B166B5093EEF}</Project>
+      <Name>DotJEM.Json.Index</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Data\DotJEM.Json.Index.TestData\DotJEM.Json.Index.TestData.csproj">
+      <Project>{F1FD3ECE-5341-450B-9EF0-A5067C387B0D}</Project>
+      <Name>DotJEM.Json.Index.TestData</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\DotJEM.Json.Index.TestUtil\DotJEM.Json.Index.TestUtil.csproj">
+      <Project>{830E00FB-4B44-4D72-BD16-89EAE9DFBC88}</Project>
+      <Name>DotJEM.Json.Index.TestUtil</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\..\packages\NETStandard.Library.2.0.1\build\netstandard2.0\NETStandard.Library.targets" Condition="Exists('..\..\packages\NETStandard.Library.2.0.1\build\netstandard2.0\NETStandard.Library.targets')" />

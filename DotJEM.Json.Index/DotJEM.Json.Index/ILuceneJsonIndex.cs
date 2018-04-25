@@ -9,15 +9,15 @@ using Lucene.Net.Search;
 
 namespace DotJEM.Json.Index
 {
-    public interface ILuceneJsonIndex
+    public interface ILuceneJsonIndex : ILuceneJsonIndexSearcherProvider
     {
         IServiceResolver Services { get; }
         IJsonIndexStorage Storage { get; }
         IJsonIndexConfiguration Configuration { get; }
 
         IJsonIndexWriter CreateWriter();
-        ILuceneJsonIndexSearcher CreateSearcher();
     }
+
     public class LuceneJsonIndex : ILuceneJsonIndex
     {
         public IJsonIndexStorage Storage { get; }
@@ -25,16 +25,16 @@ namespace DotJEM.Json.Index
         public IServiceResolver Services { get; }
 
         public LuceneJsonIndex()
-            : this(StorageProviders.RamStorage(), new JsonIndexConfiguration(), new DefaultServiceCollection())
+            : this(new LuceneRamStorageFactory(), new JsonIndexConfiguration(), ServiceCollection.CreateDefault())
         {
         }
 
         public LuceneJsonIndex(string path)
-            : this(StorageProviders.SimpleFileStorage(path), new JsonIndexConfiguration(), new DefaultServiceCollection())
+            : this(new LuceneSimpleFileSystemStorageFactory(path), new JsonIndexConfiguration(), ServiceCollection.CreateDefault())
         {
         }
 
-        public LuceneJsonIndex(ILuceneStorageProvider storage, IJsonIndexConfiguration configuration, IServiceCollection services)
+        public LuceneJsonIndex(ILuceneStorageFactory storage, IJsonIndexConfiguration configuration, IServiceCollection services)
         {
             if (services == null) throw new ArgumentNullException(nameof(services));
             Configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
@@ -46,20 +46,18 @@ namespace DotJEM.Json.Index
             Storage = storage.Create(this, configuration.Version);
         }
 
-        public LuceneJsonIndex(ILuceneStorageProvider storage, IJsonIndexConfiguration configuration, IServiceResolver services)
+        public LuceneJsonIndex(ILuceneStorageFactory storage, IJsonIndexConfiguration configuration, IServiceResolver services)
         {
             Configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             Services = services ?? throw new ArgumentNullException(nameof(services));
 
             Storage = storage.Create(this, configuration.Version);
-            //Configuration.Services.Use<ILuceneJsonIndex>(this);
         }
 
         public ILuceneJsonIndexSearcher CreateSearcher()
         {
             return new LuceneJsonIndexSearcher(this, Storage.SearcherManager);
         }
-
 
         public IJsonIndexWriter CreateWriter()
         {
@@ -68,9 +66,14 @@ namespace DotJEM.Json.Index
 
     }
 
+    public interface ILuceneJsonIndexSearcherProvider
+    {
+        ILuceneJsonIndexSearcher CreateSearcher();
+    }
+
     public static class LuceneIndexExtension
     {
-        public static Search Search(this ILuceneJsonIndex self, Query query)
+        public static Search Search(this ILuceneJsonIndexSearcherProvider self, Query query)
         {
             using (var searcher = self.CreateSearcher())
             {
