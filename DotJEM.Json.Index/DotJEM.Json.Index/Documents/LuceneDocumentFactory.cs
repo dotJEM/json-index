@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.ExceptionServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using DotJEM.Json.Index.Configuration;
 using DotJEM.Json.Index.Documents.Builder;
@@ -53,14 +54,14 @@ namespace DotJEM.Json.Index.Documents
 
         public IEnumerable<LuceneDocumentEntry> Create(IEnumerable<JObject> docs)
         {
-            BlockingCollectionEnumerable<LuceneDocumentEntry> collection = new BlockingCollectionEnumerable<LuceneDocumentEntry>();
+            AsyncList<LuceneDocumentEntry> collection = new AsyncList<LuceneDocumentEntry>();
             #pragma warning disable 4014
             FillAsync(docs, collection);
             #pragma warning restore 4014
             return collection;
         }
 
-        private async Task FillAsync(IEnumerable<JObject> docs, BlockingCollectionEnumerable<LuceneDocumentEntry> collection)
+        private async Task FillAsync(IEnumerable<JObject> docs, AsyncList<LuceneDocumentEntry> collection)
         {
             await Task.WhenAll(docs.Select(async (json, index) =>
             {
@@ -76,55 +77,100 @@ namespace DotJEM.Json.Index.Documents
             collection.CompleteAdding();
         }
 
-        private class BlockingCollectionEnumerable<T> : IEnumerable<T> where T : class
+        private class AsyncList<T> : IEnumerable<T> where T : class
         {
-            private bool complete = false;
-            private readonly BlockingCollection<T> collection = new BlockingCollection<T>();
+            private event EventHandler<EventArgs> Changed; 
+
+            private bool completed = false;
+            private readonly List<T> items = new List<T>();
             private readonly List<(Exception, JObject)> failures = new List<(Exception, JObject)>();
+
+            private int Count => items.Count;
 
             public void Add(T item)
             {
-                collection.Add(item);
+                if(completed)
+                    throw new InvalidOperationException("Cannot add more items to a AsyncList that is marked as completed.");
+                items.Add(item);
+                RaiseChanged();
             }
 
             public void CompleteAdding()
             {
-                collection.CompleteAdding();
+                completed = true;
+                RaiseChanged();
             }
 
-            public IEnumerator<T> GetEnumerator()
-            {
-                while (!collection.IsCompleted)
-                {
-                    T value = null;
-                    try
-                    {
-                        value = collection.Take();
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine(e);
-                    }
-
-                    if (value != null)
-                    {
-                        yield return value;
-                    }
-
-                    if (failures.Any())
-                    {
-                        ExceptionDispatchInfo.Capture(failures.Select(f => f.Item1).First()).Throw();
-                    }
-                }
-
-            }
-
+            public IEnumerator<T> GetEnumerator() => new DocumentsListEnumerator(this);
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
             public void ReportFailure(Exception exception, JObject json)
             {
                 failures.Add((exception, json));
                 //TODO: We need a way to report errors up stream... (Exception or similar).
+            }
+
+            private void RaiseChanged()
+            {
+                Changed?.Invoke(this, EventArgs.Empty);
+            }
+
+            private class DocumentsListEnumerator : IEnumerator<T>
+            {
+                private readonly AsyncList<T> source;
+                private readonly object padlock = new object();
+                private int index = -1;
+
+                public DocumentsListEnumerator(AsyncList<T> source)
+                {
+                    this.source = source;
+                    this.source.Changed += SourceChanged;
+                }
+
+                private void SourceChanged(object sender, EventArgs eventArgs)
+                {
+                    lock (padlock)
+                    {
+                        Monitor.PulseAll(padlock);
+                    }
+                }
+
+                public bool MoveNext()
+                {
+                    lock (padlock)
+                    {
+                        index++;
+                        while (true)
+                        {
+                            if (index < source.Count)
+                                return true;
+
+                            if (source.completed)
+                                return false;
+
+                            Monitor.Wait(padlock);
+                        }
+                    }
+                }
+
+
+                public void Reset()
+                {
+                    lock (padlock)
+                    {
+                        index = -1;
+                        Monitor.PulseAll(padlock);
+                    }
+                }
+
+                public T Current => source.items[index];
+
+                object IEnumerator.Current => Current;
+
+                public void Dispose()
+                {
+                    this.source.Changed -= SourceChanged;
+                }
             }
         }
     }
