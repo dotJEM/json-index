@@ -1,7 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using DotJEM.Json.Index.Configuration;
 
-namespace DotJEM.Json.Index.Contexts
+namespace DotJEM.Json.Index.Contexts.Configuration
 {
     public interface IJsonIndexConfigurationProvider
     {

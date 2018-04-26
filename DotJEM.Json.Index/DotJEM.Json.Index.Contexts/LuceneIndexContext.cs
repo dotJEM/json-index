@@ -2,6 +2,8 @@
 using System.Collections.Concurrent;
 using DotJEM.Json.Index;
 using DotJEM.Json.Index.Configuration;
+using DotJEM.Json.Index.Contexts.Searching;
+using DotJEM.Json.Index.Contexts.Storage;
 using DotJEM.Json.Index.Results;
 using DotJEM.Json.Index.Searching;
 using Lucene.Net.Search;

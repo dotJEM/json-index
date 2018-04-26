@@ -1,7 +1,7 @@
 ﻿using System;
 using DotJEM.Json.Index.Storage;
 
-namespace DotJEM.Json.Index.Contexts
+namespace DotJEM.Json.Index.Contexts.Storage
 {
     public class RamStorageFacility : ILuceneStorageFactoryProvider
     {

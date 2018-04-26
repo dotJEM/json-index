@@ -37,15 +37,9 @@ namespace DotJEM.Json.Index.Results
         public JObject Entity { get; }
     }
 
-
-    public interface ISearch : IEnumerable<ISearchHit>
-    {
-    }
-
-    public sealed class Search : ISearch
+    public sealed class Search : IEnumerable<ISearchHit>
     {
         private readonly IIndexSearcherManager manager;
-        private readonly IInfoStream info;
 
         private readonly int skip, take;
         private readonly Query query;
@@ -53,27 +47,28 @@ namespace DotJEM.Json.Index.Results
         private readonly bool doDocScores;
         private readonly bool doMaxScores;
         private readonly Sort sort;
+        public IInfoEventStream InfoStream { get; }
 
         public Guid CorrelationId { get; } = Guid.NewGuid();
 
-        public Search Take(int newTake) => new Search(manager, info, query, skip, newTake, sort, filter, doDocScores, doMaxScores);
-        public Search Skip(int newSkip) => new Search(manager, info, query, newSkip, take, sort, filter, doDocScores, doMaxScores);
-        public Search Query(Query newQuery) => new Search(manager, info, newQuery, skip, take, sort, filter, doDocScores, doMaxScores);
-        public Search OrderBy(Sort newSort) => new Search(manager, info, query, skip, take, newSort, filter, doDocScores, doMaxScores);
-        public Search Filter(Filter newFilter) => new Search(manager, info, query, skip, take, sort, newFilter, doDocScores, doMaxScores);
+        public Search Take(int newTake) => new Search(manager, InfoStream, query, skip, newTake, sort, filter, doDocScores, doMaxScores);
+        public Search Skip(int newSkip) => new Search(manager, InfoStream, query, newSkip, take, sort, filter, doDocScores, doMaxScores);
+        public Search Query(Query newQuery) => new Search(manager, InfoStream, newQuery, skip, take, sort, filter, doDocScores, doMaxScores);
+        public Search OrderBy(Sort newSort) => new Search(manager, InfoStream, query, skip, take, newSort, filter, doDocScores, doMaxScores);
+        public Search Filter(Filter newFilter) => new Search(manager, InfoStream, query, skip, take, sort, newFilter, doDocScores, doMaxScores);
 
-        public Search WithoutDocScores() => new Search(manager, info, query, skip, take, sort, filter, false, doMaxScores);
-        public Search WithoutMaxScores() => new Search(manager, info, query, skip, take, sort, filter, doDocScores, false);
-        public Search WithoutScores() => new Search(manager, info, query, skip, take, sort, filter, false, false);
+        public Search WithoutDocScores() => new Search(manager, InfoStream, query, skip, take, sort, filter, false, doMaxScores);
+        public Search WithoutMaxScores() => new Search(manager, InfoStream, query, skip, take, sort, filter, doDocScores, false);
+        public Search WithoutScores() => new Search(manager, InfoStream, query, skip, take, sort, filter, false, false);
 
-        public Search WithDocScores() => new Search(manager, info, query, skip, take, sort, filter, true, doMaxScores);
-        public Search WithMaxScores() => new Search(manager, info, query, skip, take, sort, filter, doDocScores, true);
-        public Search WithScores() => new Search(manager, info, query, skip, take, sort, filter, true, true);
+        public Search WithDocScores() => new Search(manager, InfoStream, query, skip, take, sort, filter, true, doMaxScores);
+        public Search WithMaxScores() => new Search(manager, InfoStream, query, skip, take, sort, filter, doDocScores, true);
+        public Search WithScores() => new Search(manager, InfoStream, query, skip, take, sort, filter, true, true);
 
-        public Search(IIndexSearcherManager manager, IInfoStream info, Query query = null, int skip = 0, int take = 25, Sort sort = null, Filter filter = null, bool doDocScores = true, bool doMaxScores = true)
+        public Search(IIndexSearcherManager manager, IInfoEventStream info, Query query = null, int skip = 0, int take = 25, Sort sort = null, Filter filter = null, bool doDocScores = true, bool doMaxScores = true)
         {
             this.manager = manager;
-            this.info = info;
+            this.InfoStream = info;
             this.skip = skip;
             this.take = take;
             this.query = query;
@@ -88,7 +83,7 @@ namespace DotJEM.Json.Index.Results
 
         private async Task<SearchResults> Execute(Query query, int skip, int take, Sort sort, Filter filter, bool doDocScores, bool doMaxScores)
         {
-            using (IInfoStreamCorrelationScope scope = info.Scope(GetType(), CorrelationId))
+            using (IInfoStreamCorrelationScope scope = InfoStream.Scope(GetType(), CorrelationId))
             {
                 scope.Debug($"Execute Search for query: {query}", new object[] { query, skip, take, sort, filter, doDocScores, doMaxScores });
 

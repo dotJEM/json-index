@@ -129,7 +129,6 @@ namespace DotJEM.Json.Index.Documents.Info
             // Consider immuteable.
             FieldMetaData meta = new FieldMetaData(rootField, fieldType, tokenType, type);
             infos.TryAdd(meta.Key, meta);
-            Console.WriteLine(meta.Key);
             return this;
         }
 

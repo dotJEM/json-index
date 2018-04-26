@@ -4,7 +4,7 @@ using DotJEM.Json.Index.Util;
 using Lucene.Net.Index;
 using Lucene.Net.Search;
 
-namespace DotJEM.Json.Index.Contexts
+namespace DotJEM.Json.Index.Contexts.Searching
 {
     public class MultiIndexJsonSearcherManager : Disposable, IIndexSearcherManager
     {

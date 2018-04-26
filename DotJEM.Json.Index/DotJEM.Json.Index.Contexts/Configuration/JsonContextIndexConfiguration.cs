@@ -1,6 +1,6 @@
 ﻿using DotJEM.Json.Index.Configuration;
 
-namespace DotJEM.Json.Index.Contexts
+namespace DotJEM.Json.Index.Contexts.Configuration
 {
     public class JsonContextIndexConfiguration : JsonIndexConfiguration
     {

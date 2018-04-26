@@ -7,12 +7,12 @@ using DotJEM.Json.Index.Util;
 using Lucene.Net.Index;
 using Lucene.Net.Search;
 
-namespace DotJEM.Json.Index.Contexts
+namespace DotJEM.Json.Index.Contexts.Searching
 {
     public class LuceneJsonMultiIndexSearcher : Disposable, ILuceneJsonIndexSearcher
     {
         public ILuceneJsonIndex Index { get; }
-        public IInfoStream InfoStream { get; } = new InfoStream();
+        public IInfoEventStream InfoStream { get; } = new InfoEventStream();
 
         private readonly ILuceneJsonIndex[] indicies;
 

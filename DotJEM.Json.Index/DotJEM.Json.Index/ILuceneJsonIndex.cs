@@ -1,5 +1,6 @@
 ﻿using System;
 using DotJEM.Json.Index.Configuration;
+using DotJEM.Json.Index.Diagnostics;
 using DotJEM.Json.Index.Documents;
 using DotJEM.Json.Index.IO;
 using DotJEM.Json.Index.Results;
@@ -11,15 +12,16 @@ namespace DotJEM.Json.Index
 {
     public interface ILuceneJsonIndex : ILuceneJsonIndexSearcherProvider
     {
+        IInfoEventStream InfoStream { get; }
         IServiceResolver Services { get; }
         IJsonIndexStorage Storage { get; }
         IJsonIndexConfiguration Configuration { get; }
-
         IJsonIndexWriter CreateWriter();
     }
 
     public class LuceneJsonIndex : ILuceneJsonIndex
     {
+        public IInfoEventStream InfoStream { get; } = new InfoEventStream();
         public IJsonIndexStorage Storage { get; }
         public IJsonIndexConfiguration Configuration { get; }
         public IServiceResolver Services { get; }
