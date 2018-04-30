@@ -25,6 +25,13 @@
 
   <ItemGroup>
 
+    <!--<Antlr4 Include="Extended/Extended.g4">
+      <Generator>MSBuild:Compile</Generator>
+      <CustomToolNamespace>DotJEM.Index.QueryParsers.Extended</CustomToolNamespace>
+      <Listener>True</Listener>
+      <Visitor>True</Visitor>
+    </Antlr4>-->
+
     <Antlr4 Include="Simplified/Simplified.g4">
       <Generator>MSBuild:Compile</Generator>
       <CustomToolNamespace>DotJEM.Index.QueryParsers.Simplified</CustomToolNamespace>

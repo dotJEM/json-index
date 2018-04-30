@@ -70,6 +70,7 @@ namespace DotJEM.Json.Index.QueryParsers
             if (ast.Name != null)
             {
                 IReadOnlyFieldinformation fieldInfo = fields.Lookup(ast.Name);
+                
             }
 
 

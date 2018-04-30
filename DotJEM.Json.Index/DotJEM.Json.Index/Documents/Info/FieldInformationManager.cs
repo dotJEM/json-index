@@ -93,12 +93,12 @@ namespace DotJEM.Json.Index.Documents.Info
 
     public interface IReadOnlyFieldinformation
     {
+        IEnumerable<IFieldMetaData> MetaData { get; }
         string Name { get; }
 
     }
     public interface IFieldInformation : IReadOnlyFieldinformation
     {
-        IEnumerable<IFieldMetaData> MetaData { get; }
 
         IFieldInformation Update(string rootField, FieldType fieldType, JTokenType tokenType, Type type);
 

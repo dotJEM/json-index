@@ -1,4 +1,4 @@
-﻿grammar Complex;
+﻿grammar Extended;
 
 /* Inspired by: https://github.com/lrowe/lucenequery and JIRA */
 
