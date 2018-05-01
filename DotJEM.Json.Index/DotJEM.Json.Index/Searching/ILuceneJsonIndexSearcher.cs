@@ -16,7 +16,7 @@ namespace DotJEM.Json.Index.Searching
     public class LuceneJsonIndexSearcher : Disposable, ILuceneJsonIndexSearcher
     {
         public ILuceneJsonIndex Index { get; }
-        public IInfoEventStream InfoStream { get; } = new InfoEventStream();
+        public IInfoEventStream InfoStream { get; } = InfoEventStream.DefaultStream.Bind<LuceneJsonIndexSearcher>();
 
         private readonly IIndexSearcherManager manager;
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Text;
+using DotJEM.Json.Index.Diagnostics;
 using DotJEM.Json.Index.Documents.Info;
 using DotJEM.Json.Index.Serialization;
 using DotJEM.Json.Visitor;
@@ -15,6 +16,7 @@ namespace DotJEM.Json.Index.Documents.Builder
 {
     public interface ILuceneDocumentBuilder
     {
+        IInfoEventStream InfoStream { get; }
         Document Document { get; }
 
         Document Build(JObject json);
@@ -24,11 +26,13 @@ namespace DotJEM.Json.Index.Documents.Builder
 
     public abstract class AbstractLuceneDocumentBuilder : JValueVisitor<IJsonPathContext>, ILuceneDocumentBuilder
     {
+        private readonly IJsonSerializer serializer;
         private FieldInformationCollector infoCollector;
-        private IJsonSerializer serializer;
+        public IInfoEventStream InfoStream { get; }
 
-        protected AbstractLuceneDocumentBuilder(IJsonSerializer serializer = null)
+        protected AbstractLuceneDocumentBuilder(IJsonSerializer serializer = null, IInfoEventStream infoStream = null)
         {
+            InfoStream = infoStream ?? InfoEventStream.DefaultStream;
             this.serializer = serializer ?? new GZipJsonSerialier();
         }
 
@@ -39,7 +43,7 @@ namespace DotJEM.Json.Index.Documents.Builder
         public Document Build(JObject json)
         {
             Document = new Document();
-            infoCollector = new FieldInformationCollector();
+            infoCollector = new FieldInformationCollector(InfoStream);
 
             JsonPathContext context = new JsonPathContext(this);
 

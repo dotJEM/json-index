@@ -2,12 +2,19 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
+using DotJEM.Json.Index.Diagnostics;
+using DotJEM.Json.Index.Serialization;
 using Newtonsoft.Json.Linq;
 
 namespace DotJEM.Json.Index.Documents.Builder
 {
     public class LuceneDocumentBuilder : AbstractLuceneDocumentBuilder
     {
+        public LuceneDocumentBuilder(IJsonSerializer serializer = null, IInfoEventStream infoStream = null) 
+            : base(serializer, infoStream)
+        {
+        }
+
         protected override void Visit(JArray json, IJsonPathContext context)
         {
             context.FieldBuilder<JArray>()

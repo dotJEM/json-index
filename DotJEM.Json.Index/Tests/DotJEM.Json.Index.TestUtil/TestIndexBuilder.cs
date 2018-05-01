@@ -5,6 +5,7 @@ using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
 using DotJEM.Json.Index.Configuration;
 using DotJEM.Json.Index.Contexts;
+using DotJEM.Json.Index.Diagnostics;
 using DotJEM.Json.Index.IO;
 using Microsoft.Win32.SafeHandles;
 using Newtonsoft.Json.Linq;
@@ -110,6 +111,7 @@ namespace DotJEM.Json.Index.TestUtil
             //});
             ILuceneIndexContext context = contextBuilder.Context;
             ILuceneJsonIndex index = context.Open(name);
+            index.InfoStream.Subscribe(new TestInfoStreamObserver());
             index.Storage.Delete();
 
             IJsonIndexWriter writer = index.CreateWriter();
@@ -126,6 +128,23 @@ namespace DotJEM.Json.Index.TestUtil
             return index;
         }
 
+    }
+
+    public class TestInfoStreamObserver : IObserver<InfoEventArgs> {
+        public void OnCompleted()
+        {
+            Console.WriteLine("INFO STREAM SIGNALED COMPLETE");
+        }
+
+        public void OnError(Exception error)
+        {
+            Console.WriteLine("ERROR ON RECEIVER INFO EVENT");
+        }
+
+        public void OnNext(InfoEventArgs value)
+        {
+            Console.WriteLine(value);
+        }
     }
 
     public sealed class TestObject

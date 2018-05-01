@@ -8,6 +8,10 @@ namespace DotJEM.Json.Index.Documents.Info
     public interface IFieldMetaData
     {
         string Key { get; }
+
+        JTokenType TokenType { get; }
+        FieldType FieldType { get; }
+        Type ClrType { get; }
     }
 
     public class FieldMetaData : IFieldMetaData
@@ -17,13 +21,13 @@ namespace DotJEM.Json.Index.Documents.Info
         public string Key { get; }
         public FieldType FieldType { get; }
         public JTokenType TokenType { get; }
-        public Type Type { get; }
+        public Type ClrType { get; }
 
         public FieldMetaData(string root, FieldType fieldType, JTokenType tokenType, Type type)
         {
             FieldType = fieldType;
             TokenType = tokenType;
-            Type = type;
+            ClrType = type;
             flags = new IndexFlags
             {
                 IsIndexed = fieldType.IsIndexed,

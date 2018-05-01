@@ -21,7 +21,7 @@ namespace DotJEM.Json.Index
 
     public class LuceneJsonIndex : ILuceneJsonIndex
     {
-        public IInfoEventStream InfoStream { get; } = new InfoEventStream();
+        public IInfoEventStream InfoStream { get; } = InfoEventStream.DefaultStream.Bind<LuceneJsonIndex>();
         public IJsonIndexStorage Storage { get; }
         public IJsonIndexConfiguration Configuration { get; }
         public IServiceResolver Services { get; }

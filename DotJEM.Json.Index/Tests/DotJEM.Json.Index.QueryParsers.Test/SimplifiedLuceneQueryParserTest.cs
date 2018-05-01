@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using DotJEM.Json.Index.Diagnostics;
 using DotJEM.Json.Index.Documents.Fields;
 using DotJEM.Json.Index.Documents.Info;
 using Lucene.Net.Analysis.Standard;
@@ -12,7 +13,7 @@ namespace DotJEM.Json.Index.QueryParsers.Test
     [TestFixture]
     public class SimplifiedLuceneQueryParserTest
     {
-        [TestCase("value", ""), Ignore("Requires implementation.")]
+        [TestCase("value", ""), Explicit("Requires implementation.")]
         public void Parse_Input_Query(string query, string result)
         {
             SimplifiedLuceneQueryParser parser = new SimplifiedLuceneQueryParser(
@@ -25,6 +26,7 @@ namespace DotJEM.Json.Index.QueryParsers.Test
 
     public class FakeFieldsInformationManager : IFieldInformationManager
     {
+        public IInfoEventStream InfoStream { get; } = new InfoEventStream();
         public IFieldResolver Resolver { get; } = new FieldResolver();
 
         public IEnumerable<string> ContentTypes { get; } = new[] {"person"};

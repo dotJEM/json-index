@@ -115,16 +115,12 @@ namespace DotJEM.Json.Index.Contexts
         }
     }
 
-
-
     //public class LuceneContextIndexBuilder : ILuceneIndexBuilder
     //{
     //    private readonly IServiceCollection services = new DefaultServiceCollection();
-
     //    public IServiceResolver ServiceResolver => new ServiceResolver(services);
     //    public ILuceneStorageFactory StorageFactory => new LuceneRamStorageFactory();
     //    public ILuceneIndexConfiguration Configuration => new LuceneIndexConfiguration();
-
     //    public virtual ILuceneJsonIndex Build()
     //    {
     //        return new LuceneJsonIndex(StorageFactory, Configuration, ServiceResolver);
