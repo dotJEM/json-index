@@ -11,6 +11,7 @@ using Lucene.Net.Util;
 
 namespace DotJEM.Json.Index.Configuration
 {
+    //TODO: Split into IServiceCollection/Factory and IServiceCollectionBuilder
     public interface IServiceCollection
     {
         IServiceCollection Use<TService, TImpl>() where TImpl : TService where TService : class;
@@ -18,7 +19,7 @@ namespace DotJEM.Json.Index.Configuration
         IServiceCollection Use<TService>(Func<TService> factory);
         IServiceCollection Use<TService>(Func<IServiceResolver, TService> factory);
         IServiceCollection Use(Type service, Func<IServiceResolver, object> factory);
-
+        
         bool Contains<T>();
         bool Contains(Type type);
 

@@ -105,6 +105,7 @@ namespace DotJEM.Json.Index.TestUtil
         public async Task<ILuceneJsonIndex> Build()
         {
             
+            
             //context.Configure(name, config =>
             //{
             //    config.UseMemoryStorage();

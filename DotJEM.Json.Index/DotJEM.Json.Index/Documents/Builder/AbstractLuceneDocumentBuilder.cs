@@ -5,6 +5,7 @@ using System.IO.Compression;
 using System.Text;
 using DotJEM.Json.Index.Diagnostics;
 using DotJEM.Json.Index.Documents.Info;
+using DotJEM.Json.Index.Documents.Strategies;
 using DotJEM.Json.Index.Serialization;
 using DotJEM.Json.Visitor;
 using Lucene.Net.Documents;
@@ -70,18 +71,30 @@ namespace DotJEM.Json.Index.Documents.Builder
         private void Info(string rootField, string fieldName, FieldType fieldType, JTokenType tokenType, Type type)
             => infoCollector.Add(rootField, fieldName, fieldType, tokenType, type);
 
+        /*
+         * TODO: Because we are adding configurabel strategies, much of the pieces below should be replaced by
+         * a more simple concept of IFieldContext...
+         *
+         * A Field context will capture the current path and value... (Just like the IJsonPathContext)
+         * however it would be far more simple in that it is not meant for navigation like the PathContext is.
+         *
+         * Instead it's merely meant for input to a FieldFactory, which replaces the FieldBuilder (It's a factory as things are now anyways).
+         */
+
         public class JsonPathContext : IJsonPathContext
         {
             private readonly AbstractLuceneDocumentBuilder builder;
 
             public string Path { get; }
             public JToken Value { get; }
+            public IFieldContext FieldContext { get; set; }
 
             public JsonPathContext(AbstractLuceneDocumentBuilder builder, string path = "", JToken value = null)
             {
                 Path = path;
                 this.builder = builder;
                 this.Value = value;
+                this.FieldContext = new FieldContext(path, value);
             }
 
             public IJsonPathContext Next(int index) => throw new NotSupportedException("Use the overloaded method Next(int, JToken) instead.");
@@ -92,6 +105,7 @@ namespace DotJEM.Json.Index.Documents.Builder
             public IFieldBuilder<TValue> FieldBuilder<TValue>() => new LuceneFieldBuilder<TValue>(Path, Value, builder, token => token.ToObject<TValue>());
             public IFieldBuilder<TValue> FieldBuilder<TValue>(Func<JToken, TValue> converter) => new LuceneFieldBuilder<TValue>(Path, Value, builder, converter);
         }
+
 
         public class LuceneFieldBuilder<TValue> : IFieldBuilder<TValue>
         {

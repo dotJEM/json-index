@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using DotJEM.Json.Index.Documents.Fields;
 using DotJEM.Json.Index.Documents.Info;
+using DotJEM.Json.Index.Documents.Strategies;
 using DotJEM.Json.Index.QueryParsers.Simplified;
 using DotJEM.Json.Index.QueryParsers.Simplified.Ast;
 using DotJEM.Json.Index.QueryParsers.Simplified.Ast.Scanner;
@@ -141,6 +142,8 @@ namespace DotJEM.Json.Index.QueryParsers
                 switch (val)
                 {
                     case DateTimeValue dateTimeValue:
+                        //new ExpandedDateTimeFieldStrategy().CreateQuery()
+
                         return NumericRangeQuery.NewInt64Range(field + ".@ticks", null, dateTimeValue.Value.Ticks, inclusive, inclusive);
 
                     case OffsetDateTime offsetDateTime:

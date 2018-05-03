@@ -3,13 +3,13 @@ using DotJEM.Json.Index.Contexts.Configuration;
 
 namespace DotJEM.Json.Index.Contexts
 {
-    public class ContextedJsonIndexBuilder : JsonIndexBuilder
+    public class ContextedLuceneJsonIndexBuilder : LuceneJsonIndexBuilder
     {
-        public ContextedJsonIndexBuilder(string name)
+        public ContextedLuceneJsonIndexBuilder(string name)
             : this(name, ServiceCollection.CreateDefault())
         {
         }
-        public ContextedJsonIndexBuilder(string name,IServiceCollection services)
+        public ContextedLuceneJsonIndexBuilder(string name,IServiceCollection services)
             : base(name, new PerIndexServiceCollection(services))
         {
         }

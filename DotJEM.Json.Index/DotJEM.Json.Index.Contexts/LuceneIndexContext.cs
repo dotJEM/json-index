@@ -100,7 +100,7 @@ namespace DotJEM.Json.Index.Contexts
 
         private ILuceneIndexContextBuilder Configure(string name, Func<ILuceneJsonIndexBuilder, ILuceneJsonIndexBuilder> config)
         {
-            ILuceneJsonIndexBuilder builder = config(new ContextedJsonIndexBuilder(name, Services).AddFacility(storage.Create(name)));
+            ILuceneJsonIndexBuilder builder = config(new ContextedLuceneJsonIndexBuilder(name, Services).AddFacility(storage.Create(name)));
             builders.AddOrUpdate(name, builder, (s, a) => builder);
             return this;
         }
@@ -110,20 +110,9 @@ namespace DotJEM.Json.Index.Contexts
             if (builders.TryGetValue(name, out ILuceneJsonIndexBuilder builder))
                 return builder.Build();
 
-            builder = new ContextedJsonIndexBuilder(name, Services).AddFacility(storage.Create(name));
+            builder = new ContextedLuceneJsonIndexBuilder(name, Services).AddFacility(storage.Create(name));
             return builder.Build();
         }
     }
 
-    //public class LuceneContextIndexBuilder : ILuceneIndexBuilder
-    //{
-    //    private readonly IServiceCollection services = new DefaultServiceCollection();
-    //    public IServiceResolver ServiceResolver => new ServiceResolver(services);
-    //    public ILuceneStorageFactory StorageFactory => new LuceneRamStorageFactory();
-    //    public ILuceneIndexConfiguration Configuration => new LuceneIndexConfiguration();
-    //    public virtual ILuceneJsonIndex Build()
-    //    {
-    //        return new LuceneJsonIndex(StorageFactory, Configuration, ServiceResolver);
-    //    }
-    //}
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 using DotJEM.Json.Index.Diagnostics;
+using DotJEM.Json.Index.Documents.Strategies;
 using DotJEM.Json.Index.Serialization;
 using Newtonsoft.Json.Linq;
 
@@ -17,6 +18,8 @@ namespace DotJEM.Json.Index.Documents.Builder
 
         protected override void Visit(JArray json, IJsonPathContext context)
         {
+
+
             context.FieldBuilder<JArray>()
                 .AddInt32Field("@count", arr => arr.Count);
             base.Visit(json, context);
@@ -84,27 +87,29 @@ namespace DotJEM.Json.Index.Documents.Builder
             //      2014-09-10T13:00 => 0hzxzie7z
             //      
             //      The fields below may however provide other search capabilities such as all things creating during the morning etc.
-            context.FieldBuilder<DateTime>()
-                .AddStringField(v => v.ToString("s"))
-                .AddInt64Field("@ticks", v => v.Ticks)
-                .AddInt32Field("@year", v => v.Year)
-                .AddInt32Field("@month", v => v.Month)
-                .AddInt32Field("@day", v => v.Day)
-                .AddInt32Field("@hour", v => v.Hour)
-                .AddInt32Field("@minute", v => v.Minute);
+            
+
+            new ExpandedDateTimeFieldStrategy().Apply(context);
+            //context.FieldBuilder<DateTime>()
+            //    .AddStringField(v => v.ToString("s"))
+            //    .AddInt64Field("@ticks", v => v.Ticks)
+            //    .AddInt32Field("@year", v => v.Year)
+            //    .AddInt32Field("@month", v => v.Month)
+            //    .AddInt32Field("@day", v => v.Day)
+            //    .AddInt32Field("@hour", v => v.Hour)
+            //    .AddInt32Field("@minute", v => v.Minute);
             base.VisitDate(json, context);
         }
 
         protected override void VisitGuid(JValue json, IJsonPathContext context)
         {
-            context.FieldBuilder<string>()
-                .AddStringField();
-
+            new IdentityFieldStrategy().Apply(context);
             base.VisitGuid(json, context);
         }
 
         protected override void VisitUri(JValue json, IJsonPathContext context)
         {
+
             context.FieldBuilder<string>()
                 .AddStringField();
 
@@ -113,6 +118,7 @@ namespace DotJEM.Json.Index.Documents.Builder
 
         protected override void VisitTimeSpan(JValue json, IJsonPathContext context)
         {
+            
             context.FieldBuilder<TimeSpan>()
                 .AddStringField(v => v.Ticks.ToString())
                 .AddInt64Field("@ticks", v => v.Ticks)
