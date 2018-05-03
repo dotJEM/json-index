@@ -127,13 +127,13 @@ namespace DotJEM.Json.Index.Diagnostics
         public void Debug(Type callerType, string message, Guid correlationId, object[] args, [CallerMemberName]string member = null)
             => Publish(new InfoEventArgs(InfoType.Debug, callerType, member, message, correlationId, args));
 
-        public void Info(Type callerType, string message, Guid correlationId, object[] args, string member = null)
+        public void Info(Type callerType, string message, Guid correlationId, object[] args, [CallerMemberName]string member = null)
             => Publish(new InfoEventArgs(InfoType.Info, callerType, member, message, correlationId, args));
 
-        public void Error(Type callerType, string message, Guid correlationId, object[] args, string member = null)
+        public void Error(Type callerType, string message, Guid correlationId, object[] args, [CallerMemberName]string member = null)
             => Publish(new InfoEventArgs(InfoType.Error, callerType, member, message, correlationId, args));
 
-        public void Exception(Type callerType, string message, Exception ex, Guid correlationId, object[] args, string member = null)
+        public void Exception(Type callerType, string message, Exception ex, Guid correlationId, object[] args, [CallerMemberName]string member = null)
             => Publish(new InfoExceptionEventArgs(InfoType.Exception, callerType, member, message, ex, correlationId, args));
 
         private void Publish(InfoEventArgs message)
@@ -187,23 +187,23 @@ namespace DotJEM.Json.Index.Diagnostics
         public IInfoStreamCorrelationScope Scope(Guid correlationId)
             => new InfoStreamCorrelationScope(inner, callerType, correlationId);
 
-        public void Debug(string message, Guid correlationId, object[] args, string member = null)
-            => inner.Debug(callerType, message, correlationId, args);
-        public void Info(string message, Guid correlationId, object[] args, string member = null)
-            => inner.Info(callerType, message, correlationId, args);
-        public void Error(string message, Guid correlationId, object[] args, string member = null)
-            => inner.Error(callerType, message, correlationId, args);
-        public void Exception(string message, Guid correlationId, Exception ex, object[] args, string member = null)
-            => inner.Exception(callerType, message, ex, correlationId, args);
+        public void Debug(string message, Guid correlationId, object[] args, [CallerMemberName]string member = null)
+            => inner.Debug(callerType, message, correlationId, args, member);
+        public void Info(string message, Guid correlationId, object[] args, [CallerMemberName]string member = null)
+            => inner.Info(callerType, message, correlationId, args, member);
+        public void Error(string message, Guid correlationId, object[] args, [CallerMemberName]string member = null)
+            => inner.Error(callerType, message, correlationId, args, member);
+        public void Exception(string message, Guid correlationId, Exception ex, object[] args, [CallerMemberName]string member = null)
+            => inner.Exception(callerType, message, ex, correlationId, args, member);
 
         public void Debug(string message, object[] args, [CallerMemberName]string member = null)
-            => inner.Debug(callerType, message, Guid.Empty, args);
+            => inner.Debug(callerType, message, Guid.Empty, args, member);
         public void Info(string message, object[] args, [CallerMemberName]string member = null)
-            => inner.Info(callerType, message, Guid.Empty, args);
+            => inner.Info(callerType, message, Guid.Empty, args, member);
         public void Error(string message, object[] args, [CallerMemberName]string member = null)
-            => inner.Error(callerType, message, Guid.Empty, args);
+            => inner.Error(callerType, message, Guid.Empty, args, member);
         public void Exception(string message, Exception ex, object[] args, [CallerMemberName]string member = null)
-            => inner.Exception(callerType, message, ex, Guid.Empty, args);
+            => inner.Exception(callerType, message, ex, Guid.Empty, args, member);
 
         public IDisposable Subscribe(IObserver<InfoEventArgs> observer) 
             => inner.Subscribe(observer);
@@ -217,22 +217,22 @@ namespace DotJEM.Json.Index.Diagnostics
         public IInfoStreamCorrelationScope Scope(Type callerType, Guid correlationId)
             => inner.Scope(callerType, correlationId);
 
-        public void Exception(Type callerType, string message, Exception ex, Guid correlationId, object[] args, string member = null)
+        public void Exception(Type callerType, string message, Exception ex, Guid correlationId, object[] args, [CallerMemberName]string member = null)
         {
             inner.Exception(callerType, message, ex, correlationId, args, member);
         }
 
-        public void Error(Type callerType, string message, Guid correlationId, object[] args, string member = null)
+        public void Error(Type callerType, string message, Guid correlationId, object[] args, [CallerMemberName]string member = null)
         {
             inner.Error(callerType, message, correlationId, args, member);
         }
 
-        public void Debug(Type callerType, string message, Guid correlationId, object[] args, string member = null)
+        public void Debug(Type callerType, string message, Guid correlationId, object[] args, [CallerMemberName]string member = null)
         {
             inner.Debug(callerType, message, correlationId, args, member);
         }
 
-        public void Info(Type callerType, string message, Guid correlationId, object[] args, string member = null)
+        public void Info(Type callerType, string message, Guid correlationId, object[] args, [CallerMemberName]string member = null)
         {
             inner.Info(callerType, message, correlationId, args, member);
         }
@@ -261,12 +261,12 @@ namespace DotJEM.Json.Index.Diagnostics
         }
 
         public void Debug(string message, object[] args, [CallerMemberName]string member = null)
-            => inner.Debug(callerType, message, correlationId, args);
+            => inner.Debug(callerType, message, correlationId, args, member);
         public void Info(string message, object[] args, [CallerMemberName]string member = null)
-            => inner.Info(callerType, message, correlationId, args);
+            => inner.Info(callerType, message, correlationId, args, member);
         public void Error(string message, object[] args, [CallerMemberName]string member = null)
-            => inner.Error(callerType, message, correlationId, args);
+            => inner.Error(callerType, message, correlationId, args, member);
         public void Exception(string message, Exception ex, object[] args, [CallerMemberName]string member = null)
-            => inner.Exception(callerType, message, ex, correlationId, args);
+            => inner.Exception(callerType, message, ex, correlationId, args, member);
     }
 }
