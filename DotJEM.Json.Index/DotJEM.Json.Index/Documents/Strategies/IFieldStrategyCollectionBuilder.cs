@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
 using DotJEM.Json.Index.Documents.Builder;
+using Lucene.Net.Documents;
 using Lucene.Net.Index;
 using Lucene.Net.Search;
 using Lucene.Net.Util;
@@ -80,15 +81,20 @@ namespace DotJEM.Json.Index.Documents.Strategies
 
     public interface IFieldFactory<T>
     {
+        IFieldContext Context { get; }
+        T DeserializedValue { get; }
     }
 
     public class FieldFactory<T> : IFieldFactory<T>
     {
-        private IFieldContext context;
+        public IFieldContext Context { get; }
+        public T DeserializedValue { get; }
 
-        public FieldFactory(IFieldContext context)
+        public FieldFactory(IFieldContext context, Func<JToken, T> converter = null)
         {
-            this.context = context;
+            converter = converter ?? (token => token.ToObject<T>());
+            this.Context = context;
+            DeserializedValue = converter(context.Value);
         }
 
         public IIndexableField CreateStringField()
@@ -97,6 +103,24 @@ namespace DotJEM.Json.Index.Documents.Strategies
         }
     }
 
+    public static class FieldFactoryExtensions
+    {
+        public static IIndexableField CreateStringField<TValue>(this IFieldFactory<TValue> self)
+            => self.CreateStringField(val => val.ToString());
+
+        public static IIndexableField CreateStringField<TValue>(this IFieldFactory<TValue> self, Func<TValue, string> transform)
+            => self.InternalCreateStringField(self.Context.Field, transform);
+
+        public static IIndexableField CreateStringField<TValue>(this IFieldFactory<TValue> self, string extension, Func<TValue, string> transform)
+            => self.InternalCreateStringField($"{self.Context.Field}.{extension}", transform);
+
+        private static IIndexableField InternalCreateStringField<TValue>(this IFieldFactory<TValue> self, string fullpath, Func<TValue, string> transform)
+        {
+            return new StringField(fullpath, transform(self.DeserializedValue), Field.Store.NO);
+            //builder.Add(new StringField(fullpath, transform(deserializedValue), Field.Store.NO));
+            //builder.Info(path, fullpath, StringField.TYPE_NOT_STORED, tokenType, typeof(string));
+        }
+    }
 
     public class IdentityFieldStrategy : IFieldStrategy
     {
