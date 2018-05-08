@@ -5,6 +5,7 @@ using System.Text;
 using DotJEM.Json.Index.Diagnostics;
 using DotJEM.Json.Index.Documents.Strategies;
 using DotJEM.Json.Index.Serialization;
+using Lucene.Net.Index;
 using Newtonsoft.Json.Linq;
 
 namespace DotJEM.Json.Index.Documents.Builder
@@ -18,24 +19,19 @@ namespace DotJEM.Json.Index.Documents.Builder
 
         protected override void Visit(JArray json, IJsonPathContext context)
         {
-
-
-            context.FieldBuilder<JArray>()
-                .AddInt32Field("@count", arr => arr.Count);
+            context.Apply<ArrayFieldStrategy>();
             base.Visit(json, context);
         }
 
         protected override void VisitInteger(JValue json, IJsonPathContext context)
         {
-            context.FieldBuilder<long>()
-                .AddInt64Field();
+            context.Apply<Int64FieldStrategy>();
             base.VisitInteger(json, context);
         }
 
         protected override void VisitFloat(JValue json, IJsonPathContext context)
         {
-            context.FieldBuilder<double>()
-                .AddDoubleField();
+            context.Apply<DoubleFieldStrategy>();
             base.VisitFloat(json, context);
         }
 
@@ -44,88 +40,58 @@ namespace DotJEM.Json.Index.Documents.Builder
             string str = json.ToString(CultureInfo.InvariantCulture);
             //TODO: This is problematic as PhraseQueries will fail if just a single field is indexed with StringField...
             //      So we need to figure out a better way.
+            //      Ideally, if we have our own analyzer which doesn't split GUID's and other things, e.g. is far more simple.
+            //      Then we can just use TextField always.
             if (str.Contains(" "))
             {
-                context.FieldBuilder<string>()
-                    .AddTextField();
+                context.Apply<TextFieldStrategy>();
             }
             else
             {
-                context.FieldBuilder<string>()
-                    .AddStringField();
+                context.Apply<StringFieldStrategy>();
             }
             base.VisitString(json, context);
         }
 
         protected override void VisitBoolean(JValue json, IJsonPathContext context)
         {
-            context.FieldBuilder<bool>()
-                .AddStringField();
+            context.Apply<BooleanFieldStrategy>();
             base.VisitBoolean(json, context);
         }
 
         protected override void VisitNull(JValue json, IJsonPathContext context)
         {
-            context.FieldBuilder<object>()
-                .AddStringField(s => "$$NULL$$");
+            context.Apply(new NullFieldStrategy("$$NULL$$"));
             base.VisitNull(json, context);
         }
 
         protected override void VisitUndefined(JValue json, IJsonPathContext context)
         {
-            context.FieldBuilder<object>()
-                .AddStringField(s => "$$UNDEFINED$$");
+            context.Apply(new NullFieldStrategy("$$UNDEFINED$$"));
             base.VisitUndefined(json, context);
         }
 
         protected override void VisitDate(JValue json, IJsonPathContext context)
         {
-            //TODO: Can we do better here? Lucene it self seems to use a lexical format for dateTimes
-            //
-            //   Examples: 
-            //      2014-09-10T11:00 => 0hzwfs800
-            //      2014-09-10T13:00 => 0hzxzie7z
-            //      
-            //      The fields below may however provide other search capabilities such as all things creating during the morning etc.
-            
-
-            new ExpandedDateTimeFieldStrategy().Apply(context);
-            //context.FieldBuilder<DateTime>()
-            //    .AddStringField(v => v.ToString("s"))
-            //    .AddInt64Field("@ticks", v => v.Ticks)
-            //    .AddInt32Field("@year", v => v.Year)
-            //    .AddInt32Field("@month", v => v.Month)
-            //    .AddInt32Field("@day", v => v.Day)
-            //    .AddInt32Field("@hour", v => v.Hour)
-            //    .AddInt32Field("@minute", v => v.Minute);
+            context.Apply<ExpandedDateTimeFieldStrategy>();
             base.VisitDate(json, context);
         }
 
         protected override void VisitGuid(JValue json, IJsonPathContext context)
         {
-            new IdentityFieldStrategy().Apply(context);
+            context.Apply<IdentityFieldStrategy>();
             base.VisitGuid(json, context);
         }
 
         protected override void VisitUri(JValue json, IJsonPathContext context)
         {
-
-            context.FieldBuilder<string>()
-                .AddStringField();
-
+            context.Apply<StringFieldStrategy>();
             base.VisitUri(json, context);
         }
 
         protected override void VisitTimeSpan(JValue json, IJsonPathContext context)
         {
-            
-            context.FieldBuilder<TimeSpan>()
-                .AddStringField(v => v.Ticks.ToString())
-                .AddInt64Field("@ticks", v => v.Ticks)
-                .AddInt32Field("@days", v => v.Days)
-                .AddInt32Field("@hours", v => v.Hours)
-                .AddInt32Field("@minutes", v => v.Minutes);
-
+            context.Apply<ExpandedTimeSpanFieldStrategy>();
             base.VisitTimeSpan(json, context);
         }
     }

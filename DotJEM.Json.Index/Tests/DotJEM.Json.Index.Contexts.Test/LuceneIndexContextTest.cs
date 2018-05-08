@@ -32,6 +32,7 @@ namespace DotJEM.Json.Index.Contexts.Test
             using (ILuceneJsonIndexSearcher searcher = context.CreateSearcher())
             {
                 Query q = NumericRangeQuery.NewInt64Range("id", 0, 2, false, false);
+                //q = new MatchAllDocsQuery();
                 SearchResults result = searcher.Search(q).Result.Result;
 
                 Assert.That(result, 

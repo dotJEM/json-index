@@ -87,7 +87,7 @@ namespace DotJEM.Json.Index.Documents.Builder
 
             public string Path { get; }
             public JToken Value { get; }
-            public IFieldContext FieldContext { get; set; }
+            public IFieldContext FieldContext { get; }
 
             public JsonPathContext(AbstractLuceneDocumentBuilder builder, string path = "", JToken value = null)
             {
@@ -102,115 +102,33 @@ namespace DotJEM.Json.Index.Documents.Builder
             public IJsonPathContext Next(string name) => throw new NotSupportedException("Use the overloaded method Next(string, JToken) instead.");
             public IJsonPathContext Next(string name, JToken value) => new JsonPathContext(builder, Path == "" ? name : Path + "." + name, value);
 
-            public IFieldBuilder<TValue> FieldBuilder<TValue>() => new LuceneFieldBuilder<TValue>(Path, Value, builder, token => token.ToObject<TValue>());
-            public IFieldBuilder<TValue> FieldBuilder<TValue>(Func<JToken, TValue> converter) => new LuceneFieldBuilder<TValue>(Path, Value, builder, converter);
-        }
+            public void Apply<T>() where T : IFieldStrategy, new()
+                => Apply(new T());
 
-
-        public class LuceneFieldBuilder<TValue> : IFieldBuilder<TValue>
-        {
-            private readonly string path;
-            private readonly JTokenType tokenType;
-            private readonly TValue deserializedValue;
-            private readonly AbstractLuceneDocumentBuilder builder;
-
-            public LuceneFieldBuilder(string path, JToken value, AbstractLuceneDocumentBuilder builder, Func<JToken, TValue> converter)
+            public void Apply(IFieldStrategy strategy)
             {
-                this.path = path;
-                this.builder = builder;
-                this.tokenType = value.Type;
-                this.deserializedValue = converter(value);
-            }
+                //return new StringField(fullpath, transform(self.DeserializedValue), Field.Store.NO);
+                //builder.Add(new StringField(fullpath, transform(deserializedValue), Field.Store.NO));
+                //builder.Info(path, fullpath, StringField.TYPE_NOT_STORED, tokenType, typeof(string));
+                
+                string sourceFieldName = FieldContext.Field;
+                Type strategyType = strategy.GetType();
+                JTokenType jsonType = FieldContext.Value.Type;
+                
+                foreach (IJsonIndexableField field in strategy.CreateFields(FieldContext))
+                {
+                    builder.Add(field.Field);
 
-            public IFieldBuilder<TValue> AddStringField()
-                => InternalAddStringField(path, v => v.ToString());
 
-            public IFieldBuilder<TValue> AddStringField(Func<TValue, string> transform)
-                => InternalAddStringField(path, transform);
+                    //TODO: This needs fixing.
+                    string fieldName = field.FieldName;
+                    Type clrType = field.ClrType;
+                    FieldType luceneType = field.LuceneType;
+                    FieldData[] data = field.Data;
 
-            public IFieldBuilder<TValue> AddStringField(string extension, Func<TValue, string> transform)
-                => InternalAddStringField($"{path}.{extension}", transform);
+                    builder.Info(sourceFieldName, fieldName, luceneType, jsonType, clrType);
 
-            public IFieldBuilder<TValue> InternalAddStringField(string fullpath, Func<TValue, string> transform)
-            {
-                builder.Add(new StringField(fullpath, transform(deserializedValue), Field.Store.NO));
-                builder.Info(path, fullpath, StringField.TYPE_NOT_STORED, tokenType, typeof(string));
-                return this;
-            }
-
-            public IFieldBuilder<TValue> AddTextField()
-                => InternalAddTextField(path, v => v.ToString());
-            public IFieldBuilder<TValue> AddTextField(Func<TValue, string> transform)
-                => InternalAddTextField(path, transform);
-
-            public IFieldBuilder<TValue> AddTextField(string extension, Func<TValue, string> transform)
-                => InternalAddTextField($"{path}.{extension}", transform);
-
-            public IFieldBuilder<TValue> InternalAddTextField(string fullpath, Func<TValue, string> transform)
-            {
-                builder.Add(new TextField(fullpath, transform(deserializedValue), Field.Store.NO));
-                builder.Info(path, fullpath, TextField.TYPE_NOT_STORED, tokenType, typeof(string));
-                return this;
-            }
-
-            public IFieldBuilder<TValue> AddInt32Field()
-                => InternalAddInt32Field(path, v => Convert.ToInt32(v));
-            public IFieldBuilder<TValue> AddInt32Field(Func<TValue, int> transform)
-                => InternalAddInt32Field(path, transform);
-
-            public IFieldBuilder<TValue> AddInt32Field(string extension, Func<TValue, int> transform)
-                => InternalAddInt32Field($"{path}.{extension}", transform);
-
-            private IFieldBuilder<TValue> InternalAddInt32Field(string fullpath, Func<TValue, int> transform)
-            {
-                builder.Add(new Int32Field(fullpath, transform(deserializedValue), Field.Store.NO));
-                builder.Info(path, fullpath, Int32Field.TYPE_NOT_STORED, tokenType, typeof(long));
-                return this;
-            }
-
-            public IFieldBuilder<TValue> AddInt64Field()
-                => InternalAddInt64Field(path, v => Convert.ToInt64(v));
-            public IFieldBuilder<TValue> AddInt64Field(Func<TValue, long> transform)
-                => InternalAddInt64Field(path, transform);
-
-            public IFieldBuilder<TValue> AddInt64Field(string extension, Func<TValue, long> transform)
-                => InternalAddInt64Field($"{path}.{extension}", transform);
-
-            private IFieldBuilder<TValue> InternalAddInt64Field(string fullpath, Func<TValue, long> transform)
-            {
-                builder.Add(new Int64Field(fullpath, transform(deserializedValue), Field.Store.NO));
-                builder.Info(path, fullpath, Int64Field.TYPE_NOT_STORED, tokenType, typeof(long));
-                return this;
-            }
-
-            public IFieldBuilder<TValue> AddSingleField()
-                => InternalAddSingleField(path, v => Convert.ToSingle(v));
-            public IFieldBuilder<TValue> AddSingleField(Func<TValue, float> transform)
-                => InternalAddSingleField(path, transform);
-
-            public IFieldBuilder<TValue> AddSingleField(string extension, Func<TValue, float> transform)
-                => InternalAddSingleField($"{path}.{extension}", transform);
-
-            private IFieldBuilder<TValue> InternalAddSingleField(string fullpath, Func<TValue, float> transform)
-            {
-                builder.Add(new SingleField(fullpath, transform(deserializedValue), Field.Store.NO));
-                builder.Info(path, fullpath, SingleField.TYPE_NOT_STORED, tokenType, typeof(long));
-                return this;
-            }
-
-            public IFieldBuilder<TValue> AddDoubleField()
-                => InternalAddDoubleField(path, v => Convert.ToDouble(v));
-            public IFieldBuilder<TValue> AddDoubleField(Func<TValue, double> transform)
-                => InternalAddDoubleField(path, transform);
-
-            public IFieldBuilder<TValue> AddDoubleField(string extension, Func<TValue, double> transform)
-                => InternalAddDoubleField($"{path}.{extension}", transform);
-
-            private IFieldBuilder<TValue> InternalAddDoubleField(string fullpath, Func<TValue, double> transform)
-            {
-                builder.Add(new DoubleField(fullpath, transform(deserializedValue), Field.Store.NO));
-                builder.Info(path, fullpath, DoubleField.TYPE_NOT_STORED, tokenType, typeof(long));
-                return this;
+                }
             }
         }
     }

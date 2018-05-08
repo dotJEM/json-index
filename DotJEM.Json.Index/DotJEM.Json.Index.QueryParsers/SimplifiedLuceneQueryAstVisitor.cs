@@ -70,10 +70,10 @@ namespace DotJEM.Json.Index.QueryParsers
 
             if (ast.Name != null)
             {
-                IReadOnlyFieldinformation fieldInfo = fields.Lookup(ast.Name);
-                foreach (IFieldMetaData metaData in fieldInfo.MetaData)
-                {
-                }
+                //IReadOnlyFieldinformation fieldInfo = fields.Lookup(ast.Name);
+                //foreach (IFieldMetaData metaData in fieldInfo.MetaData)
+                //{
+                //}
             }
 
 
@@ -142,7 +142,7 @@ namespace DotJEM.Json.Index.QueryParsers
                 switch (val)
                 {
                     case DateTimeValue dateTimeValue:
-                        //new ExpandedDateTimeFieldStrategy().CreateQuery()
+                        //new ExpandedDateTimeFieldStrategy().CreateQuery(new )
 
                         return NumericRangeQuery.NewInt64Range(field + ".@ticks", null, dateTimeValue.Value.Ticks, inclusive, inclusive);
 
