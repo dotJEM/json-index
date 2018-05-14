@@ -51,7 +51,7 @@ namespace DotJEM.Json.Index.Documents.Builder
 
         protected override void VisitString(JValue json, IJsonPathContext context)
         {
-            IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Float);
+            IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.String);
             //
             string str = json.ToString(CultureInfo.InvariantCulture);
             //TODO: This is problematic as PhraseQueries will fail if just a single field is indexed with StringField...
@@ -73,7 +73,7 @@ namespace DotJEM.Json.Index.Documents.Builder
 
         protected override void VisitBoolean(JValue json, IJsonPathContext context)
         {
-            IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Float)
+            IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Boolean)
                                       ?? new BooleanFieldStrategy();
             context.Apply(strategy);
             //context.Apply<BooleanFieldStrategy>();
@@ -82,7 +82,7 @@ namespace DotJEM.Json.Index.Documents.Builder
 
         protected override void VisitNull(JValue json, IJsonPathContext context)
         {
-            IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Float)
+            IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Null)
                                       ?? new NullFieldStrategy("$$NULL$$");
             context.Apply(strategy);
             //context.Apply(new NullFieldStrategy("$$NULL$$"));
@@ -91,7 +91,7 @@ namespace DotJEM.Json.Index.Documents.Builder
 
         protected override void VisitUndefined(JValue json, IJsonPathContext context)
         {
-            IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Float)
+            IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Undefined)
                                       ?? new NullFieldStrategy("$$UNDEFINED$$");
             context.Apply(strategy);
             //context.Apply(new NullFieldStrategy("$$UNDEFINED$$"));
@@ -100,7 +100,7 @@ namespace DotJEM.Json.Index.Documents.Builder
 
         protected override void VisitDate(JValue json, IJsonPathContext context)
         {
-            IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Float)
+            IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Date)
                                       ?? new ExpandedDateTimeFieldStrategy();
             context.Apply(strategy);
             //context.Apply<ExpandedDateTimeFieldStrategy>();
@@ -109,7 +109,7 @@ namespace DotJEM.Json.Index.Documents.Builder
 
         protected override void VisitGuid(JValue json, IJsonPathContext context)
         {
-            IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Float)
+            IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Guid)
                                       ?? new IdentityFieldStrategy();
             context.Apply(strategy);
             //context.Apply<IdentityFieldStrategy>();
@@ -118,7 +118,7 @@ namespace DotJEM.Json.Index.Documents.Builder
 
         protected override void VisitUri(JValue json, IJsonPathContext context)
         {
-            IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Float)
+            IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Uri)
                                       ?? new StringFieldStrategy();
             context.Apply(strategy);
             //context.Apply<StringFieldStrategy>();
@@ -127,7 +127,7 @@ namespace DotJEM.Json.Index.Documents.Builder
 
         protected override void VisitTimeSpan(JValue json, IJsonPathContext context)
         {
-            IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Float)
+            IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.TimeSpan)
                                       ?? new ExpandedTimeSpanFieldStrategy();
             context.Apply(strategy);
             //context.Apply<ExpandedTimeSpanFieldStrategy>();
