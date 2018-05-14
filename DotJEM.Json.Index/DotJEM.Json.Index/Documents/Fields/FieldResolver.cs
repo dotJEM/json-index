@@ -10,8 +10,9 @@ namespace DotJEM.Json.Index.Documents.Fields
     {
         string IndentityField { get; }
         string ContentTypeField { get; }
-        string ContentType(JObject entity);
+        string StorageField { get; }
 
+        string ContentType(JObject entity);
         Term Identity(JObject entity);
     }
 
@@ -19,14 +20,16 @@ namespace DotJEM.Json.Index.Documents.Fields
     {
         public string IndentityField { get; }
         public string ContentTypeField { get; }
+        public string StorageField { get; }
 
         private readonly Func<JObject, Term> indentityFieldLookup;
         private readonly Func<JObject, string> contentTypeFieldLookup;
 
-        public FieldResolver(string indentityField = "$id", string contentTypeField = "$contentType")
+        public FieldResolver(string indentityField = "$id", string contentTypeField = "$contentType", string storageField = "$$RAW")
         {
             IndentityField = indentityField;
             ContentTypeField = contentTypeField;
+            StorageField = storageField;
             indentityFieldLookup = UseSelect(indentityField)
                 ? new Func<JObject, Term>(obj => new Term(indentityField, (string)obj.SelectToken(indentityField)))
                 : new Func<JObject, Term>(obj => new Term(indentityField, (string)obj[indentityField]));

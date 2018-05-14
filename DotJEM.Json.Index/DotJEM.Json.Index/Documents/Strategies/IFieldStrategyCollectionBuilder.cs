@@ -14,8 +14,17 @@ namespace DotJEM.Json.Index.Documents.Strategies
 {
     public interface IFieldStrategyCollection
     {
-
+        IFieldStrategy Resolve(string fieldName, JTokenType type);
     }
+
+    public class NullFieldStrategyCollection : IFieldStrategyCollection
+    {
+        public IFieldStrategy Resolve(string fieldName, JTokenType type)
+        {
+            return null;
+        }
+    }
+
 
     public interface IFieldStrategyCollectionBuilder
     {
@@ -53,7 +62,7 @@ namespace DotJEM.Json.Index.Documents.Strategies
             builder.Use<ExpandedDateTimeFieldStrategy>().For<DateTime>();
 
             //builder.For("contentType").Use<ExpandedDateTimeFieldStrategy>().On("field");
-
+            //builder.Use<IdentityFieldStrategy>().For("*", "$created");
         }
     }
 

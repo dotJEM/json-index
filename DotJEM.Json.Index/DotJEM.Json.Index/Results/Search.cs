@@ -10,8 +10,11 @@ using System.Threading.Tasks;
 using DotJEM.Json.Index.Diagnostics;
 using DotJEM.Json.Index.Searching;
 using DotJEM.Json.Index.Serialization;
+using Lucene.Net.Analysis.Util;
 using Lucene.Net.Documents;
+using Lucene.Net.Index;
 using Lucene.Net.Search;
+using Lucene.Net.Util;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -91,20 +94,32 @@ namespace DotJEM.Json.Index.Results
                 using (IIndexSearcherContext context = manager.Acquire())
                 {
                     IndexSearcher s = context.Searcher;
-                    query = s.Rewrite(query);
+                    //s.Doc()
+                    //query = s.Rewrite(query);
                     scope.Debug($"Query Rewrite: {query}", new object[] { query });
 
                     // https://issues.apache.org/jira/secure/attachment/12430688/PagingCollector.java
 
+                    //TopScoreDocCollector collector = TopScoreDocCollector.Create(int.MaxValue, true);
+                    //TopDocs docs = collector.GetTopDocs(0, 100);
+                    //TopFieldCollector collector2 = TopFieldCollector.Create(sort, 100, false, false, false, false);
+                    //Query fq = filter != null 
+                    //    ? new FilteredQuery(query, filter)
+                    //    : query;
+                    //Weight w = s.CreateNormalizedWeight(fq);
+                    //collector2.GetTopDocs()
+                    
                     TopFieldDocs results = await Task.Run(() => s.Search(query, filter, take, sort, doDocScores, doMaxScores));
+
                     TimeSpan searchTime = timer.Elapsed;
                     scope.Info($"Search took: {searchTime.TotalMilliseconds} ms", new object[] { searchTime });
-
+                    var fieldsToLoad = new CharArraySet(LuceneVersion.LUCENE_48, new List<string> {"$$RAW"}, false);
                     var loaded =
                         from hit in results.ScoreDocs.Skip(skip)
                         let document = s.Doc(hit.Doc)
                         //TODO: Field Resolver
                         let data = document.GetBinaryValue("$$RAW").Bytes
+
                         select new { data, hit.Score };
 
                     //TODO: We could throw in another measurement (Load vs Deserialization)...
@@ -148,4 +163,29 @@ namespace DotJEM.Json.Index.Results
 
         public static implicit operator SearchResults(Search search) => search.Result.Result;
     }
+
+    public class PagingCollector : TopDocsCollector<ScoreDoc>
+    {
+        public PagingCollector(PriorityQueue<ScoreDoc> pq) : base(pq)
+        {
+        }
+
+        public override void SetScorer(Scorer scorer)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void Collect(int doc)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void SetNextReader(AtomicReaderContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override bool AcceptsDocsOutOfOrder => false;
+    }
+
 }

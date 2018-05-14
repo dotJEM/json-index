@@ -4,6 +4,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Text;
 using DotJEM.Json.Index.Diagnostics;
+using DotJEM.Json.Index.Documents.Fields;
 using DotJEM.Json.Index.Documents.Info;
 using DotJEM.Json.Index.Documents.Strategies;
 using DotJEM.Json.Index.Serialization;
@@ -27,13 +28,16 @@ namespace DotJEM.Json.Index.Documents.Builder
 
     public abstract class AbstractLuceneDocumentBuilder : JValueVisitor<IJsonPathContext>, ILuceneDocumentBuilder
     {
+        private readonly IFieldResolver fields;
         private readonly IJsonSerializer serializer;
         private FieldInformationCollector infoCollector;
         public IInfoEventStream InfoStream { get; }
 
-        protected AbstractLuceneDocumentBuilder(IJsonSerializer serializer = null, IInfoEventStream infoStream = null)
+        protected AbstractLuceneDocumentBuilder(IFieldResolver fields = null, IJsonSerializer serializer = null, IInfoEventStream infoStream = null)
         {
             InfoStream = infoStream ?? InfoEventStream.DefaultStream;
+
+            this.fields = fields ?? new FieldResolver();
             this.serializer = serializer ?? new GZipJsonSerialier();
         }
 
@@ -48,8 +52,9 @@ namespace DotJEM.Json.Index.Documents.Builder
 
             JsonPathContext context = new JsonPathContext(this);
 
+            //serializer.SerializeTo(json, Document);
             //TODO: Perhaps we should just pass the document?
-            Add(new StoredField("$$RAW", serializer.Serialize(json)));
+            Add(new StoredField(fields.StorageField, serializer.Serialize(json)));
 
             Visit(json, context);
             return Document;
