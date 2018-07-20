@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -9,6 +10,7 @@ using DotJEM.Json.Index.Documents.Strategies;
 using DotJEM.Json.Index.QueryParsers.Simplified;
 using DotJEM.Json.Index.QueryParsers.Simplified.Ast;
 using DotJEM.Json.Index.QueryParsers.Simplified.Ast.Scanner;
+using DotJEM.Json.Index.QueryParsers.Simplified.Ast.Scanner.Matchers;
 using Lucene.Net.Analysis;
 using Lucene.Net.Analysis.TokenAttributes;
 using Lucene.Net.Index;
@@ -30,6 +32,11 @@ namespace DotJEM.Json.Index.QueryParsers
         {
             this.contentTypes = enumerable.ToList();
         }
+
+        public override string ToString()
+        {
+            return $"ContentTypes(" +string.Join(";", contentTypes)+")";
+        }
     }
 
     public class SimplifiedLuceneQueryAstVisitor : SimplifiedQueryAstVisitor<LuceneQueryInfo, ContentTypeContext>
@@ -43,11 +50,21 @@ namespace DotJEM.Json.Index.QueryParsers
             this.analyzer = analyzer;
         }
 
+
+        private ContentTypeContext GetContentTypes(BaseQuery ast)
+        {
+            if (ast.TryGetAs("contentTypes", out string[] contentTypes))
+            {
+                return new ContentTypeContext(contentTypes);
+            }
+            return new ContentTypeContext(fields.ContentTypes.ToArray());
+        }
+
         public override LuceneQueryInfo Visit(BaseQuery ast, ContentTypeContext context) => throw new NotImplementedException();
 
         public override LuceneQueryInfo Visit(OrderedQuery ast, ContentTypeContext context)
         {
-            LuceneQueryInfo query = ast.Query.Accept(this, context);
+            LuceneQueryInfo query = ast.Query.Accept(this, GetContentTypes(ast));
             LuceneQueryInfo order = ast.Ordering?.Accept(this, context);
             return new LuceneQueryInfo(query.Query, order?.Sort);
         }
@@ -70,10 +87,25 @@ namespace DotJEM.Json.Index.QueryParsers
 
             if (ast.Name != null)
             {
+                // If we have a contentType context, use that.
+                IJsonFieldInfo field = fields.Lookup(ast.Name);
+                if (field == null)
+                {
+                    return query;
+                }
+                foreach (ILuceneFieldInfo info in field)
+                {
+                    
+                }
+
                 //IReadOnlyFieldinformation fieldInfo = fields.Lookup(ast.Name);
                 //foreach (IFieldMetaData metaData in fieldInfo.MetaData)
                 //{
                 //}
+            }
+            else
+            {
+                // Calculate relevant fields from context.
             }
 
 
@@ -256,13 +288,13 @@ namespace DotJEM.Json.Index.QueryParsers
             return query;
         }
 
-        private LuceneQueryInfo VisitComposite(CompositeQuery ast, Func<ContentTypeContext> contextProvider, Occur occur)
+        private LuceneQueryInfo VisitComposite(CompositeQuery ast, ContentTypeContext context, Occur occur)
         {
             BooleanQuery query = new BooleanQuery();
             foreach (BaseQuery child in ast.Queries)
             {
                 //TODO: Branch context.
-                query.Add(child.Accept(this, contextProvider()).Query, occur);
+                query.Add(child.Accept(this, context).Query, occur);
             }
             return query;
 
@@ -271,16 +303,12 @@ namespace DotJEM.Json.Index.QueryParsers
         public override LuceneQueryInfo Visit(OrQuery ast, ContentTypeContext context)
         {
             //TODO: Branch context.
-            return VisitComposite(ast, () => context, Occur.SHOULD);
+            return VisitComposite(ast, GetContentTypes(ast), Occur.SHOULD);
         }
 
         public override LuceneQueryInfo Visit(AndQuery ast, ContentTypeContext context)
         {
-            if (ast.TryGetAs("contentTypes", out string[] contentTypes))
-            {
-                context = new ContentTypeContext(contentTypes);
-            }
-            return VisitComposite(ast, () => context, Occur.MUST);
+            return VisitComposite(ast, GetContentTypes(ast), Occur.MUST);
         }
 
         public override LuceneQueryInfo Visit(ImplicitCompositeQuery ast, ContentTypeContext context)
@@ -292,7 +320,7 @@ namespace DotJEM.Json.Index.QueryParsers
 
         public override LuceneQueryInfo Visit(NotQuery ast, ContentTypeContext context)
         {
-            LuceneQuery not = ast.Not.Accept(this, context).Query;
+            LuceneQuery not = ast.Not.Accept(this, GetContentTypes(ast)).Query;
 
             BooleanQuery query = new BooleanQuery(true);
             query.Add(new BooleanClause(not, Occur.MUST_NOT));

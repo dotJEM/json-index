@@ -12,7 +12,6 @@ namespace DotJEM.Json.Index.Documents.Builder
         IFieldContext FieldContext { get; }
         IJsonPathContext Next(int index, JToken value);
         IJsonPathContext Next(string name, JToken value);
-        void Apply<T>() where T:IFieldStrategy, new();
         void Apply(IFieldStrategy strategy);
     }
     public interface IFieldContext

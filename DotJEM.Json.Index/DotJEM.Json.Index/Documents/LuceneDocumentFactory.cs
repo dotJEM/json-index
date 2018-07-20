@@ -1,15 +1,11 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.ExceptionServices;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using DotJEM.Json.Index.Configuration;
 using DotJEM.Json.Index.Documents.Builder;
-using DotJEM.Json.Index.Documents.Fields;
 using DotJEM.Json.Index.Documents.Info;
 using Lucene.Net.Documents;
 using Newtonsoft.Json.Linq;
@@ -40,16 +36,16 @@ namespace DotJEM.Json.Index.Documents
 
         public async Task<LuceneDocumentEntry> Create(JObject entity)
         {
-            return await Task.Run(async () =>
+            return await Task.Run(() =>
             {
                 ILuceneDocumentBuilder builder = builderFactory.Create();
                 string contentType = fieldsInfo.Resolver.ContentType(entity);
 
                 Document doc = builder.Build(entity);
-                await fieldsInfo.Merge(contentType, builder.FieldInfo);
+                fieldsInfo.Merge(contentType, builder.FieldInfo);
 
                 return new LuceneDocumentEntry(fieldsInfo.Resolver.Identity(entity), contentType, doc);
-            });
+            }).ConfigureAwait(false);
         }
 
         public IEnumerable<LuceneDocumentEntry> Create(IEnumerable<JObject> docs)
@@ -79,19 +75,24 @@ namespace DotJEM.Json.Index.Documents
 
         private class AsyncList<T> : IEnumerable<T> where T : class
         {
-            private event EventHandler<EventArgs> Changed; 
+            private event EventHandler<EventArgs> Changed;
 
             private bool completed = false;
+            private readonly object padlock = new object();
             private readonly List<T> items = new List<T>();
-            private readonly List<(Exception, JObject)> failures = new List<(Exception, JObject)>();
+            //private readonly List<(Exception, JObject)> failures = new List<(Exception, JObject)>();
 
             private int Count => items.Count;
 
             public void Add(T item)
             {
-                if(completed)
+                if (item == null)
+                    throw new ArgumentNullException(nameof(item));
+
+                if (completed)
                     throw new InvalidOperationException("Cannot add more items to a AsyncList that is marked as completed.");
-                items.Add(item);
+
+                lock (padlock) items.Add(item);
                 RaiseChanged();
             }
 
@@ -106,14 +107,11 @@ namespace DotJEM.Json.Index.Documents
 
             public void ReportFailure(Exception exception, JObject json)
             {
-                failures.Add((exception, json));
                 //TODO: We need a way to report errors up stream... (Exception or similar).
+                //failures.Add((exception, json));
             }
 
-            private void RaiseChanged()
-            {
-                Changed?.Invoke(this, EventArgs.Empty);
-            }
+            private void RaiseChanged() => Changed?.Invoke(this, EventArgs.Empty);
 
             private class DocumentsListEnumerator : IEnumerator<T>
             {
@@ -129,10 +127,7 @@ namespace DotJEM.Json.Index.Documents
 
                 private void SourceChanged(object sender, EventArgs eventArgs)
                 {
-                    lock (padlock)
-                    {
-                        Monitor.PulseAll(padlock);
-                    }
+                    lock (padlock) Monitor.PulseAll(padlock);
                 }
 
                 public bool MoveNext()
@@ -164,13 +159,8 @@ namespace DotJEM.Json.Index.Documents
                 }
 
                 public T Current => source.items[index];
-
                 object IEnumerator.Current => Current;
-
-                public void Dispose()
-                {
-                    this.source.Changed -= SourceChanged;
-                }
+                public void Dispose() => this.source.Changed -= SourceChanged;
             }
         }
     }

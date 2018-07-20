@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using DotJEM.Json.Index.Diagnostics;
 using DotJEM.Json.Index.Documents.Fields;
+using DotJEM.Json.Index.Documents.Strategies;
 using Lucene.Net.Documents;
 using Newtonsoft.Json.Linq;
 
@@ -20,146 +21,102 @@ namespace DotJEM.Json.Index.Documents.Info
         IEnumerable<string> AllFields { get; }
 
         //Task Merge(string contentType, JObject entity);
-        Task Merge(string contentType, IFieldInformationCollection information);
+        void Merge(string contentType, IFieldInfoCollection info);
 
-        IReadOnlyFieldinformation Lookup(string fieldName);
-        IReadOnlyFieldinformation Lookup(string contentType, string fieldName);
+        IJsonFieldInfo Lookup(string fieldName);
+        IJsonFieldInfo Lookup(string contentType, string fieldName);
     }
 
     //TODO: How can we make the abstraction work with JSchema as well as our own simple collector?
-    public interface IFieldInformationCollection : IEnumerable<IFieldInformation>
+    public interface IFieldInfoCollection : IEnumerable<IJsonFieldInfo>
     {
-        IFieldInformationCollection Merge(IFieldInformationCollection other);
-        IReadOnlyFieldinformation Lookup(string fieldName);
+        IFieldInfoCollection Merge(IFieldInfoCollection other);
+        IJsonFieldInfo Lookup(string fieldName);
     }
 
-    public class FieldInformationCollector : IFieldInformationCollection
+    public class FieldInfoCollectionBuilder
     {
-        private IInfoEventStream InfoStream { get; }
+        private readonly ITypeBoundInfoStream infoStream;
+        public IInfoEventStream InfoStream => infoStream;
 
-        private readonly Dictionary<string, IFieldInformation> fields;
-        public FieldInformationCollector(IInfoEventStream infoStream)
-            : this(Enumerable.Empty<IFieldInformation>(), infoStream) { }
+        private readonly Dictionary<string, IJsonFieldInfo> fields = new Dictionary<string, IJsonFieldInfo>();
 
-        public FieldInformationCollector(IEnumerable<IFieldInformation> fields, IInfoEventStream infoStream)
+        public FieldInfoCollectionBuilder(IInfoEventStream infoStream)
         {
-            InfoStream = infoStream;
-            this.fields = fields
+            this.infoStream = infoStream.Bind<FieldInfoCollectionBuilder>();
+        }
+
+        public void Add(IJsonFieldInfo info)
+        {
+            if (fields.TryGetValue(info.Name, out IJsonFieldInfo fieldInfo))
+            {
+                infoStream.Debug($"Updating field information {info.Name}", new []{ info });
+                fields[info.Name] = fieldInfo.Merge(info);
+            }
+            else
+            {
+                infoStream.Debug($"Adding field information {info.Name}", new []{ info });
+                fields[info.Name] = info;
+            }
+        }
+
+        public IFieldInfoCollection Build()
+        {
+            return new FieldInfoCollection(fields);
+        }
+    }
+
+    public class FieldInfoCollection : IFieldInfoCollection
+    {
+        private readonly Dictionary<string, IJsonFieldInfo> fields;
+
+        public FieldInfoCollection() : this(new Dictionary<string, IJsonFieldInfo>()) { }
+
+        public FieldInfoCollection(IEnumerable<IJsonFieldInfo> fields)
+            : this(fields
                 .GroupBy(info => info.Name)
                 .Select(group => group.Aggregate((left, right) => left.Merge(right)))
-                .ToDictionary(info => info.Name);
-        }
+                .ToDictionary(info => info.Name)) { }
 
-        public void Add(string rootField, string fieldName, FieldType fieldType, JTokenType tokenType, Type type)
+        public FieldInfoCollection(IDictionary<string, IJsonFieldInfo> fields)
         {
-            if (!fields.TryGetValue(fieldName, out IFieldInformation fieldInfo))
-                fields.Add(fieldName, fieldInfo = new FieldInformation(fieldName));
-
-            fieldInfo.Update(rootField, fieldType, tokenType, type);
+            if(!(fields is Dictionary<string, IJsonFieldInfo> fieldsDictionary))
+                fieldsDictionary = new Dictionary<string, IJsonFieldInfo>(fields);
+            this.fields = fieldsDictionary;
         }
-        public IReadOnlyFieldinformation Lookup(string fieldName)
+
+        public IFieldInfoCollection Merge(IFieldInfoCollection other)
         {
-            return fields.TryGetValue(fieldName, out IFieldInformation field) ? field : null;
+            Dictionary<string, IJsonFieldInfo> merged = new Dictionary<string, IJsonFieldInfo>(fields);
+            foreach (IJsonFieldInfo info in other)
+            {
+                if (merged.TryGetValue(info.Name, out IJsonFieldInfo fieldInfo))
+                {
+                    merged[info.Name] = fieldInfo.Merge(info);
+                }
+                else
+                {
+                    merged[info.Name] = info;
+                }
+            }
+            return new FieldInfoCollection(merged);
         }
 
-
-        public IFieldInformationCollection Merge(IFieldInformationCollection other) => new FieldInformationCollector(this.Concat(other), InfoStream);
-
-        public IEnumerator<IFieldInformation> GetEnumerator() => fields.Values.GetEnumerator();
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-
-    }
-
-    public class FieldInformationCollection : IFieldInformationCollection
-    {
-        private readonly Dictionary<string, IFieldInformation> fields;
-
-        public FieldInformationCollection() : this(Enumerable.Empty<IFieldInformation>()) { }
-
-        public FieldInformationCollection(IEnumerable<IFieldInformation> fields)
+        public IJsonFieldInfo Lookup(string fieldName)
         {
-            this.fields = fields
-                .GroupBy(info => info.Name)
-                .Select(group => group.Aggregate((left, right) => left.Merge(right)))
-                .ToDictionary(info => info.Name);
+            return fields.TryGetValue(fieldName, out IJsonFieldInfo field) ? field : null;
         }
 
-        public IFieldInformationCollection Merge(IFieldInformationCollection other)
-        {
-            return new FieldInformationCollection(this.Concat(other));
-        }
-        public IReadOnlyFieldinformation Lookup(string fieldName)
-        {
-            return fields.TryGetValue(fieldName, out IFieldInformation field) ? field : null;
-        }
-
-        public IEnumerator<IFieldInformation> GetEnumerator() => fields.Values.GetEnumerator();
+        public IEnumerator<IJsonFieldInfo> GetEnumerator() => fields.Values.GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
-
-    public interface IReadOnlyFieldinformation
-    {
-        IEnumerable<IFieldMetaData> MetaData { get; }
-        string Name { get; }
-
-    }
-    public interface IFieldInformation : IReadOnlyFieldinformation
-    {
-        ITypeBoundInfoStream InfoStream { get; }
-
-        IFieldInformation Update(string rootField, FieldType fieldType, JTokenType tokenType, Type type);
-
-        IFieldInformation Merge(IFieldInformation other);
-    }
-
-    public class FieldInformation : IFieldInformation
-    {
-        public string Name { get; }
-        public ITypeBoundInfoStream InfoStream { get; }
-
-        private readonly ConcurrentDictionary<string, IFieldMetaData> infos;
-
-        public IEnumerable<IFieldMetaData> MetaData => infos.Values;
-
-        public FieldInformation(string name, IInfoEventStream infoStream = null) 
-            : this(name, Enumerable.Empty<IFieldMetaData>(), infoStream) {}
-
-        private FieldInformation(string name, IEnumerable<IFieldMetaData> metaData, IInfoEventStream infoStream = null)
-        {
-            InfoStream = (infoStream ?? InfoEventStream.DefaultStream).Bind<FieldInformation>();
-            Name = name;
-            infos = new ConcurrentDictionary<string, IFieldMetaData>(
-                metaData.ToDictionary(meta => meta.Key)
-                );
-        }
-
-        public IFieldInformation Update(string rootField, FieldType fieldType, JTokenType tokenType, Type type)
-        {
-            // Consider immuteable.
-            FieldMetaData meta = new FieldMetaData(rootField, fieldType, tokenType, type);
-            infos.TryAdd(meta.Key, meta);
-            InfoStream.Debug($"Adding field meta data ({meta.Key}) to field {Name}", new []{ meta });
-            return this;
-        }
-
-        public IFieldInformation Merge(IFieldInformation other)
-        {
-            return new FieldInformation(Name, other.MetaData.Concat(MetaData).Distinct(new FieldMetaDataComparer()), InfoStream);
-        }
-
-        private class FieldMetaDataComparer : IEqualityComparer<IFieldMetaData>
-        {
-            public bool Equals(IFieldMetaData x, IFieldMetaData y) => StringComparer.Ordinal.Equals(x.Key, y.Key);
-            public int GetHashCode(IFieldMetaData obj) => StringComparer.Ordinal.GetHashCode(obj.Key);
-        }
-    }
-
+    
     public class DefaultFieldInformationManager : IFieldInformationManager
     {
         public IInfoEventStream InfoStream { get; }
 
-        private readonly IFieldInformationCollection allFields = new FieldInformationCollection();
-        private readonly ConcurrentDictionary<string, IFieldInformationCollection> contentTypes = new ConcurrentDictionary<string, IFieldInformationCollection>();
+        private IFieldInfoCollection allFields = new FieldInfoCollection();
+        private readonly ConcurrentDictionary<string, IFieldInfoCollection> contentTypes = new ConcurrentDictionary<string, IFieldInfoCollection>();
 
         public IFieldResolver Resolver { get; }
 
@@ -172,29 +129,197 @@ namespace DotJEM.Json.Index.Documents.Info
         public IEnumerable<string> ContentTypes => contentTypes.Keys;
         public IEnumerable<string> AllFields => allFields.Select(info => info.Name);
 
-        public async Task Merge(string contentType, IFieldInformationCollection information)
+        public void Merge(string contentType, IFieldInfoCollection info)
         {
-            await Task.Run(() =>
+            contentTypes.AddOrUpdate(contentType,
+                key => new FieldInfoCollection(info),
+                (key, collection) => collection.Merge(info));
+            //TODO: Find another way that won't lock the resource. Either some queing or branching...
+            //      Branching is ok when we merge back in because we don't care if we are presented with the same
+            //      information multiple times.
+            lock (allFields)
             {
-                contentTypes.AddOrUpdate(contentType,
-                    key => new FieldInformationCollection(information),
-                    (key, collection) => collection.Merge(information));
-                allFields.Merge(information);
-            });
+                this.allFields = allFields.Merge(info);
+            }
         }
 
-        public IReadOnlyFieldinformation Lookup(string fieldName)
+        public IJsonFieldInfo Lookup(string fieldName)
         {
             return allFields.Lookup(fieldName);
         }
 
-        public IReadOnlyFieldinformation Lookup(string contentType, string fieldName)
+        public IJsonFieldInfo Lookup(string contentType, string fieldName)
         {
-            if (contentTypes.TryGetValue(contentType, out IFieldInformationCollection fields))
+            if (contentTypes.TryGetValue(contentType, out IFieldInfoCollection fields))
                 return fields.Lookup(fieldName);
             return null;
         }
     }
 
+    public interface IJsonFieldInfo : IEnumerable<ILuceneFieldInfo>
+    {
+        string Name { get; }
+        IJsonFieldInfo Merge(IJsonFieldInfo other);
+    }
+
+    public class JsonFieldInfo : IJsonFieldInfo
+    {
+        private readonly Dictionary<string, ILuceneFieldInfo> fields;
+
+        public string Name { get; }
+
+        public JsonFieldInfo(string name, IDictionary<string, ILuceneFieldInfo> fields)
+        {
+            Name = name;
+            if (!(fields is Dictionary<string, ILuceneFieldInfo> fieldsDictionary))
+                fieldsDictionary = new Dictionary<string, ILuceneFieldInfo>(fields);
+            this.fields = fieldsDictionary;
+        }
+
+        public IJsonFieldInfo Merge(IJsonFieldInfo other)
+        {
+            JsonFieldInfoBuilder builder = new JsonFieldInfoBuilder(Name);
+            this.Aggregate(builder, (b, info) => b.Add(info));
+            other.Aggregate(builder, (b, info) => b.Add(info));
+            return builder.Build();
+        }
+
+        public IEnumerator<ILuceneFieldInfo> GetEnumerator() => fields.Values.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+    }
+
+    public class JsonFieldInfoBuilder
+    {
+        private readonly string name;
+        private readonly Dictionary<string, ILuceneFieldInfo> infos = new Dictionary<string, ILuceneFieldInfo>();
+
+        public JsonFieldInfoBuilder(string name)
+        {
+            this.name = name;
+        }
+
+        public JsonFieldInfoBuilder Add(ILuceneFieldInfo info)
+        {
+            if (infos.TryGetValue(info.Key, out ILuceneFieldInfo fieldInfo))
+            {
+                //TODO: Merge MetaData, the rest is the same as pr. the key.
+                //      Ideally MetaData should also give input to the key and we should hash it... But for now SIMPLE STUFF.
+                infos[info.Key] = info; //fieldInfo.Merge(info);
+            }
+            else
+            {
+                infos[info.Key] = info;
+            }
+            return this;
+        }
+
+        public JsonFieldInfoBuilder Add(string luceneField, JTokenType jsonType, Type clrType, FieldType luceneType, Type strategyType, FieldMetaData[] metaData)
+            => Add(new LuceneFieldInfo(luceneField, jsonType, clrType, luceneType, strategyType, metaData));
+
+        public IJsonFieldInfo Build()
+        {
+            return new JsonFieldInfo(name, infos);
+        }
+    }
+
+    public interface ILuceneFieldInfo
+    {
+        string Key { get; }
+        string LuceneField { get; }
+        JTokenType JsonType { get; }
+        Type ClrType { get; }
+        FieldType LuceneType { get; }
+        Type StrategyType { get; }
+        FieldMetaData[] MetaData { get; }
+    }
+
+    public class LuceneFieldInfo : ILuceneFieldInfo
+    {
+        public string Key { get; }
+        public string LuceneField { get; }
+        public JTokenType JsonType { get; }
+        public Type ClrType { get; }
+        public FieldType LuceneType { get; }
+        public Type StrategyType { get; }
+        public FieldMetaData[] MetaData { get; }
+
+        public LuceneFieldInfo(string luceneField, JTokenType jsonType, Type clrType, FieldType luceneType, Type strategyType, FieldMetaData[] metaData)
+        {
+            LuceneField = luceneField;
+            JsonType = jsonType;
+            ClrType = clrType;
+            LuceneType = luceneType;
+            StrategyType = strategyType;
+            MetaData = metaData;
+            Key =
+                $"{luceneField};{(int)luceneType.DocValueType};{(int)luceneType.IndexOptions};{(int)luceneType.IndexOptions}" +
+                $";{(int)luceneType.DocValueType};" +
+                $"{luceneType.GetBase64Flags()};{luceneType.NumericPrecisionStep};{(int)jsonType};{clrType};{strategyType}";
+
+        }
+    }
+
+    public interface IFieldMetaData
+    {
+        string Name { get; }
+        string Value { get; }
+    }
+
+    public struct FieldMetaData : IFieldMetaData
+    {
+        public string Name { get; }
+        public string Value { get; }
+
+        public FieldMetaData(string name, string value)
+        {
+            Name = name;
+            Value = value;
+        }
+    }
+
+
+    public static class FieldTypeExtensions
+    {
+        public static LuceneFieldFlags GetFlags(this FieldType field)
+        {
+            LuceneFieldFlags flags = LuceneFieldFlags.None;
+            if (field.IsIndexed)
+                flags |= LuceneFieldFlags.IsIndexed;
+            if (field.IsStored)
+                flags |= LuceneFieldFlags.IsStored;
+            if (field.IsTokenized)
+                flags |= LuceneFieldFlags.IsTokenized;
+            if (field.OmitNorms)
+                flags |= LuceneFieldFlags.OmitNorms;
+            if (field.StoreTermVectorOffsets)
+                flags |= LuceneFieldFlags.StoreTermVectorOffsets;
+            if (field.StoreTermVectorPayloads)
+                flags |= LuceneFieldFlags.StoreTermVectorPayloads;
+            if (field.StoreTermVectorPositions)
+                flags |= LuceneFieldFlags.StoreTermVectorPositions;
+            if (field.StoreTermVectors)
+                flags |= LuceneFieldFlags.StoreTermVectors;
+            return flags;
+        }
+
+        public static string GetBase64Flags(this FieldType field)
+        {
+            return Convert.ToBase64String(new[] { (byte)field.GetFlags() });
+        }
+    }
+
+    [Flags]
+    public enum LuceneFieldFlags : byte
+    {
+        None = 0,
+        IsIndexed = 1 << 0,
+        IsStored = 1 << 1,
+        IsTokenized = 1 << 2,
+        OmitNorms = 1 << 3,
+        StoreTermVectorOffsets = 1 << 4,
+        StoreTermVectorPayloads = 1 << 5,
+        StoreTermVectorPositions = 1 << 6,
+        StoreTermVectors = 1 << 7
+    }
 
 }

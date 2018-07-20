@@ -32,19 +32,20 @@ namespace DotJEM.Json.Index.QueryParsers.Test
         public IEnumerable<string> ContentTypes { get; } = new[] {"person"};
         public IEnumerable<string> AllFields { get; } = new[] { "person" };
 
-        public Task Merge(string contentType, IFieldInformationCollection information)
+        public Task Merge(string contentType, IFieldInfoCollection info)
         {
             throw new System.NotImplementedException();
         }
 
-        public IReadOnlyFieldinformation Lookup(string fieldName)
+        public IJsonFieldInfo Lookup(string fieldName)
         {
             return null;
         }
 
-        public IReadOnlyFieldinformation Lookup(string contentType, string fieldName)
+        public IJsonFieldInfo Lookup(string contentType, string fieldName)
         {
             return null;
         }
+
     }
 }

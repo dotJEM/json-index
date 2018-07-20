@@ -1,4 +1,5 @@
 ﻿using System;
+using DotJEM.Json.Index.Documents.Info;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
 
@@ -9,19 +10,20 @@ namespace DotJEM.Json.Index.Documents.Strategies
         string FieldName { get; }
         Type ClrType { get; }
         FieldType LuceneType { get; }
-        FieldData[] Data { get; }
+        FieldMetaData[] Data { get; }
         IIndexableField Field { get; }
     }
+
     public class JsonIndexableField<T> : IJsonIndexableField
     {
         public string FieldName { get; }
         public Type ClrType { get; } = typeof(T);
         public FieldType LuceneType { get; }
-        public FieldData[] Data { get; }
+        public FieldMetaData[] Data { get; }
 
         public IIndexableField Field { get; }
 
-        public JsonIndexableField(Field field, params FieldData[] data)
+        public JsonIndexableField(Field field, params FieldMetaData[] data)
         {
             Field = field;
             LuceneType = field.FieldType;

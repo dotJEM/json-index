@@ -21,7 +21,7 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast.Scanner
         public override IValueMatcher Visit(FieldQuery ast, object context)
         {
             if (ast.Name != fieldsInfo.Resolver.ContentTypeField)
-                return null;
+                return new MatchAllMatcher();
 
             switch (ast.Operator)
             {
@@ -44,7 +44,7 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast.Scanner
                 case FieldOperator.NotSimilar:
                     return new NullMatcher();
             }
-            return null;
+            return new MatchAllMatcher();
 
             IValueMatcher CreateMatcher(Value value)
             {
@@ -71,7 +71,7 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast.Scanner
 
 
         public override IValueMatcher Visit(OrQuery ast, object context) 
-            => new AnyOfMatcher(ast.Queries.Select(q => q.Accept(this, context)).Where(m => m != null));
+            => Decorate(ast, new AnyOfMatcher(ast.Queries.Select(q => q.Accept(this, context)).Where(m => m != null)));
 
         public override IValueMatcher Visit(AndQuery ast, object context) 
             => Decorate(ast, new AllOfMatcher(ast.Queries.Select(q => q.Accept(this, context)).Where(m => m != null)));
@@ -82,7 +82,7 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast.Scanner
         public override IValueMatcher Visit(NotQuery ast, object context)
         {
             IValueMatcher matcher = ast.Not.Accept(this, context);
-            return  matcher != null ? new NotMatcher(matcher) : null;
+            return Decorate(ast, matcher != null ? (IValueMatcher)new NotMatcher(matcher) : new MatchAllMatcher());
         }
 
         //Note: Ordering does not matter.

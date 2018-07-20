@@ -23,19 +23,20 @@ namespace DotJEM.Json.Index.Documents.Builder
 
         Document Build(JObject json);
 
-        IFieldInformationCollection FieldInfo { get; }
+        IFieldInfoCollection FieldInfo { get; }
     }
 
     public abstract class AbstractLuceneDocumentBuilder : JValueVisitor<IJsonPathContext>, ILuceneDocumentBuilder
     {
         private readonly IFieldResolver fields;
         private readonly IJsonSerializer serializer;
-        private FieldInformationCollector infoCollector;
-        public IInfoEventStream InfoStream { get; }
+        private readonly ITypeBoundInfoStream infoStream;
+
+        public IInfoEventStream InfoStream => infoStream;
 
         protected AbstractLuceneDocumentBuilder(IFieldResolver fields = null, IJsonSerializer serializer = null, IInfoEventStream infoStream = null)
         {
-            InfoStream = infoStream ?? InfoEventStream.DefaultStream;
+            this.infoStream = (infoStream ?? InfoEventStream.DefaultStream).Bind<AbstractLuceneDocumentBuilder>();
 
             this.fields = fields ?? new FieldResolver();
             this.serializer = serializer ?? new GZipJsonSerialier();
@@ -43,12 +44,10 @@ namespace DotJEM.Json.Index.Documents.Builder
 
         public Document Document { get; private set; }
 
-        public IFieldInformationCollection FieldInfo => infoCollector;
-
         public Document Build(JObject json)
         {
             Document = new Document();
-            infoCollector = new FieldInformationCollector(InfoStream);
+            infoCollector = new FieldInfoCollectionBuilder(InfoStream);
 
             JsonPathContext context = new JsonPathContext(this);
 
@@ -73,8 +72,6 @@ namespace DotJEM.Json.Index.Documents.Builder
         private void Add(IIndexableField field)
             => Document.Add(field);
 
-        private void Info(string rootField, string fieldName, FieldType fieldType, JTokenType tokenType, Type type)
-            => infoCollector.Add(rootField, fieldName, fieldType, tokenType, type);
 
         /*
          * TODO: Because we are adding configurabel strategies, much of the pieces below should be replaced by
@@ -107,34 +104,27 @@ namespace DotJEM.Json.Index.Documents.Builder
             public IJsonPathContext Next(string name) => throw new NotSupportedException("Use the overloaded method Next(string, JToken) instead.");
             public IJsonPathContext Next(string name, JToken value) => new JsonPathContext(builder, Path == "" ? name : Path + "." + name, value);
 
-            public void Apply<T>() where T : IFieldStrategy, new()
-                => Apply(new T());
-
             public void Apply(IFieldStrategy strategy)
             {
-                //return new StringField(fullpath, transform(self.DeserializedValue), Field.Store.NO);
-                //builder.Add(new StringField(fullpath, transform(deserializedValue), Field.Store.NO));
-                //builder.Info(path, fullpath, StringField.TYPE_NOT_STORED, tokenType, typeof(string));
-                
-                string sourceFieldName = FieldContext.Field;
                 Type strategyType = strategy.GetType();
                 JTokenType jsonType = FieldContext.Value.Type;
-                
+                JsonFieldInfoBuilder info = new JsonFieldInfoBuilder(FieldContext.Field);
                 foreach (IJsonIndexableField field in strategy.CreateFields(FieldContext))
                 {
                     builder.Add(field.Field);
-
-
-                    //TODO: This needs fixing.
-                    string fieldName = field.FieldName;
-                    Type clrType = field.ClrType;
-                    FieldType luceneType = field.LuceneType;
-                    FieldData[] data = field.Data;
-
-                    builder.Info(sourceFieldName, fieldName, luceneType, jsonType, clrType);
-
+                    info.Add(field.FieldName, jsonType, field.ClrType, field.LuceneType, strategyType, field.Data);
                 }
+                builder.AddFieldInfo(info.Build());
             }
+        }
+
+
+        private FieldInfoCollectionBuilder infoCollector;
+        public IFieldInfoCollection FieldInfo => infoCollector.Build();
+
+        private void AddFieldInfo(IJsonFieldInfo fieldInfo)
+        {
+            infoCollector.Add(fieldInfo);
         }
     }
 }
