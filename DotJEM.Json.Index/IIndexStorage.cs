@@ -2,8 +2,10 @@
 using System.Linq;
 using DotJEM.Json.Index.Storage;
 using Lucene.Net.Analysis;
+using Lucene.Net.Analysis.Standard;
 using Lucene.Net.Index;
 using Lucene.Net.Store;
+using Lucene.Net.Util;
 using Directory = Lucene.Net.Store.Directory;
 
 namespace DotJEM.Json.Index
@@ -15,6 +17,8 @@ namespace DotJEM.Json.Index
         bool Exists { get; }
         void Close();
         void Flush();
+
+        bool Purge();
     }
 
     public abstract class AbstractLuceneIndexStorage : IIndexStorage
@@ -26,6 +30,7 @@ namespace DotJEM.Json.Index
 
         private IndexWriter writer;
         private IndexReader reader;
+        private Analyzer analyzer;
 
         protected AbstractLuceneIndexStorage(Directory directory)
         {
@@ -37,7 +42,7 @@ namespace DotJEM.Json.Index
             //TODO: The storage should define the analyzer, not the writer.
             lock (padlock)
             {
-                return writer ?? (writer = new IndexWriter(Directory, analyzer, !Exists, IndexWriter.MaxFieldLength.UNLIMITED));
+                return writer ?? (writer = new IndexWriter(Directory, this.analyzer = analyzer, !Exists, IndexWriter.MaxFieldLength.UNLIMITED));
             }
         }
 
@@ -58,7 +63,31 @@ namespace DotJEM.Json.Index
             {
                 writer?.Dispose();
                 writer = null;
+
+                reader?.Dispose();
+                reader = null;
             }
+        }
+
+        public bool Purge()
+        {
+            lock (padlock)
+            {
+                Close();
+                if (analyzer == null)
+                {
+                    var temp = new IndexWriter(Directory, new SimpleAnalyzer(), true, IndexWriter.MaxFieldLength.UNLIMITED);
+                    temp.Commit();
+                    temp.Dispose();
+                }
+                else
+                {
+                    writer = new IndexWriter(Directory, analyzer, true, IndexWriter.MaxFieldLength.UNLIMITED);
+                    writer.Commit();
+                }
+            }
+
+            return true;
         }
 
         public void Flush()
