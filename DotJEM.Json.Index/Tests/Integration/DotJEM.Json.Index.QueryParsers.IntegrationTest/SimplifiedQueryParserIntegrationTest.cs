@@ -56,7 +56,8 @@ namespace DotJEM.Json.Index.QueryParsers.IntegrationTest
             Assert.That(results, Is.EqualTo(expected));
         }
 
-        [TestCase("username: Bret", "1")]
+        [TestCase("$contentType: user AND username: Bret", "1")]
+        [TestCase("(($contentType: user AND username: Bret) OR ($contentType: album AND name: Fighters)) AND bexit: go", "1")]
         public void Search_JsonPlaceholder_YieldDocuments(string query, string expected)
         {
             bool orderMatters = query.IndexOf("ORDER", StringComparison.OrdinalIgnoreCase) != -1;
