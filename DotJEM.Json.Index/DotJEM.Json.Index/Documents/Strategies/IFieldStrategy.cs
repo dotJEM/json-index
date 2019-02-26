@@ -81,7 +81,7 @@ namespace DotJEM.Json.Index.Documents.Strategies
 
         public IEnumerable<IJsonIndexableField> CreateFields(IFieldContext context)
         {
-            var factory = new FieldFactory<string>(context);
+            FieldFactory<string> factory = new FieldFactory<string>(context);
             yield return factory.CreateStringField();
         }
     }

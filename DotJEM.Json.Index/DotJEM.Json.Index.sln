@@ -36,7 +36,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionIt
 		..\README.md = ..\README.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotJEM.Json.Index.QueryParsers.Contexts", "DotJEM.Json.Index.QueryParsers.Contexts\DotJEM.Json.Index.QueryParsers.Contexts.csproj", "{C6D24770-16E3-4422-9BDD-9DE7A4E4882D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotJEM.Json.Index.QueryParsers.Contexts", "DotJEM.Json.Index.QueryParsers.Contexts\DotJEM.Json.Index.QueryParsers.Contexts.csproj", "{C6D24770-16E3-4422-9BDD-9DE7A4E4882D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Visualizer", "Visualizer", "{76D5B15D-D068-4A92-9B3B-A9ACF521D1B9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotJEM.Json.Index.QueryParser.Visualizer", "Visualizer\DotJEM.Json.Index.QueryParser.Visualizer\DotJEM.Json.Index.QueryParser.Visualizer.csproj", "{9F6F3856-448A-49C3-BBFE-814476C9D8A7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -88,6 +92,10 @@ Global
 		{C6D24770-16E3-4422-9BDD-9DE7A4E4882D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C6D24770-16E3-4422-9BDD-9DE7A4E4882D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C6D24770-16E3-4422-9BDD-9DE7A4E4882D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9F6F3856-448A-49C3-BBFE-814476C9D8A7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9F6F3856-448A-49C3-BBFE-814476C9D8A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9F6F3856-448A-49C3-BBFE-814476C9D8A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9F6F3856-448A-49C3-BBFE-814476C9D8A7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -102,6 +110,7 @@ Global
 		{830E00FB-4B44-4D72-BD16-89EAE9DFBC88} = {D212FCF5-0168-42AE-AA78-2CA01AB591CE}
 		{6FF309D7-88B6-4342-A36F-7026048AC458} = {D212FCF5-0168-42AE-AA78-2CA01AB591CE}
 		{F1FD3ECE-5341-450B-9EF0-A5067C387B0D} = {6FF309D7-88B6-4342-A36F-7026048AC458}
+		{9F6F3856-448A-49C3-BBFE-814476C9D8A7} = {76D5B15D-D068-4A92-9B3B-A9ACF521D1B9}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {4F04E371-C858-41CF-9D6B-E410C9041C9E}

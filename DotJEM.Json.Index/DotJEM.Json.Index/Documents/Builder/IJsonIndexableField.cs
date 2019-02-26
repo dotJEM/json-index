@@ -1,8 +1,9 @@
 ﻿using System;
+using DotJEM.Json.Index.Documents.Strategies;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
 
-namespace DotJEM.Json.Index.Documents.Strategies
+namespace DotJEM.Json.Index.Documents.Builder
 {
     public interface IJsonIndexableField
     {

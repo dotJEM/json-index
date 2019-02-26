@@ -171,6 +171,8 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast
         {
             this.Value = value;
         }
+
+        public override string ToString() => Value;
     }
 
     public class WildcardValue : StringValue {
@@ -187,6 +189,7 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast
         {
             this.Value = value;
         }
+        public override string ToString() => Value;
     }
 
     public class NumberValue : Value
@@ -197,6 +200,7 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast
         {
             this.Value = value;
         }
+        public override string ToString() => Value.ToString();
     }
 
     public class DateTimeValue : Value
@@ -214,6 +218,7 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast
         {
             Date, Time, DateTime
         }
+        public override string ToString() => Value.ToString();
     }
 
     public class OffsetDateTime : Value
@@ -253,6 +258,7 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast
                 
             return new OffsetDateTime(text, offset, now);
         }
+        public override string ToString() => Value.ToString();
     }
 
     public class IntegerValue : Value
@@ -263,10 +269,12 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast
         {
             this.Value = value;
         }
+        public override string ToString() => Value.ToString();
     }
 
     public class MatchAllValue : Value
     {
+        public override string ToString() => "*";
     }
 
     public class ListValue : Value
@@ -280,6 +288,7 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast
         {
             this.values = values;
         }
+        public override string ToString() => "( " + string.Join(", ", values.Select(v => v.ToString())) + " )";
     }
 
 }

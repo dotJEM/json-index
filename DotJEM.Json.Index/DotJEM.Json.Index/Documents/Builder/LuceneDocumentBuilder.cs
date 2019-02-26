@@ -26,8 +26,6 @@ namespace DotJEM.Json.Index.Documents.Builder
             IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Array)
                                       ?? new ArrayFieldStrategy();
             context.Apply(strategy);
-
-            //context.Apply<ArrayFieldStrategy>();
             base.Visit(json, context);
         }
 
@@ -36,7 +34,6 @@ namespace DotJEM.Json.Index.Documents.Builder
             IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Integer)
                                       ?? new Int64FieldStrategy();
             context.Apply(strategy);
-            //context.Apply<Int64FieldStrategy>();
             base.VisitInteger(json, context);
         }
 
@@ -45,7 +42,6 @@ namespace DotJEM.Json.Index.Documents.Builder
             IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Float)
                                       ?? new DoubleFieldStrategy();
             context.Apply(strategy);
-            //context.Apply<DoubleFieldStrategy>();
             base.VisitFloat(json, context);
         }
 
@@ -61,12 +57,10 @@ namespace DotJEM.Json.Index.Documents.Builder
             if (str.Contains(" "))
             {
                 context.Apply(strategy ?? new TextFieldStrategy());
-                //context.Apply<TextFieldStrategy>();
             }
             else
             {
                 context.Apply(strategy ?? new StringFieldStrategy());
-                //context.Apply<StringFieldStrategy>();
             }
             base.VisitString(json, context);
         }
@@ -76,7 +70,6 @@ namespace DotJEM.Json.Index.Documents.Builder
             IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Boolean)
                                       ?? new BooleanFieldStrategy();
             context.Apply(strategy);
-            //context.Apply<BooleanFieldStrategy>();
             base.VisitBoolean(json, context);
         }
 
@@ -85,7 +78,6 @@ namespace DotJEM.Json.Index.Documents.Builder
             IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Null)
                                       ?? new NullFieldStrategy("$$NULL$$");
             context.Apply(strategy);
-            //context.Apply(new NullFieldStrategy("$$NULL$$"));
             base.VisitNull(json, context);
         }
 
@@ -94,7 +86,6 @@ namespace DotJEM.Json.Index.Documents.Builder
             IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Undefined)
                                       ?? new NullFieldStrategy("$$UNDEFINED$$");
             context.Apply(strategy);
-            //context.Apply(new NullFieldStrategy("$$UNDEFINED$$"));
             base.VisitUndefined(json, context);
         }
 
@@ -103,7 +94,6 @@ namespace DotJEM.Json.Index.Documents.Builder
             IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Date)
                                       ?? new ExpandedDateTimeFieldStrategy();
             context.Apply(strategy);
-            //context.Apply<ExpandedDateTimeFieldStrategy>();
             base.VisitDate(json, context);
         }
 
@@ -112,7 +102,6 @@ namespace DotJEM.Json.Index.Documents.Builder
             IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Guid)
                                       ?? new IdentityFieldStrategy();
             context.Apply(strategy);
-            //context.Apply<IdentityFieldStrategy>();
             base.VisitGuid(json, context);
         }
 
@@ -121,7 +110,6 @@ namespace DotJEM.Json.Index.Documents.Builder
             IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Uri)
                                       ?? new StringFieldStrategy();
             context.Apply(strategy);
-            //context.Apply<StringFieldStrategy>();
             base.VisitUri(json, context);
         }
 
@@ -130,7 +118,6 @@ namespace DotJEM.Json.Index.Documents.Builder
             IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.TimeSpan)
                                       ?? new ExpandedTimeSpanFieldStrategy();
             context.Apply(strategy);
-            //context.Apply<ExpandedTimeSpanFieldStrategy>();
             base.VisitTimeSpan(json, context);
         }
     }
