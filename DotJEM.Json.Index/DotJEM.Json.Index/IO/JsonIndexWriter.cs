@@ -32,23 +32,6 @@ namespace DotJEM.Json.Index.IO
         IJsonIndexWriter Rollback();
         IJsonIndexWriter PrepareCommit();
         IJsonIndexWriter SetCommitData(IDictionary<string, string> commitUserData);
-
-        Task CreateAsync(JObject doc);
-        Task CreateAsync(IEnumerable<JObject> docs);
-        Task DeleteAsync(JObject doc);
-        Task DeleteAsync(IEnumerable<JObject> docs);
-        Task UpdateAsync(JObject doc);
-        Task UpdateAsync(IEnumerable<JObject> docs);
-
-        Task ForceMergeAsync(int maxSegments);
-        Task ForceMergeAsync(int maxSegments, bool wait);
-        Task ForceMergeDeletesAsync();
-        Task ForceMergeDeletesAsync(bool wait);
-        Task RollbackAsync();
-        Task FlushAsync(bool triggerMerge, bool applyDeletes);
-        Task CommitAsync();
-        Task PrepareCommitAsync();
-        Task SetCommitDataAsync(IDictionary<string, string> commitUserData);
     }
 
     public class JsonIndexWriter : Disposable, IJsonIndexWriter
@@ -147,30 +130,11 @@ namespace DotJEM.Json.Index.IO
             UnderlyingWriter.SetCommitData(commitUserData);
             return this;
         }
-
-        public async Task CreateAsync(JObject doc) => await CreateAsync(new[] { doc });
-        public async Task CreateAsync(IEnumerable<JObject> docs) => await Task.Run(() => Create(docs));
-        public async Task UpdateAsync(JObject doc) => await UpdateAsync(new[] { doc });
-        public async Task UpdateAsync(IEnumerable<JObject> docs) => await Task.Run(() => Update(docs));
-        public async Task DeleteAsync(JObject doc) => await DeleteAsync(new[] { doc });
-        public async Task DeleteAsync(IEnumerable<JObject> docs) => await Task.Run(() => Delete(docs));
-
-        public async Task CommitAsync() => await Task.Run(() => Commit());
-        public async Task ForceMergeAsync(int maxSegments) => await Task.Run(() => ForceMerge(maxSegments));
-        public async Task ForceMergeAsync(int maxSegments, bool wait) => await Task.Run(() => ForceMerge(maxSegments, wait));
-        public async Task ForceMergeDeletesAsync() => await Task.Run(() => ForceMergeDeletes());
-        public async Task ForceMergeDeletesAsync(bool wait) => await Task.Run(() => ForceMergeDeletes(wait));
-        public async Task RollbackAsync() => await Task.Run(() => Rollback());
-        public async Task FlushAsync(bool triggerMerge, bool applyDeletes) => await Task.Run(() => Flush(triggerMerge, applyDeletes));
-        public async Task SetCommitDataAsync(IDictionary<string, string> commitUserData) => await Task.Run(() => SetCommitData(commitUserData));
-        public async Task PrepareCommitAsync() => await Task.Run(() => PrepareCommit());
-
+        
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                //Note: CommitAsync data and release the writer.
-                //      The storage should handle the life cycle.
                 Commit();
             }
             base.Dispose(disposing);

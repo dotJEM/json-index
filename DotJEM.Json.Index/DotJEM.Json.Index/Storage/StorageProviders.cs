@@ -5,6 +5,7 @@ using DotJEM.Json.Index.IO;
 using DotJEM.Json.Index.Searching;
 using Lucene.Net.Analysis;
 using Lucene.Net.Analysis.Standard;
+using Lucene.Net.Codecs;
 using Lucene.Net.Index;
 using Lucene.Net.Store;
 using Lucene.Net.Support;

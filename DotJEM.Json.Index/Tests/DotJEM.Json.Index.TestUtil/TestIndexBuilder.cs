@@ -118,8 +118,8 @@ namespace DotJEM.Json.Index.TestUtil
             IJsonIndexWriter writer = index.CreateWriter();
             try
             {
-                await writer.CreateAsync(objects);
-                await writer.CommitAsync();
+                writer.Create(objects);
+                writer.Commit();
             }
             catch (AggregateException e)
             {
