@@ -1,4 +1,5 @@
 ﻿using System;
+using DotJEM.Json.Index.Documents.Builder;
 using Lucene.Net.Documents;
 
 namespace DotJEM.Json.Index.Documents.Strategies
