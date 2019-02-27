@@ -30,12 +30,17 @@
         {
             this.ctrlQuery = new System.Windows.Forms.TextBox();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
-            this.ctrlGraph = new System.Windows.Forms.Panel();
             this.ctrlError = new System.Windows.Forms.TextBox();
+            this.ctrlGraph = new System.Windows.Forms.Panel();
+            this.toolStrip1 = new System.Windows.Forms.ToolStrip();
+            this.toolStripComboBox1 = new System.Windows.Forms.ToolStripComboBox();
+            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            this.ctrlOptimize = new System.Windows.Forms.ToolStripComboBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
+            this.toolStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
             // ctrlQuery
@@ -61,21 +66,12 @@
             // 
             // splitContainer1.Panel2
             // 
+            this.splitContainer1.Panel2.Controls.Add(this.toolStrip1);
             this.splitContainer1.Panel2.Controls.Add(this.ctrlError);
             this.splitContainer1.Panel2.Controls.Add(this.ctrlGraph);
             this.splitContainer1.Size = new System.Drawing.Size(1033, 758);
             this.splitContainer1.SplitterDistance = 167;
             this.splitContainer1.TabIndex = 1;
-            // 
-            // ctrlGraph
-            // 
-            this.ctrlGraph.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.ctrlGraph.Location = new System.Drawing.Point(12, 12);
-            this.ctrlGraph.Name = "ctrlGraph";
-            this.ctrlGraph.Size = new System.Drawing.Size(1009, 373);
-            this.ctrlGraph.TabIndex = 0;
             // 
             // ctrlError
             // 
@@ -86,6 +82,47 @@
             this.ctrlError.Name = "ctrlError";
             this.ctrlError.Size = new System.Drawing.Size(1009, 184);
             this.ctrlError.TabIndex = 1;
+            // 
+            // ctrlGraph
+            // 
+            this.ctrlGraph.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.ctrlGraph.Location = new System.Drawing.Point(12, 31);
+            this.ctrlGraph.Name = "ctrlGraph";
+            this.ctrlGraph.Size = new System.Drawing.Size(1009, 354);
+            this.ctrlGraph.TabIndex = 0;
+            // 
+            // toolStrip1
+            // 
+            this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripComboBox1,
+            this.toolStripSeparator1,
+            this.ctrlOptimize});
+            this.toolStrip1.Location = new System.Drawing.Point(0, 0);
+            this.toolStrip1.Name = "toolStrip1";
+            this.toolStrip1.Size = new System.Drawing.Size(1033, 25);
+            this.toolStrip1.TabIndex = 2;
+            this.toolStrip1.Text = "toolStrip1";
+            // 
+            // toolStripComboBox1
+            // 
+            this.toolStripComboBox1.Name = "toolStripComboBox1";
+            this.toolStripComboBox1.Size = new System.Drawing.Size(121, 25);
+            // 
+            // toolStripSeparator1
+            // 
+            this.toolStripSeparator1.Name = "toolStripSeparator1";
+            this.toolStripSeparator1.Size = new System.Drawing.Size(6, 25);
+            // 
+            // ctrlOptimize
+            // 
+            this.ctrlOptimize.Items.AddRange(new object[] {
+            "Raw",
+            "Optimized"});
+            this.ctrlOptimize.Name = "ctrlOptimize";
+            this.ctrlOptimize.Size = new System.Drawing.Size(121, 25);
+            this.ctrlOptimize.SelectedIndexChanged += new System.EventHandler(this.OptimizeChanged);
             // 
             // LuceneQueryVisualizer
             // 
@@ -102,6 +139,8 @@
             this.splitContainer1.Panel2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
             this.splitContainer1.ResumeLayout(false);
+            this.toolStrip1.ResumeLayout(false);
+            this.toolStrip1.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -112,6 +151,10 @@
         private System.Windows.Forms.SplitContainer splitContainer1;
         private System.Windows.Forms.Panel ctrlGraph;
         private System.Windows.Forms.TextBox ctrlError;
+        private System.Windows.Forms.ToolStrip toolStrip1;
+        private System.Windows.Forms.ToolStripComboBox toolStripComboBox1;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
+        private System.Windows.Forms.ToolStripComboBox ctrlOptimize;
     }
 }
 

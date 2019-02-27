@@ -34,7 +34,7 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast
         public bool ContainsKey(string key) => metaData.ContainsKey(key);
 
 
-        public object GetAs<TData>(string key) => (TData)metaData[key];
+        public TData GetAs<TData>(string key) => (TData)metaData[key];
         public bool TryGetAs<TData>(string key, out TData value)
         {
             if (metaData.TryGetValue(key, out object val))

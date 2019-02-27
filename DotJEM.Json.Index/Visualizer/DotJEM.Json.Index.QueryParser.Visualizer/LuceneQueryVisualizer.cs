@@ -7,9 +7,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using DotJEM.Json.Index.Diagnostics;
+using DotJEM.Json.Index.Documents.Fields;
+using DotJEM.Json.Index.Documents.Info;
 using DotJEM.Json.Index.QueryParsers;
 using DotJEM.Json.Index.QueryParsers.Simplified;
 using DotJEM.Json.Index.QueryParsers.Simplified.Ast;
+using DotJEM.Json.Index.QueryParsers.Simplified.Ast.Optimizer;
+using DotJEM.Json.Index.QueryParsers.Simplified.Ast.Scanner;
 using Microsoft.Msagl.Drawing;
 using Microsoft.Msagl.GraphViewerGdi;
 
@@ -28,27 +33,33 @@ namespace DotJEM.Json.Index.QueryParser.Visualizer
         private void LuceneQueryVisualizer_Load(object sender, EventArgs e)
         {
 
-
-         
+            ctrlQuery.Text = "(contentType: diary AND name: token) OR (contentType: animal AND color IN (Brown, Yellow, Red)) ORDER BY $created DESC";
+            QueryChanged(null, null);
         }
 
         private void QueryChanged(object sender, KeyEventArgs e)
+        {
+            BuildGraph();
+        }
+
+        private void OptimizeChanged(object sender, EventArgs e)
+        {
+            BuildGraph();
+        }
+
+        private void BuildGraph()
         {
             try
             {
                 SimplifiedQueryAstParser parser = new SimplifiedQueryAstParser();
                 BaseQuery query = parser.Parse(ctrlQuery.Text);
+                if (ctrlOptimize.Text == "Optimized")
+                {
+                    query = query.Optimize();
+                }
+
+                query = query.DecorateWithContentTypes(new DummyManager());
                 Graph graph = query.Accept(new GraphBuilderVisitor(), new GraphBuilderVisitor.GraphBuilderContext(new Graph(), "[root]"));
-
-                //Graph graph = new Graph("graph");
-
-                //graph.AddEdge("A", "", "B");
-
-                //graph.FindNode("A").Label.Text = "AAA";
-
-                //graph.AddEdge("A", "", "C");
-                //graph.AddEdge("C", "", "D");
-                //graph.AddEdge("C", "", "E");
 
                 SuspendLayout();
                 viewer.Graph = graph;
@@ -60,6 +71,28 @@ namespace DotJEM.Json.Index.QueryParser.Visualizer
             {
                 ctrlError.Text = ex.ToString();
             }
+        }
+    }
+
+    internal class DummyManager : IFieldInformationManager
+    {
+        public IInfoEventStream InfoStream { get; }
+        public IFieldResolver Resolver { get; } = new FieldResolver(contentTypeField:"contentType");
+        public IEnumerable<string> ContentTypes => "animal;diary".Split(';');
+        public IEnumerable<string> AllFields => "contentType;name;color;$created;type".Split(';');
+        public void Merge(string contentType, IFieldInfoCollection info)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IJsonFieldInfo Lookup(string fieldName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IJsonFieldInfo Lookup(string contentType, string fieldName)
+        {
+            throw new NotImplementedException();
         }
     }
 
@@ -76,9 +109,18 @@ namespace DotJEM.Json.Index.QueryParser.Visualizer
                 Parent = parent;
             }
 
-            public void AddEdge(string id, string label)
+            public Edge AddEdge(string id, string label)
             {
-                Graph.AddEdge(Parent, id).TargetNode.Label.Text = label;
+                Edge edge = Graph.AddEdge(Parent, id);
+                edge.TargetNode.Label.Text = label;
+                return edge;
+            }
+
+            public Edge AddEdge(string id, string target, string label)
+            {
+                Edge edge = Graph.AddEdge(id, target);
+                edge.TargetNode.Label.Text = label;
+                return edge;
             }
         }
 
@@ -92,7 +134,18 @@ namespace DotJEM.Json.Index.QueryParser.Visualizer
             string id = Guid.NewGuid().ToString("N");
             context.AddEdge(id, "Not");
             ast.Not.Accept(this, new GraphBuilderContext(context.Graph, id));
+            AddContentTypes(ast, context, id);
             return context.Graph;
+        }
+
+        private static void AddContentTypes(BaseQuery ast, GraphBuilderContext context, string id)
+        {
+            if (ast.ContainsKey("contentTypes"))
+            {
+                Edge edge = context.AddEdge(id, id + "contentTypes", string.Join(";", ast.GetAs<string[]>("contentTypes")));
+                edge.TargetNode.Attr.Shape = Shape.Ellipse;
+                edge.LabelText = "ContentTypes";
+            }
         }
 
         public Graph Visit(OrderedQuery ast, GraphBuilderContext context)
@@ -100,10 +153,12 @@ namespace DotJEM.Json.Index.QueryParser.Visualizer
             string id = Guid.NewGuid().ToString("N");
             ast.Query.Accept(this, new GraphBuilderContext(context.Graph, id));
             context.AddEdge(id, "QUERY");
+            AddContentTypes(ast, context, id);
 
-            id = Guid.NewGuid().ToString("N");
-            context.AddEdge(id, "ORDER");
-            ast.Ordering?.Accept(this, new GraphBuilderContext(context.Graph, id));
+            if (ast.Ordering == null)
+                return context.Graph;
+
+            ast.Ordering.Accept(this, context);
             return context.Graph;
         }
 
@@ -115,6 +170,7 @@ namespace DotJEM.Json.Index.QueryParser.Visualizer
             {
                 field.Accept(this, new GraphBuilderContext(context.Graph, id));
             }
+            AddContentTypes(ast, context, id);
             return context.Graph;
         }
 
@@ -122,6 +178,7 @@ namespace DotJEM.Json.Index.QueryParser.Visualizer
         {
             string id = Guid.NewGuid().ToString("N");
             context.AddEdge(id, $"{ast.Name} {ast.SpecifiedOrder}");
+            AddContentTypes(ast, context, id);
             return context.Graph;
         }
 
@@ -133,6 +190,7 @@ namespace DotJEM.Json.Index.QueryParser.Visualizer
             {
                 query.Accept(this, new GraphBuilderContext(context.Graph, id));
             }
+            AddContentTypes(ast, context, id);
             return context.Graph;
         }
 
@@ -144,6 +202,7 @@ namespace DotJEM.Json.Index.QueryParser.Visualizer
             {
                 query.Accept(this, new GraphBuilderContext(context.Graph, id));
             }
+            AddContentTypes(ast, context, id);
             return context.Graph;
         }
 
@@ -155,6 +214,7 @@ namespace DotJEM.Json.Index.QueryParser.Visualizer
             {
                 query.Accept(this, new GraphBuilderContext(context.Graph, id));
             }
+            AddContentTypes(ast, context, id);
             return context.Graph;
         }
 
@@ -166,6 +226,7 @@ namespace DotJEM.Json.Index.QueryParser.Visualizer
             {
                 query.Accept(this, new GraphBuilderContext(context.Graph, id));
             }
+            AddContentTypes(ast, context, id);
             return context.Graph;
         }
 
@@ -210,6 +271,7 @@ namespace DotJEM.Json.Index.QueryParser.Visualizer
                 default:
                     throw new ArgumentOutOfRangeException();
             }
+            AddContentTypes(ast, context, id);
             return context.Graph;
         }
     }
