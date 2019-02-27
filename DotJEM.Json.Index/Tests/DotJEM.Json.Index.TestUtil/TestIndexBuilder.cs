@@ -64,7 +64,7 @@ namespace DotJEM.Json.Index.TestUtil
         public async Task<ILuceneIndexContext> Build()
         {
             foreach (TestIndexBuilder builder in indexBuilders.Values)
-                await builder.Build();
+                await builder.Build().ConfigureAwait(false);
             return context.Value;
         }
 

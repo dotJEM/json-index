@@ -109,7 +109,8 @@ namespace DotJEM.Json.Index.Results
                     //Weight w = s.CreateNormalizedWeight(fq);
                     //collector2.GetTopDocs()
                     
-                    TopFieldDocs results = await Task.Run(() => s.Search(query, filter, take, sort, doDocScores, doMaxScores));
+                    TopFieldDocs results = await Task.Run(() => s.Search(query, filter, take, sort, doDocScores, doMaxScores))
+                        .ConfigureAwait(false);
 
                     TimeSpan searchTime = timer.Elapsed;
                     scope.Info($"Search took: {searchTime.TotalMilliseconds} ms", new object[] { searchTime });
