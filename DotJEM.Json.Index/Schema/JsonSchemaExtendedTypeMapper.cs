@@ -24,10 +24,10 @@ namespace DotJEM.Json.Index.Schema
             //NOTE: Unsupported types, perhaps these should be any instead?
             map[JTokenType.Raw] = JsonSchemaExtendedType.Any;
             map[JTokenType.Bytes] = JsonSchemaExtendedType.Any;
-            map[JTokenType.Guid] = JsonSchemaExtendedType.Any;
-            map[JTokenType.Uri] = JsonSchemaExtendedType.Any;
-            map[JTokenType.TimeSpan] = JsonSchemaExtendedType.Any;
-            map[JTokenType.Undefined] = JsonSchemaExtendedType.Any;
+            map[JTokenType.Guid] = JsonSchemaExtendedType.Guid;
+            map[JTokenType.Uri] = JsonSchemaExtendedType.Uri;
+            map[JTokenType.TimeSpan] = JsonSchemaExtendedType.TimeSpan;
+            map[JTokenType.Undefined] = JsonSchemaExtendedType.Null;
         }
 
         public static JsonSchemaExtendedType ToSchemaExtendedType(this JTokenType self)
