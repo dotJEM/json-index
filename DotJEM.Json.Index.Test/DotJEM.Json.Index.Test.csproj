@@ -114,6 +114,7 @@
     <Compile Include="Integration\LuceneSearcherSortingTest.cs" />
     <Compile Include="Integration\LuceneSearcherSimpleDataTest.cs" />
     <Compile Include="Unit\Schema\JSchemaCollectionTest.cs" />
+    <Compile Include="Unit\Schema\JsonSchemaGeneratorTest.cs" />
     <Compile Include="Unit\Schema\JsonSchemaTypeConverter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Unit\MultiFieldQueryParserTest.cs" />
