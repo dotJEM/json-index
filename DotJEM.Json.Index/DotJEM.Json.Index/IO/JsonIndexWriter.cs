@@ -50,6 +50,7 @@ namespace DotJEM.Json.Index.IO
         }
 
         public IJsonIndexWriter Create(JObject doc) => Create(new[] { doc });
+
         public IJsonIndexWriter Create(IEnumerable<JObject> docs)
         {
             IEnumerable<Document> documents = factory

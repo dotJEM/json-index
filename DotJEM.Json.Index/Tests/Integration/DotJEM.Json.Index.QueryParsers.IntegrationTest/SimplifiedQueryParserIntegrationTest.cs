@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Mime;
+using DotJEM.Json.Index.Results;
 using DotJEM.Json.Index.TestData;
 using DotJEM.Json.Index.TestUtil;
 using Lucene.Net.Search;
@@ -34,9 +35,8 @@ namespace DotJEM.Json.Index.QueryParsers.IntegrationTest
         [TestCase("name = * ORDER BY age DESC", "DOC_004,DOC_003,DOC_002,DOC_001,DOC_006,DOC_005")]
         [TestCase("updated > -2days", "DOC_001,DOC_002")]
         [TestCase("name = Peter OR name = John OR num = 10", "DOC_001,DOC_003,DOC_004")]
-
         [TestCase("$contentType: person AND name = *", "DOC_004,DOC_003,DOC_002,DOC_001,DOC_006,DOC_005")]
-        [TestCase("($contentType: person AND name = *) OR ($contenttype: car and foo = x)", "DOC_004,DOC_003,DOC_002,DOC_001,DOC_006,DOC_005")]
+        [TestCase("($contentType: person AND name = *) OR ($contentType: car and foo = x)", "DOC_004,DOC_003,DOC_002,DOC_001,DOC_006,DOC_005")]
         public void Search_Persons_YieldDocuments(string query, string expected)
         {
             bool orderMatters = query.IndexOf("ORDER", StringComparison.OrdinalIgnoreCase) != -1;
@@ -57,7 +57,7 @@ namespace DotJEM.Json.Index.QueryParsers.IntegrationTest
         }
 
         [TestCase("$contentType: user AND username: Bret", "1")]
-        [TestCase("(($contentType: user AND username: Bret) OR ($contentType: album AND name: Fighters)) AND bexit: go", "1")]
+        [TestCase("(($contentType: user AND username: Bret) OR ($contentType: album AND name: Fighters))", "1")]
         public void Search_JsonPlaceholder_YieldDocuments(string query, string expected)
         {
             bool orderMatters = query.IndexOf("ORDER", StringComparison.OrdinalIgnoreCase) != -1;
@@ -82,6 +82,32 @@ namespace DotJEM.Json.Index.QueryParsers.IntegrationTest
             Assert.That(results, Is.EqualTo(expected));
         }
 
+
+        [TestCase("name = * ORDER BY age", 2, 3, "DOC_005,DOC_006;DOC_001,DOC_002;DOC_003,DOC_004")]
+        public void Search_AfterPersons_YieldDocuments(string query, int pageSize, int numPages, string expected)
+        {
+            ILuceneJsonIndex index = new TestIndexBuilder()
+                .With(TestObjects.Persons)
+                .With(services => services.UseSimplifiedLuceneQueryParser())
+                .Build().Result;
+
+            ISearchHit lastHit = null;
+            List<string[]> pages = new List<string[]>(numPages);
+            for (int i = 0; i < numPages; i++)
+            {
+                List<ISearchHit> hits = index.Search(query)
+                    .Take(pageSize)
+                    .After(lastHit)
+                    .Execute()
+                    .Result
+                    .ToList();
+                lastHit = hits.Last();
+                pages.Add(hits.Select(hit => (string)hit.Json.key).ToArray());
+            }
+
+            string results = string.Join(";", pages.Select(p => string.Join(",", p)));
+            Assert.That(results, Is.EqualTo(expected));
+        }
     }
 
 
