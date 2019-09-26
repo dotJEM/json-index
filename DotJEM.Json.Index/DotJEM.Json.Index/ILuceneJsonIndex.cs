@@ -7,6 +7,7 @@ using DotJEM.Json.Index.Results;
 using DotJEM.Json.Index.Searching;
 using DotJEM.Json.Index.Storage;
 using Lucene.Net.Search;
+using Lucene.Net.Util;
 
 namespace DotJEM.Json.Index
 {
@@ -16,6 +17,8 @@ namespace DotJEM.Json.Index
         IServiceResolver Services { get; }
         IJsonIndexStorage Storage { get; }
         IJsonIndexConfiguration Configuration { get; }
+        IIndexWriterManager WriterManager { get; }
+        IIndexSearcherManager SearcherManager { get; }
         IJsonIndexWriter CreateWriter();
     }
 
@@ -25,6 +28,9 @@ namespace DotJEM.Json.Index
         public IJsonIndexStorage Storage { get; }
         public IJsonIndexConfiguration Configuration { get; }
         public IServiceResolver Services { get; }
+
+        public IIndexWriterManager WriterManager { get; }
+        public IIndexSearcherManager SearcherManager { get; }
 
         public LuceneJsonIndex()
             : this(new LuceneRamStorageFactory(), new JsonIndexConfiguration(), ServiceCollection.CreateDefault())
@@ -39,13 +45,17 @@ namespace DotJEM.Json.Index
         public LuceneJsonIndex(ILuceneStorageFactory storage, IJsonIndexConfiguration configuration, IServiceCollection services)
         {
             if (services == null) throw new ArgumentNullException(nameof(services));
-            Configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            Configuration = configuration.AsReadOnly() ?? throw new ArgumentNullException(nameof(configuration));
 
-            //TODO: Ehhh... could we perhaps provide this differently, e.g. a Generic Provider pattern that would allow us to inject both the LuceneVersion and the Index.
+            //TODO: Ehhh... could we perhaps provide this differently, e.g. a Generic Provider pattern that would allow us to inject'
+            //      both the LuceneVersion and the Index.
             services.Use<ILuceneJsonIndex>(p => this);
             Services = new ServiceResolver(services);
 
             Storage = storage.Create(this, configuration.Version);
+
+            WriterManager = new IndexWriterManager(this);
+            SearcherManager = new IndexSearcherManager(WriterManager);
         }
 
         public LuceneJsonIndex(ILuceneStorageFactory storage, IJsonIndexConfiguration configuration, IServiceResolver services)
@@ -58,14 +68,13 @@ namespace DotJEM.Json.Index
 
         public ILuceneJsonIndexSearcher CreateSearcher()
         {
-            return new LuceneJsonIndexSearcher(this, Storage.SearcherManager);
+            return new LuceneJsonIndexSearcher(this);
         }
 
         public IJsonIndexWriter CreateWriter()
         {
-            return new JsonIndexWriter(this, Services.Resolve<ILuceneDocumentFactory>(), Storage.WriterManager);
+            return new JsonIndexWriter(this, Services.Resolve<ILuceneDocumentFactory>(), WriterManager);
         }
-
     }
 
     public interface ILuceneJsonIndexSearcherProvider

@@ -55,6 +55,7 @@ namespace DotJEM.Json.Index.Results
         private readonly bool doDocScores;
         private readonly bool doMaxScores;
         private readonly Sort sort;
+
         public IInfoEventStream InfoStream { get; }
 
         public Guid CorrelationId { get; } = Guid.NewGuid();
@@ -102,6 +103,7 @@ namespace DotJEM.Json.Index.Results
         public Task<SearchResults> Result => Execute();
 
         public Task<SearchResults> Execute() => Execute(query, skip, take, sort, filter, doDocScores, doMaxScores);
+
         private async Task<SearchResults> Execute(Query query, int skip, int take, Sort sort, Filter filter, bool doDocScores, bool doMaxScores)
         {
             using (IInfoStreamCorrelationScope scope = InfoStream.Scope(GetType(), CorrelationId))

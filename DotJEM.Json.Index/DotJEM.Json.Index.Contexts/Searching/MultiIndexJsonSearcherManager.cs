@@ -8,31 +8,23 @@ namespace DotJEM.Json.Index.Contexts.Searching
 {
     public class MultiIndexJsonSearcherManager : Disposable, IIndexSearcherManager
     {
-        private readonly DirectoryReader[] readers;
+        private readonly ILuceneJsonIndex[] indicies;
 
-        public MultiIndexJsonSearcherManager(DirectoryReader[] readers)
+        public MultiIndexJsonSearcherManager(ILuceneJsonIndex[] indicies)
         {
-            this.readers = readers;
+            this.indicies = indicies;
         }
 
         public IIndexSearcherContext Acquire()
         {
-            MultiReader reader = new MultiReader(readers.Select(r => DirectoryReader.OpenIfChanged(r) ?? r).Cast<IndexReader>().ToArray(), false);
+            IndexReader[] readers = indicies
+                .Select(idx => idx.WriterManager.Writer.GetReader(true))
+                .Select(r => DirectoryReader.OpenIfChanged(r) ?? r)
+                .Cast<IndexReader>()
+                .ToArray();
+
+            MultiReader reader = new MultiReader(readers, false);
             return new IndexSearcherContext(new IndexSearcher(reader), searcher => {});
         }
-
-        //private readonly SearcherManager manager;
-
-
-        //public IndexSearcherManager(IIndexWriterManager writerManager)
-        //{
-        //    manager = new SearcherManager(writerManager.Writer, true, new SearcherFactory());
-        //}
-
-        //public IIndexSearcherContext Acquire()
-        //{
-        //    manager.MaybeRefreshBlocking();
-        //    return new IndexSearcherContext(manager.Acquire(), searcher => manager.Release(searcher));
-        //}
     }
 }

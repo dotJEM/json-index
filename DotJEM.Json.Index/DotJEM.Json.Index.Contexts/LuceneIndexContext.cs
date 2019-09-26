@@ -21,9 +21,7 @@ namespace DotJEM.Json.Index.Contexts
     {
         private readonly ILuceneJsonIndexFactory factory;
         private readonly ConcurrentDictionary<string, ILuceneJsonIndex> indices = new ConcurrentDictionary<string, ILuceneJsonIndex>();
-
         public IServiceResolver Services { get; }
-
         public LuceneIndexContext(IServiceCollection services = null)
             : this(new LuceneIndexContextBuilder(), services) { }
 
