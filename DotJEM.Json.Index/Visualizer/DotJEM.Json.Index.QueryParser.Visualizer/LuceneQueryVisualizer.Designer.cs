@@ -30,12 +30,13 @@
         {
             this.ctrlQuery = new System.Windows.Forms.TextBox();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
-            this.ctrlError = new System.Windows.Forms.TextBox();
-            this.ctrlGraph = new System.Windows.Forms.Panel();
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
             this.toolStripComboBox1 = new System.Windows.Forms.ToolStripComboBox();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.ctrlOptimize = new System.Windows.Forms.ToolStripComboBox();
+            this.ctrlError = new System.Windows.Forms.TextBox();
+            this.ctrlGraph = new System.Windows.Forms.Panel();
+            this.ctrlTranslation = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -66,32 +67,13 @@
             // 
             // splitContainer1.Panel2
             // 
+            this.splitContainer1.Panel2.Controls.Add(this.ctrlTranslation);
             this.splitContainer1.Panel2.Controls.Add(this.toolStrip1);
             this.splitContainer1.Panel2.Controls.Add(this.ctrlError);
             this.splitContainer1.Panel2.Controls.Add(this.ctrlGraph);
             this.splitContainer1.Size = new System.Drawing.Size(1033, 758);
             this.splitContainer1.SplitterDistance = 167;
             this.splitContainer1.TabIndex = 1;
-            // 
-            // ctrlError
-            // 
-            this.ctrlError.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.ctrlError.Location = new System.Drawing.Point(12, 391);
-            this.ctrlError.Multiline = true;
-            this.ctrlError.Name = "ctrlError";
-            this.ctrlError.Size = new System.Drawing.Size(1009, 184);
-            this.ctrlError.TabIndex = 1;
-            // 
-            // ctrlGraph
-            // 
-            this.ctrlGraph.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.ctrlGraph.Location = new System.Drawing.Point(12, 31);
-            this.ctrlGraph.Name = "ctrlGraph";
-            this.ctrlGraph.Size = new System.Drawing.Size(1009, 354);
-            this.ctrlGraph.TabIndex = 0;
             // 
             // toolStrip1
             // 
@@ -124,6 +106,36 @@
             this.ctrlOptimize.Size = new System.Drawing.Size(121, 25);
             this.ctrlOptimize.SelectedIndexChanged += new System.EventHandler(this.OptimizeChanged);
             // 
+            // ctrlError
+            // 
+            this.ctrlError.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.ctrlError.Location = new System.Drawing.Point(12, 465);
+            this.ctrlError.Multiline = true;
+            this.ctrlError.Name = "ctrlError";
+            this.ctrlError.Size = new System.Drawing.Size(1009, 110);
+            this.ctrlError.TabIndex = 1;
+            // 
+            // ctrlGraph
+            // 
+            this.ctrlGraph.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.ctrlGraph.Location = new System.Drawing.Point(12, 31);
+            this.ctrlGraph.Name = "ctrlGraph";
+            this.ctrlGraph.Size = new System.Drawing.Size(1009, 323);
+            this.ctrlGraph.TabIndex = 0;
+            // 
+            // ctrlTranslation
+            // 
+            this.ctrlTranslation.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.ctrlTranslation.Location = new System.Drawing.Point(12, 360);
+            this.ctrlTranslation.Multiline = true;
+            this.ctrlTranslation.Name = "ctrlTranslation";
+            this.ctrlTranslation.Size = new System.Drawing.Size(1009, 99);
+            this.ctrlTranslation.TabIndex = 3;
+            // 
             // LuceneQueryVisualizer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -155,6 +167,7 @@
         private System.Windows.Forms.ToolStripComboBox toolStripComboBox1;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
         private System.Windows.Forms.ToolStripComboBox ctrlOptimize;
+        private System.Windows.Forms.TextBox ctrlTranslation;
     }
 }
 

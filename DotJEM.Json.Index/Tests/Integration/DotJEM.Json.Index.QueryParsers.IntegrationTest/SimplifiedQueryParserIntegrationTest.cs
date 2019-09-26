@@ -72,7 +72,7 @@ namespace DotJEM.Json.Index.QueryParsers.IntegrationTest
                 .With(services => services.UseSimplifiedLuceneQueryParser())
                 .Build().Result;
 
-            IEnumerable<string> keys = index.Search(query).Result.Result.Select(hit => (string)hit.Json.id);
+            IEnumerable<string> keys = index.Search(query).Execute().Result.Select(hit => (string)hit.Json.id);
             if (!orderMatters)
             {
                 keys = keys.OrderBy(key => key);

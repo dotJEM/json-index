@@ -15,6 +15,9 @@ using DotJEM.Json.Index.QueryParsers.Simplified;
 using DotJEM.Json.Index.QueryParsers.Simplified.Ast;
 using DotJEM.Json.Index.QueryParsers.Simplified.Ast.Optimizer;
 using DotJEM.Json.Index.QueryParsers.Simplified.Ast.Scanner;
+using Lucene.Net.Analysis.Standard;
+using Lucene.Net.Search;
+using Lucene.Net.Util;
 using Microsoft.Msagl.Drawing;
 using Microsoft.Msagl.GraphViewerGdi;
 
@@ -22,6 +25,10 @@ namespace DotJEM.Json.Index.QueryParser.Visualizer
 {
     public partial class LuceneQueryVisualizer : Form
     {
+        private readonly SimplifiedLuceneQueryParser parser = new SimplifiedLuceneQueryParser(
+            new DefaultFieldInformationManager(new FieldResolver()), new StandardAnalyzer(LuceneVersion.LUCENE_48) );
+
+
         private readonly GViewer viewer = new GViewer();
         public LuceneQueryVisualizer()
         {
@@ -64,6 +71,9 @@ namespace DotJEM.Json.Index.QueryParser.Visualizer
                 SuspendLayout();
                 viewer.Graph = graph;
                 viewer.Dock = DockStyle.Fill;
+
+                Query luceneQuery = this.parser.Parse(ctrlQuery.Text).Query;
+                ctrlTranslation.Text = luceneQuery.ToString();
 
                 ResumeLayout();
             }
