@@ -89,14 +89,14 @@ namespace DotJEM.Json.Index.QueryParsers
             {
                 // If we have a contentType context, use that.
                 IJsonFieldInfo field = fields.Lookup(ast.Name);
-                if (field == null)
+                if (field != null)
                 {
-                    return query;
+                    foreach (ILuceneFieldInfo info in field)
+                    {
+                        //Note: in the most common scenarios, there should only be one FieldInfo here.
+                    }
                 }
-                foreach (ILuceneFieldInfo info in field)
-                {
-                    
-                }
+                
 
                 //IReadOnlyFieldinformation fieldInfo = fields.Lookup(ast.Name);
                 //foreach (IFieldMetaData metaData in fieldInfo.MetaData)
@@ -340,7 +340,7 @@ namespace DotJEM.Json.Index.QueryParsers
                 return true;
             }
 
-            attribute = default(TAttribute);
+            attribute = default;
             return false;
         }
     }

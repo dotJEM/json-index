@@ -164,16 +164,16 @@ namespace DotJEM.Json.Index.Documents.Info
 
     public class JsonFieldInfo : IJsonFieldInfo
     {
-        private readonly Dictionary<string, ILuceneFieldInfo> fields;
+        private readonly IDictionary<string, ILuceneFieldInfo> mappedToFields;
 
         public string Name { get; }
 
-        public JsonFieldInfo(string name, IDictionary<string, ILuceneFieldInfo> fields)
+        public JsonFieldInfo(string name, IDictionary<string, ILuceneFieldInfo> mappedToFields)
         {
             Name = name;
-            if (!(fields is Dictionary<string, ILuceneFieldInfo> fieldsDictionary))
-                fieldsDictionary = new Dictionary<string, ILuceneFieldInfo>(fields);
-            this.fields = fieldsDictionary;
+            if (!(mappedToFields is Dictionary<string, ILuceneFieldInfo> fieldsDictionary))
+                fieldsDictionary = new Dictionary<string, ILuceneFieldInfo>(mappedToFields);
+            this.mappedToFields = fieldsDictionary;
         }
 
         public IJsonFieldInfo Merge(IJsonFieldInfo other)
@@ -184,7 +184,7 @@ namespace DotJEM.Json.Index.Documents.Info
             return builder.Build();
         }
 
-        public IEnumerator<ILuceneFieldInfo> GetEnumerator() => fields.Values.GetEnumerator();
+        public IEnumerator<ILuceneFieldInfo> GetEnumerator() => mappedToFields.Values.GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
@@ -200,16 +200,9 @@ namespace DotJEM.Json.Index.Documents.Info
 
         public JsonFieldInfoBuilder Add(ILuceneFieldInfo info)
         {
-            if (infos.TryGetValue(info.Key, out ILuceneFieldInfo fieldInfo))
-            {
-                //TODO: Merge MetaData, the rest is the same as pr. the key.
-                //      Ideally MetaData should also give input to the key and we should hash it... But for now SIMPLE STUFF.
-                infos[info.Key] = info; //fieldInfo.Merge(info);
-            }
-            else
-            {
-                infos[info.Key] = info;
-            }
+            infos[info.Key] = infos.TryGetValue(info.Key, out ILuceneFieldInfo fieldInfo)
+                ? fieldInfo.Merge(info)
+                : info;
             return this;
         }
 
@@ -221,7 +214,15 @@ namespace DotJEM.Json.Index.Documents.Info
             return new JsonFieldInfo(name, infos);
         }
     }
-
+    public static class LuceneFieldInfoExtentions
+    {
+        public static ILuceneFieldInfo Merge(this ILuceneFieldInfo self, ILuceneFieldInfo other)
+        {
+            //TODO: Merge MetaData, the rest is the same as pr. the key.
+            //      Ideally MetaData should also give input to the key and we should hash it... But for now SIMPLE STUFF.
+            return other;
+        }
+    }
     public interface ILuceneFieldInfo
     {
         string Key { get; }
@@ -276,50 +277,4 @@ namespace DotJEM.Json.Index.Documents.Info
             Value = value;
         }
     }
-
-
-    public static class FieldTypeExtensions
-    {
-        public static LuceneFieldFlags GetFlags(this FieldType field)
-        {
-            LuceneFieldFlags flags = LuceneFieldFlags.None;
-            if (field.IsIndexed)
-                flags |= LuceneFieldFlags.IsIndexed;
-            if (field.IsStored)
-                flags |= LuceneFieldFlags.IsStored;
-            if (field.IsTokenized)
-                flags |= LuceneFieldFlags.IsTokenized;
-            if (field.OmitNorms)
-                flags |= LuceneFieldFlags.OmitNorms;
-            if (field.StoreTermVectorOffsets)
-                flags |= LuceneFieldFlags.StoreTermVectorOffsets;
-            if (field.StoreTermVectorPayloads)
-                flags |= LuceneFieldFlags.StoreTermVectorPayloads;
-            if (field.StoreTermVectorPositions)
-                flags |= LuceneFieldFlags.StoreTermVectorPositions;
-            if (field.StoreTermVectors)
-                flags |= LuceneFieldFlags.StoreTermVectors;
-            return flags;
-        }
-
-        public static string GetBase64Flags(this FieldType field)
-        {
-            return Convert.ToBase64String(new[] { (byte)field.GetFlags() });
-        }
-    }
-
-    [Flags]
-    public enum LuceneFieldFlags : byte
-    {
-        None = 0,
-        IsIndexed = 1 << 0,
-        IsStored = 1 << 1,
-        IsTokenized = 1 << 2,
-        OmitNorms = 1 << 3,
-        StoreTermVectorOffsets = 1 << 4,
-        StoreTermVectorPayloads = 1 << 5,
-        StoreTermVectorPositions = 1 << 6,
-        StoreTermVectors = 1 << 7
-    }
-
 }
