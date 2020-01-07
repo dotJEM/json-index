@@ -42,7 +42,7 @@ namespace DotJEM.Json.Index.Configuration
                 .Use<IFieldResolver, FieldResolver>()
                 .Use<IFieldInformationManager, DefaultFieldInformationManager>()
                 .Use<ILuceneDocumentFactory, LuceneDocumentFactory>()
-                .Use<IJsonSerializer, GZipJsonSerialier>();
+                .Use<ILuceneJsonDocumentSerializer, GZipLuceneJsonDocumentSerialier>();
         }
 
         public ServiceCollection(IServiceFactory factory = null)

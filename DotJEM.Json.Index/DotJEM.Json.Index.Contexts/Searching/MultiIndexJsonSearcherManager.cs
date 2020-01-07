@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using DotJEM.Json.Index.Searching;
+using DotJEM.Json.Index.Serialization;
 using DotJEM.Json.Index.Util;
 using Lucene.Net.Index;
 using Lucene.Net.Search;
@@ -9,11 +10,14 @@ namespace DotJEM.Json.Index.Contexts.Searching
     public class MultiIndexJsonSearcherManager : Disposable, IIndexSearcherManager
     {
         private readonly DirectoryReader[] readers;
+        public ILuceneJsonDocumentSerializer Serializer { get; }
 
-        public MultiIndexJsonSearcherManager(DirectoryReader[] readers)
+        public MultiIndexJsonSearcherManager(DirectoryReader[] readers, ILuceneJsonDocumentSerializer serializer)
         {
             this.readers = readers;
+            Serializer = serializer;
         }
+
 
         public IIndexSearcherContext Acquire()
         {

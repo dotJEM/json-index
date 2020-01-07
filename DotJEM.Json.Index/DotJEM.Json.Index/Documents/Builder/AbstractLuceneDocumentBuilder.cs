@@ -29,17 +29,17 @@ namespace DotJEM.Json.Index.Documents.Builder
     public abstract class AbstractLuceneDocumentBuilder : JValueVisitor<IJsonPathContext>, ILuceneDocumentBuilder
     {
         private readonly IFieldResolver fields;
-        private readonly IJsonSerializer serializer;
+        private readonly ILuceneJsonDocumentSerializer documentSerializer;
         private readonly ITypeBoundInfoStream infoStream;
 
         public IInfoEventStream InfoStream => infoStream;
 
-        protected AbstractLuceneDocumentBuilder(IFieldResolver fields = null, IJsonSerializer serializer = null, IInfoEventStream infoStream = null)
+        protected AbstractLuceneDocumentBuilder(IFieldResolver fields = null, ILuceneJsonDocumentSerializer documentSerializer = null, IInfoEventStream infoStream = null)
         {
             this.infoStream = (infoStream ?? InfoEventStream.DefaultStream).Bind<AbstractLuceneDocumentBuilder>();
 
             this.fields = fields ?? new FieldResolver();
-            this.serializer = serializer ?? new GZipJsonSerialier();
+            this.documentSerializer = documentSerializer ?? new GZipLuceneJsonDocumentSerialier();
         }
 
         public Document Document { get; private set; }
@@ -50,10 +50,7 @@ namespace DotJEM.Json.Index.Documents.Builder
             infoCollector = new FieldInfoCollectionBuilder(InfoStream);
 
             JsonPathContext context = new JsonPathContext(this);
-
-            //serializer.SerializeTo(json, Document);
-            //TODO: Perhaps we should just pass the document?
-            Add(new StoredField(fields.StorageField, serializer.Serialize(json)));
+            documentSerializer.SerializeTo(json, Document);
 
             Visit(json, context);
             return Document;

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using DotJEM.Json.Index.IO;
 using DotJEM.Json.Index.Searching;
+using DotJEM.Json.Index.Serialization;
 using Lucene.Net.Analysis;
 using Lucene.Net.Analysis.Standard;
 using Lucene.Net.Index;
@@ -60,7 +61,7 @@ namespace DotJEM.Json.Index.Storage
             config.IndexDeletionPolicy = new SnapshotDeletionPolicy(config.IndexDeletionPolicy);
 
             WriterManager = new IndexWriterManager(new IndexWriter(directory, config));
-            SearcherManager = new IndexSearcherManager(WriterManager);
+            SearcherManager = new IndexSearcherManager(WriterManager, new GZipLuceneJsonDocumentSerialier());
         }
 
         public void Unlock()
@@ -77,10 +78,8 @@ namespace DotJEM.Json.Index.Storage
 
             WriterManager.Dispose();
             WriterManager = new IndexWriterManager(new IndexWriter(directory, config));
-            SearcherManager = new IndexSearcherManager(WriterManager);
+            SearcherManager = new IndexSearcherManager(WriterManager, new GZipLuceneJsonDocumentSerialier());
             Unlock();
-
-
         }
     }
 }

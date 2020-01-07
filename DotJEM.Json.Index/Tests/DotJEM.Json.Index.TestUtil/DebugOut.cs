@@ -46,7 +46,6 @@ namespace DotJEM.Json.Index.TestUtil
             ExpandoObjectConverter expConverter = new ExpandoObjectConverter();
             dynamic deserializedObject = JsonConvert.DeserializeObject<ExpandoObject>(json.ToString(), expConverter);
             return new SerializerBuilder()
-                .EmitDefaults()
                 .Build()
                 .Serialize(deserializedObject);
         }

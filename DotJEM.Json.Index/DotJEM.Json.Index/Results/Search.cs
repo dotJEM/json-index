@@ -20,27 +20,31 @@ using Newtonsoft.Json.Linq;
 
 namespace DotJEM.Json.Index.Results
 {
-    public interface ISearchHit
+    public interface ISearchResult
     {
         float Score { get; }
         dynamic Json { get; }
         JObject Entity { get; }
     }
 
-    public class SearchHit : ISearchHit
+    public class SearchResult : ISearchResult
     {
-        public SearchHit(float score, JObject entity)
+        private readonly ScoreDoc score;
+        private readonly JObject entity;
+
+        public float Score => score.Score;
+        public dynamic Json => entity;
+        public JObject Entity => entity;
+
+        public SearchResult(ScoreDoc score, JObject entity)
         {
-            Score = score;
-            Entity = entity;
+            this.score = score;
+            this.entity = entity;
         }
 
-        public float Score { get; }
-        public dynamic Json => Entity;
-        public JObject Entity { get; }
     }
 
-    public sealed class Search : IEnumerable<ISearchHit>
+    public sealed class Search : IEnumerable<ISearchResult>
     {
         private readonly IIndexSearcherManager manager;
 
@@ -86,6 +90,7 @@ namespace DotJEM.Json.Index.Results
 
         private async Task<SearchResults> Execute(Query query, int skip, int take, Sort sort, Filter filter, bool doDocScores, bool doMaxScores)
         {
+            await Task.Yield();
             using (IInfoStreamCorrelationScope scope = InfoStream.Scope(GetType(), CorrelationId))
             {
                 scope.Debug($"Execute Search for query: {query}", new object[] { query, skip, take, sort, filter, doDocScores, doMaxScores });
@@ -93,7 +98,7 @@ namespace DotJEM.Json.Index.Results
                 Stopwatch timer = Stopwatch.StartNew();
                 using (IIndexSearcherContext context = manager.Acquire())
                 {
-                    IndexSearcher s = context.Searcher;
+                    IndexSearcher searcher = context.Searcher;
                     //s.Doc()
                     //query = s.Rewrite(query);
                     scope.Debug($"Query Rewrite: {query}", new object[] { query });
@@ -108,38 +113,30 @@ namespace DotJEM.Json.Index.Results
                     //    : query;
                     //Weight w = s.CreateNormalizedWeight(fq);
                     //collector2.GetTopDocs()
-                    
-                    TopFieldDocs results = await Task.Run(() => s.Search(query, filter, take, sort, doDocScores, doMaxScores));
+                    ILuceneJsonDocumentSerializer serializer = manager.Serializer;
 
+                    TopFieldDocs topDocs = searcher.Search(query, filter, take, sort, doDocScores, doMaxScores);
+                    
                     TimeSpan searchTime = timer.Elapsed;
                     scope.Info($"Search took: {searchTime.TotalMilliseconds} ms", new object[] { searchTime });
-                    var fieldsToLoad = new CharArraySet(LuceneVersion.LUCENE_48, new List<string> {"$$RAW"}, false);
-                    var loaded =
-                        from hit in results.ScoreDocs.Skip(skip)
-                        let document = s.Doc(hit.Doc)
-                        //TODO: Field Resolver
-                        let data = document.GetBinaryValue("$$RAW").Bytes
-
-                        select new { data, hit.Score };
+                    ParallelQuery<SearchResult> loaded =
+                        from hit in topDocs.ScoreDocs.Skip(skip).AsParallel().AsOrdered()
+                        let document = searcher.Doc(hit.Doc, serializer.FieldsToLoad)
+                        select new SearchResult(hit, serializer.DeserializeFrom(document));
 
                     //TODO: We could throw in another measurement (Load vs Deserialization)...
                     //      That would require us to force evaluate the above though (e.g. ToList it)....
 
-                    ParallelQuery<ISearchHit> hits =
-                        from hit in loaded.AsParallel().AsOrdered()
-                        //TODO: Require Service
-                        let json = new GZipJsonSerialier().Deserialize(hit.data)
-                        select (ISearchHit)new SearchHit(hit.Score, json);
-                    ISearchHit[] r = hits.ToArray();
+                    ISearchResult[] results = loaded.Cast<ISearchResult>().ToArray();
 
                     TimeSpan loadTime = timer.Elapsed;
                     scope.Info($"Data load took: {loadTime.TotalMilliseconds} ms", new object[] { loadTime });
-                    return new SearchResults(r, results.TotalHits);
+                    return new SearchResults(results, topDocs.TotalHits);
                 }
             }
         }
 
-        public IEnumerator<ISearchHit> GetEnumerator()
+        public IEnumerator<ISearchResult> GetEnumerator()
         {
             return Result.ConfigureAwait(false).GetAwaiter().GetResult().GetEnumerator();
         }
@@ -147,18 +144,18 @@ namespace DotJEM.Json.Index.Results
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
-    public class SearchResults : IEnumerable<ISearchHit>
+    public class SearchResults : IEnumerable<ISearchResult>
     {
-        public ISearchHit[] Hits { get; }
+        public ISearchResult[] Hits { get; }
         public int TotalHits { get; }
 
-        public SearchResults(ISearchHit[] hits, int totalHits)
+        public SearchResults(ISearchResult[] hits, int totalHits)
         {
             Hits = hits;
             TotalHits = totalHits;
         }
         
-        public IEnumerator<ISearchHit> GetEnumerator() => Hits.AsEnumerable().GetEnumerator();
+        public IEnumerator<ISearchResult> GetEnumerator() => Hits.AsEnumerable().GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         public static implicit operator SearchResults(Search search) => search.Result.Result;

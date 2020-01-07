@@ -15,8 +15,8 @@ namespace DotJEM.Json.Index.Documents.Builder
     {
         private readonly IFieldStrategyCollection strategies;
 
-        public LuceneDocumentBuilder(IFieldStrategyCollection strategies = null, IFieldResolver fields = null, IJsonSerializer serializer = null, IInfoEventStream infoStream = null) 
-            : base(fields, serializer, infoStream)
+        public LuceneDocumentBuilder(IFieldStrategyCollection strategies = null, IFieldResolver fields = null, ILuceneJsonDocumentSerializer documentSerializer = null, IInfoEventStream infoStream = null) 
+            : base(fields, documentSerializer, infoStream)
         {
             this.strategies = strategies ?? new NullFieldStrategyCollection();
         }

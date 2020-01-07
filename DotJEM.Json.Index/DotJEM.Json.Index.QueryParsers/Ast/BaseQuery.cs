@@ -187,7 +187,7 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast
 
         public PhraseValue(string value)
         {
-            this.Value = value;
+            Value = value;
         }
         public override string ToString() => Value;
     }
@@ -198,7 +198,7 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast
 
         public NumberValue(double value)
         {
-            this.Value = value;
+            Value = value;
         }
         public override string ToString() => Value.ToString();
     }
