@@ -14,20 +14,21 @@ namespace DotJEM.Json.Index.Searching
 
     public class IndexSearcherManager : Disposable, IIndexSearcherManager
     {
-        private readonly SearcherManager manager;
-
+        private readonly ResetableLazy<SearcherManager> manager;
+        
         public ILuceneJsonDocumentSerializer Serializer { get; }
 
         public IndexSearcherManager(IIndexWriterManager writerManager, ILuceneJsonDocumentSerializer serializer)
         {
             Serializer = serializer;
-            manager = new SearcherManager(writerManager.Writer, true, new SearcherFactory());
+            manager = new ResetableLazy<SearcherManager>(() => new SearcherManager(writerManager.Writer, true, new SearcherFactory()));
+            writerManager.OnClose += (sender, args) => manager.Reset();
         }
 
         public IIndexSearcherContext Acquire()
         {
-            manager.MaybeRefreshBlocking();
-            return new IndexSearcherContext(manager.Acquire(), searcher => manager.Release(searcher));
+            manager.Value.MaybeRefreshBlocking();
+            return new IndexSearcherContext(manager.Value.Acquire(), searcher => manager.Value.Release(searcher));
         }
     }
 }

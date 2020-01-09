@@ -13,6 +13,7 @@ namespace DotJEM.Json.Index.Contexts.Searching
     public class LuceneJsonMultiIndexSearcher : Disposable, ILuceneJsonIndexSearcher
     {
         public ILuceneJsonIndex Index { get; }
+
         public IInfoEventStream InfoStream { get; } = new InfoEventStream();
 
         private readonly ILuceneJsonIndex[] indicies;
@@ -22,17 +23,9 @@ namespace DotJEM.Json.Index.Contexts.Searching
             this.indicies = indicies.ToArray();
         }
 
-        private IIndexSearcherManager CreateOneTimeManager()
-        {
-            DirectoryReader[] readers = indicies
-                .Select(idx => idx.Storage.WriterManager.Writer.GetReader(true))
-                .ToArray();
-            return new MultiIndexJsonSearcherManager(readers, new GZipLuceneJsonDocumentSerialier());
-        }
-
         public Search Search(Query query)
         {
-            return new Search(CreateOneTimeManager(), InfoStream, query);
+            return new Search(new MultiIndexJsonSearcherManager(indicies), InfoStream, query);
         }
     }
 }

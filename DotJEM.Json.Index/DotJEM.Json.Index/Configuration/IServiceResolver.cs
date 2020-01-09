@@ -58,7 +58,7 @@ namespace DotJEM.Json.Index.Configuration
             {
                 factory = new Lazy<Func<TService>>(() =>
                 {
-                    var fac = services.ObtainFactory<TService>();
+                    Func<IServiceResolver, TService> fac = services.ObtainFactory<TService>();
                     return () => fac(resolver);
                 });
             }

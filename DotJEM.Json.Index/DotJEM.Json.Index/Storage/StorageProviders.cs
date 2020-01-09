@@ -5,7 +5,9 @@ using DotJEM.Json.Index.IO;
 using DotJEM.Json.Index.Searching;
 using DotJEM.Json.Index.Serialization;
 using Lucene.Net.Analysis;
+using Lucene.Net.Analysis.Core;
 using Lucene.Net.Analysis.Standard;
+using Lucene.Net.Codecs;
 using Lucene.Net.Index;
 using Lucene.Net.Store;
 using Lucene.Net.Support;
@@ -21,10 +23,7 @@ namespace DotJEM.Json.Index.Storage
     public interface IJsonIndexStorage
     {
         bool Exists { get; }
-
-        IIndexWriterManager WriterManager { get; }
-        IIndexSearcherManager SearcherManager { get; }
-
+        Directory Directory { get; }
         void Unlock();
         void Delete();
     }
@@ -43,42 +42,34 @@ namespace DotJEM.Json.Index.Storage
 
     public class JsonIndexStorage : IJsonIndexStorage
     {
+        private readonly ILuceneJsonIndex index;
         private readonly LuceneVersion version = LuceneVersion.LUCENE_48;
-        private readonly Directory directory;
 
-        public bool Exists => DirectoryReader.IndexExists(directory);
-
-        public IIndexWriterManager WriterManager { get; private set; }
-        public IIndexSearcherManager SearcherManager { get; private set; }
+        public bool Exists => DirectoryReader.IndexExists(Directory);
+        public Directory Directory { get; }
 
         public JsonIndexStorage(ILuceneJsonIndex index, Directory directory)
         {
-            this.directory = directory;
-
-            IndexWriterConfig config = new IndexWriterConfig(version, index.Services.Resolve<Analyzer>());
-            config.SetRAMBufferSizeMB(512);
-            config.SetOpenMode(OpenMode.CREATE_OR_APPEND);
-            config.IndexDeletionPolicy = new SnapshotDeletionPolicy(config.IndexDeletionPolicy);
-
-            WriterManager = new IndexWriterManager(new IndexWriter(directory, config));
-            SearcherManager = new IndexSearcherManager(WriterManager, new GZipLuceneJsonDocumentSerialier());
+            this.index = index;
+            this.Directory = directory;
+            SearcherManager = new IndexSearcherManager(WriterManager);
         }
 
         public void Unlock()
         {
-            if (IndexWriter.IsLocked(directory))
-                IndexWriter.Unlock(directory);
+            if (IndexWriter.IsLocked(Directory))
+                IndexWriter.Unlock(Directory);
         }
 
         public virtual void Delete()
         {
-            IndexWriterConfig config = new IndexWriterConfig(version, new StandardAnalyzer(version));
-            config.SetRAMBufferSizeMB(512);
+            IndexWriterConfig config = new IndexWriterConfig(version, new KeywordAnalyzer());
             config.SetOpenMode(OpenMode.CREATE);
 
-            WriterManager.Dispose();
-            WriterManager = new IndexWriterManager(new IndexWriter(directory, config));
-            SearcherManager = new IndexSearcherManager(WriterManager, new GZipLuceneJsonDocumentSerialier());
+            index.WriterManager.Close();
+            //TODO: This will cause all index files to be deleted as we force it to create the index
+            new IndexWriter(Directory, config).Dispose();
+            SearcherManager = new IndexSearcherManager(WriterManager);
             Unlock();
         }
     }

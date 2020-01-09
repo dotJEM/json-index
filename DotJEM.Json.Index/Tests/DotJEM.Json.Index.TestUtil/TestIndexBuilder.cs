@@ -64,7 +64,7 @@ namespace DotJEM.Json.Index.TestUtil
         public async Task<ILuceneIndexContext> Build()
         {
             foreach (TestIndexBuilder builder in indexBuilders.Values)
-                await builder.Build();
+                await builder.Build().ConfigureAwait(false);
             return context.Value;
         }
 
@@ -118,8 +118,8 @@ namespace DotJEM.Json.Index.TestUtil
             IJsonIndexWriter writer = index.CreateWriter();
             try
             {
-                await writer.CreateAsync(objects);
-                await writer.CommitAsync();
+                writer.Create(objects);
+                writer.Commit();
             }
             catch (AggregateException e)
             {

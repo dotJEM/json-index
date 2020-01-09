@@ -18,18 +18,15 @@ namespace DotJEM.Json.Index.Searching
         public ILuceneJsonIndex Index { get; }
         public IInfoEventStream InfoStream { get; } = InfoEventStream.DefaultStream.Bind<LuceneJsonIndexSearcher>();
 
-        private readonly IIndexSearcherManager manager;
-
-        public LuceneJsonIndexSearcher(ILuceneJsonIndex index, IIndexSearcherManager manager)
+        public LuceneJsonIndexSearcher(ILuceneJsonIndex index)
         {
             Index = index;
-            this.manager = manager;
         }
 
         public Search Search(Query query)
         {
             //TODO: Retrieve InfoEventStream
-            return new Search(manager, InfoStream, query);
+            return new Search(Index.SearcherManager, InfoStream, query);
         }
     }
 }

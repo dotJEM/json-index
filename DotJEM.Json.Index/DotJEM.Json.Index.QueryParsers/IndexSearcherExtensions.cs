@@ -9,10 +9,10 @@ namespace DotJEM.Json.Index.QueryParsers
     {
         public static ILuceneJsonIndexBuilder UseSimplifiedLuceneQueryParser(this ILuceneJsonIndexBuilder self)
         {
-            
             self.Services.Use<ILuceneQueryParser, SimplifiedLuceneQueryParser>();
             return self;
         }
+
         public static IServiceCollection UseSimplifiedLuceneQueryParser(this IServiceCollection self)
         {
             self.Use<ILuceneQueryParser, SimplifiedLuceneQueryParser>();
@@ -30,11 +30,6 @@ namespace DotJEM.Json.Index.QueryParsers
         {
             ILuceneQueryParser parser = self.ResolveParser();
             LuceneQueryInfo queryInfo = parser.Parse(query);
-
-
-            //SortField sortField = new SortField("", );
-            //Sort sort = new Sort();
-
             return self.CreateSearcher().Search(queryInfo.Query).OrderBy(queryInfo.Sort);
         }
 
