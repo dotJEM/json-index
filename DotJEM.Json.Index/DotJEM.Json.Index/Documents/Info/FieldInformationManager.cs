@@ -124,48 +124,4 @@ namespace DotJEM.Json.Index.Documents.Info
     }
 
     
-    public static class FieldTypeExtensions
-    {
-        public static LuceneFieldFlags GetFlags(this FieldType field)
-        {
-            LuceneFieldFlags flags = LuceneFieldFlags.None;
-            if (field.IsIndexed)
-                flags |= LuceneFieldFlags.Indexed;
-            if (field.IsStored)
-                flags |= LuceneFieldFlags.Stored;
-            if (field.IsTokenized)
-                flags |= LuceneFieldFlags.Tokenized;
-            if (field.OmitNorms)
-                flags |= LuceneFieldFlags.OmitNorms;
-            if (field.StoreTermVectorOffsets)
-                flags |= LuceneFieldFlags.StoreTermVectorOffsets;
-            if (field.StoreTermVectorPayloads)
-                flags |= LuceneFieldFlags.StoreTermVectorPayloads;
-            if (field.StoreTermVectorPositions)
-                flags |= LuceneFieldFlags.StoreTermVectorPositions;
-            if (field.StoreTermVectors)
-                flags |= LuceneFieldFlags.StoreTermVectors;
-            return flags;
-        }
-
-        public static string GetBase64Flags(this FieldType field)
-        {
-            return Convert.ToBase64String(new[] { (byte)field.GetFlags() });
-        }
-    }
-
-    [Flags]
-    public enum LuceneFieldFlags : byte
-    {
-        None = 0,
-        Indexed = 1 << 0,
-        Stored = 1 << 1,
-        Tokenized = 1 << 2,
-        OmitNorms = 1 << 3,
-        StoreTermVectorOffsets = 1 << 4,
-        StoreTermVectorPayloads = 1 << 5,
-        StoreTermVectorPositions = 1 << 6,
-        StoreTermVectors = 1 << 7
-    }
-
 }
