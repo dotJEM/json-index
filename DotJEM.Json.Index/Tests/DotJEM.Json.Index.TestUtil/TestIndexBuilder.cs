@@ -111,6 +111,7 @@ namespace DotJEM.Json.Index.TestUtil
             //    config.UseMemoryStorage();
             //});
             ILuceneIndexContext context = contextBuilder.Context;
+            
             ILuceneJsonIndex index = context.Open(name);
             index.InfoStream.Subscribe(new TestInfoStreamObserver());
             index.Storage.Delete();

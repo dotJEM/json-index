@@ -51,21 +51,21 @@ namespace DotJEM.Json.Index.Documents.Strategies
         void For(IStrategySelector filter);
     }
 
-
-
-    public class Use
+    public interface IStrategySelector
     {
-        public void HowToUse()
-        {
-            IFieldStrategyCollectionBuilder builder = new FieldStrategyCollectionBuilder();
-            builder.Use<ExpandedDateTimeFieldStrategy>().For(new TypeFilter<DateTime>());
-            builder.Use<ExpandedDateTimeFieldStrategy>().For<DateTime>();
 
-            //builder.For("contentType").Use<ExpandedDateTimeFieldStrategy>().On("field");
-            //builder.Use<IdentityFieldStrategy>().For("*", "$created");
-        }
     }
 
-    public interface IStrategySelector { }
-    public class TypeFilter<T>: IStrategySelector { }
+    public class TypeFilter<T> : IStrategySelector
+    {
+
+    }
+
+    public class TypeFilter : IStrategySelector
+    {
+        public TypeFilter(JTokenType date)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }
