@@ -109,7 +109,7 @@ namespace DotJEM.Json.Index.Documents.Builder
                 foreach (IJsonIndexableField field in strategy.CreateFields(FieldContext))
                 {
                     builder.Add(field.Field);
-                    info.Add(field.FieldName, jsonType, field.ClrType, field.LuceneType, strategyType, field.Data);
+                    info.Add(field.FieldName, jsonType, field.ClrType, field.LuceneType, strategyType, field.MetaData);
                 }
                 builder.AddFieldInfo(info.Build());
             }

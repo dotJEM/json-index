@@ -30,7 +30,7 @@ namespace DotJEM.Json.Index.QueryParsers.Test
         public IFieldResolver Resolver { get; } = new FieldResolver();
 
         public IEnumerable<string> ContentTypes { get; } = new[] {"person"};
-        public IEnumerable<string> AllFields { get; } = new[] { "person" };
+        public IEnumerable<IJsonFieldInfo> AllFields { get; }
 
         public void Merge(string contentType, IFieldInfoCollection info)
         {
