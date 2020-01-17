@@ -20,7 +20,6 @@ namespace DotJEM.Json.Index.Documents.Info
         IEnumerable<string> ContentTypes { get; }
         IEnumerable<string> AllFields { get; }
 
-        //Task Merge(string contentType, JObject entity);
         void Merge(string contentType, IFieldInfoCollection info);
 
         IJsonFieldInfo Lookup(string fieldName);
