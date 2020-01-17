@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using Antlr4.Runtime.Tree;
-using DotJEM.Index.QueryParsers.Simplified;
 using DotJEM.Json.Index.QueryParsers.Simplified.Ast;
+using DotJEM.Json.Index.QueryParsers.Simplified.Parser;
 
 namespace DotJEM.Json.Index.QueryParsers.Simplified
 {

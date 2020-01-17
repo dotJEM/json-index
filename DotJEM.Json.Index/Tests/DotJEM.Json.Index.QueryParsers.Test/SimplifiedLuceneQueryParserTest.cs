@@ -32,6 +32,10 @@ namespace DotJEM.Json.Index.QueryParsers.Test
         public IEnumerable<string> ContentTypes { get; } = new[] {"person"};
         public IEnumerable<string> AllFields { get; } = new[] { "person" };
 
+        public void Merge(string contentType, IFieldInfoCollection info)
+        {
+            throw new System.NotImplementedException();
+        }
 
         public IJsonFieldInfo Lookup(string fieldName)
         {
@@ -43,9 +47,5 @@ namespace DotJEM.Json.Index.QueryParsers.Test
             return null;
         }
 
-        public void Merge(string contentType, IFieldInfoCollection info)
-        {
-            throw new System.NotImplementedException();
-        }
     }
 }

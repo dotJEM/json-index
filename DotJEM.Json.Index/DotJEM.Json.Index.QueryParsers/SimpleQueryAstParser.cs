@@ -1,12 +1,11 @@
 ﻿using System;
 using Antlr4.Runtime;
-using DotJEM.Index.QueryParsers.Simplified;
-using DotJEM.Json.Index.Documents.Fields;
 using DotJEM.Json.Index.Documents.Info;
 using DotJEM.Json.Index.QueryParsers.Simplified;
 using DotJEM.Json.Index.QueryParsers.Simplified.Ast;
 using DotJEM.Json.Index.QueryParsers.Simplified.Ast.Optimizer;
 using DotJEM.Json.Index.QueryParsers.Simplified.Ast.Scanner;
+using DotJEM.Json.Index.QueryParsers.Simplified.Parser;
 using Lucene.Net.Analysis;
 using Lucene.Net.Search;
 using LuceneQuery = Lucene.Net.Search.Query;

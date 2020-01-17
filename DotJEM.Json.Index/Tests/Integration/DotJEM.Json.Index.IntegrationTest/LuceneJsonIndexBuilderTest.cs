@@ -15,9 +15,12 @@ namespace DotJEM.Json.Index.IntegrationTest
         [Test]
         public void Test()
         {
-            ILuceneJsonIndexBuilder builder = new LuceneJsonIndexBuilder("main");
+            ILuceneJsonIndexBuilder builder = new LuceneJsonIndexBuilder("main")
+                .UseMemoryStorage();
 
             builder.Services.Use<IFieldStrategyCollection>(() => new FieldStrategyCollectionBuilder().Build());
+
+                
 
             //BooleanQuery.MaxClauseCount = 65535;
             //index.Configuration.SetTypeResolver("contentType");

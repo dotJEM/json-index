@@ -3,6 +3,7 @@ using System.Linq;
 using DotJEM.Json.Index.Diagnostics;
 using DotJEM.Json.Index.Results;
 using DotJEM.Json.Index.Searching;
+using DotJEM.Json.Index.Serialization;
 using DotJEM.Json.Index.Util;
 using Lucene.Net.Index;
 using Lucene.Net.Search;

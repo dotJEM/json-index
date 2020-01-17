@@ -3,6 +3,7 @@ using DotJEM.Json.Index.Documents.Info;
 using DotJEM.Json.Index.Documents.Strategies;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
+using Newtonsoft.Json.Linq;
 
 namespace DotJEM.Json.Index.Documents.Builder
 {
@@ -11,7 +12,7 @@ namespace DotJEM.Json.Index.Documents.Builder
         string FieldName { get; }
         Type ClrType { get; }
         FieldType LuceneType { get; }
-        FieldMetaData[] Data { get; }
+        JObject MetaData { get; }
         IIndexableField Field { get; }
     }
 
@@ -20,16 +21,16 @@ namespace DotJEM.Json.Index.Documents.Builder
         public string FieldName { get; }
         public Type ClrType { get; } = typeof(T);
         public FieldType LuceneType { get; }
-        public FieldMetaData[] Data { get; }
+        public JObject MetaData { get; }
 
         public IIndexableField Field { get; }
 
-        public JsonIndexableField(Field field, params FieldMetaData[] data)
+        public JsonIndexableField(Field field, JObject metaData = null)
         {
             Field = field;
             LuceneType = field.FieldType;
             FieldName = field.Name;
-            Data = data;
+            MetaData = metaData;
         }
 
     }

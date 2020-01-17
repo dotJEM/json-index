@@ -18,7 +18,7 @@ namespace DotJEM.Json.Index.Documents.Info
         IFieldResolver Resolver { get; }
 
         IEnumerable<string> ContentTypes { get; }
-        IEnumerable<string> AllFields { get; }
+        IEnumerable<IJsonFieldInfo> AllFields { get; }
 
         void Merge(string contentType, IFieldInfoCollection info);
 
@@ -31,38 +31,6 @@ namespace DotJEM.Json.Index.Documents.Info
     {
         IFieldInfoCollection Merge(IFieldInfoCollection other);
         IJsonFieldInfo Lookup(string fieldName);
-    }
-
-    public class FieldInfoCollectionBuilder
-    {
-        private readonly ITypeBoundInfoStream infoStream;
-        public IInfoEventStream InfoStream => infoStream;
-
-        private readonly Dictionary<string, IJsonFieldInfo> fields = new Dictionary<string, IJsonFieldInfo>();
-
-        public FieldInfoCollectionBuilder(IInfoEventStream infoStream)
-        {
-            this.infoStream = infoStream.Bind<FieldInfoCollectionBuilder>();
-        }
-
-        public void Add(IJsonFieldInfo info)
-        {
-            if (fields.TryGetValue(info.Name, out IJsonFieldInfo fieldInfo))
-            {
-                infoStream.Debug($"Updating field information {info.Name}", new []{ info });
-                fields[info.Name] = fieldInfo.Merge(info);
-            }
-            else
-            {
-                infoStream.Debug($"Adding field information {info.Name}", new []{ info });
-                fields[info.Name] = info;
-            }
-        }
-
-        public IFieldInfoCollection Build()
-        {
-            return new FieldInfoCollection(fields);
-        }
     }
 
     public class FieldInfoCollection : IFieldInfoCollection
@@ -110,144 +78,41 @@ namespace DotJEM.Json.Index.Documents.Info
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
     
-    public class DefaultFieldInformationManager : IFieldInformationManager
-    {
-        public IInfoEventStream InfoStream { get; }
-
-        private IFieldInfoCollection allFields = new FieldInfoCollection();
-        private readonly ConcurrentDictionary<string, IFieldInfoCollection> contentTypes = new ConcurrentDictionary<string, IFieldInfoCollection>();
-
-        public IFieldResolver Resolver { get; }
-
-        public DefaultFieldInformationManager(IFieldResolver resolver, IInfoEventStream infoStream = null)
-        {
-            Resolver = resolver;
-            InfoStream = infoStream ?? InfoEventStream.DefaultStream.Bind<DefaultFieldInformationManager>();
-        }
-
-        public IEnumerable<string> ContentTypes => contentTypes.Keys;
-        public IEnumerable<string> AllFields => allFields.Select(info => info.Name);
-
-        public void Merge(string contentType, IFieldInfoCollection info)
-        {
-            contentTypes.AddOrUpdate(contentType,
-                key => new FieldInfoCollection(info),
-                (key, collection) => collection.Merge(info));
-            //TODO: Find another way that won't lock the resource. Either some queing or branching...
-            //      Branching is ok when we merge back in because we don't care if we are presented with the same
-            //      information multiple times.
-            lock (allFields)
-            {
-                this.allFields = allFields.Merge(info);
-            }
-        }
-
-        public IJsonFieldInfo Lookup(string fieldName)
-        {
-            return allFields.Lookup(fieldName);
-        }
-
-        public IJsonFieldInfo Lookup(string contentType, string fieldName)
-        {
-            if (contentTypes.TryGetValue(contentType, out IFieldInfoCollection fields))
-                return fields.Lookup(fieldName);
-            return null;
-        }
-    }
-
-    public interface IJsonFieldInfo : IEnumerable<ILuceneFieldInfo>
+   public interface IJsonFieldInfo : IEnumerable<ILuceneFieldInfo>
     {
         string Name { get; }
-        IJsonFieldInfo Merge(IJsonFieldInfo other);
+        JTokenType TokenType { get; }
+        IEnumerable<Type> ClrType { get; }
     }
 
-    public class JsonFieldInfo : IJsonFieldInfo
-    {
-        private readonly IDictionary<string, ILuceneFieldInfo> mappedToFields;
+   public static class JsonFieldInfoExtensions
+   {
+       public static IJsonFieldInfo Merge(this IJsonFieldInfo self, IJsonFieldInfo other)
+       {
+           return null;
+       }
+   }
 
-        public string Name { get; }
 
-        public JsonFieldInfo(string name, IDictionary<string, ILuceneFieldInfo> mappedToFields)
-        {
-            Name = name;
-            if (!(mappedToFields is Dictionary<string, ILuceneFieldInfo> fieldsDictionary))
-                fieldsDictionary = new Dictionary<string, ILuceneFieldInfo>(mappedToFields);
-            this.mappedToFields = fieldsDictionary;
-        }
-
-        public IJsonFieldInfo Merge(IJsonFieldInfo other)
-        {
-            JsonFieldInfoBuilder builder = new JsonFieldInfoBuilder(Name);
-            this.Aggregate(builder, (b, info) => b.Add(info));
-            other.Aggregate(builder, (b, info) => b.Add(info));
-            return builder.Build();
-        }
-
-        public IEnumerator<ILuceneFieldInfo> GetEnumerator() => mappedToFields.Values.GetEnumerator();
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-    }
-
-    public class JsonFieldInfoBuilder
-    {
-        private readonly string name;
-        private readonly Dictionary<string, ILuceneFieldInfo> infos = new Dictionary<string, ILuceneFieldInfo>();
-
-        public JsonFieldInfoBuilder(string name)
-        {
-            this.name = name;
-        }
-
-        public JsonFieldInfoBuilder Add(ILuceneFieldInfo info)
-        {
-            infos[info.Key] = infos.TryGetValue(info.Key, out ILuceneFieldInfo fieldInfo)
-                ? fieldInfo.Merge(info)
-                : info;
-            return this;
-        }
-
-        public JsonFieldInfoBuilder Add(string luceneField, JTokenType jsonType, Type clrType, FieldType luceneType, Type strategyType, FieldMetaData[] metaData)
-            => Add(new LuceneFieldInfo(luceneField, jsonType, clrType, luceneType, strategyType, metaData));
-
-        public IJsonFieldInfo Build()
-        {
-            return new JsonFieldInfo(name, infos);
-        }
-    }
-    public static class LuceneFieldInfoExtentions
-    {
-        public static ILuceneFieldInfo Merge(this ILuceneFieldInfo self, ILuceneFieldInfo other)
-        {
-            //TODO: Merge MetaData, the rest is the same as pr. the key.
-            //      Ideally MetaData should also give input to the key and we should hash it... But for now SIMPLE STUFF.
-            return other;
-        }
-    }
     public interface ILuceneFieldInfo
     {
-        string Key { get; }
         string LuceneField { get; }
-        JTokenType JsonType { get; }
-        Type ClrType { get; }
         FieldType LuceneType { get; }
         Type StrategyType { get; }
-        FieldMetaData[] MetaData { get; }
+        JObject MetaData { get; }
     }
 
     public class LuceneFieldInfo : ILuceneFieldInfo
     {
         public string Key { get; }
         public string LuceneField { get; }
-        public JTokenType JsonType { get; }
-        public Type ClrType { get; }
         public FieldType LuceneType { get; }
         public Type StrategyType { get; }
-        public FieldMetaData[] MetaData { get; }
+        public JObject MetaData { get; }
 
-        public LuceneFieldInfo(string luceneField, JTokenType jsonType, Type clrType, FieldType luceneType, Type strategyType, FieldMetaData[] metaData)
+        public LuceneFieldInfo(string luceneField, JTokenType jsonType, Type clrType, FieldType luceneType, Type strategyType, JObject metaData)
         {
             LuceneField = luceneField;
-            JsonType = jsonType;
-            ClrType = clrType;
             LuceneType = luceneType;
             StrategyType = strategyType;
             MetaData = metaData;
@@ -255,25 +120,52 @@ namespace DotJEM.Json.Index.Documents.Info
                 $"{luceneField};{(int)luceneType.DocValueType};{(int)luceneType.IndexOptions};{(int)luceneType.IndexOptions}" +
                 $";{(int)luceneType.DocValueType};" +
                 $"{luceneType.GetBase64Flags()};{luceneType.NumericPrecisionStep};{(int)jsonType};{clrType};{strategyType}";
-
         }
     }
 
-    public interface IFieldMetaData
+    
+    public static class FieldTypeExtensions
     {
-        string Name { get; }
-        string Value { get; }
-    }
-
-    public struct FieldMetaData : IFieldMetaData
-    {
-        public string Name { get; }
-        public string Value { get; }
-
-        public FieldMetaData(string name, string value)
+        public static LuceneFieldFlags GetFlags(this FieldType field)
         {
-            Name = name;
-            Value = value;
+            LuceneFieldFlags flags = LuceneFieldFlags.None;
+            if (field.IsIndexed)
+                flags |= LuceneFieldFlags.Indexed;
+            if (field.IsStored)
+                flags |= LuceneFieldFlags.Stored;
+            if (field.IsTokenized)
+                flags |= LuceneFieldFlags.Tokenized;
+            if (field.OmitNorms)
+                flags |= LuceneFieldFlags.OmitNorms;
+            if (field.StoreTermVectorOffsets)
+                flags |= LuceneFieldFlags.StoreTermVectorOffsets;
+            if (field.StoreTermVectorPayloads)
+                flags |= LuceneFieldFlags.StoreTermVectorPayloads;
+            if (field.StoreTermVectorPositions)
+                flags |= LuceneFieldFlags.StoreTermVectorPositions;
+            if (field.StoreTermVectors)
+                flags |= LuceneFieldFlags.StoreTermVectors;
+            return flags;
+        }
+
+        public static string GetBase64Flags(this FieldType field)
+        {
+            return Convert.ToBase64String(new[] { (byte)field.GetFlags() });
         }
     }
+
+    [Flags]
+    public enum LuceneFieldFlags : byte
+    {
+        None = 0,
+        Indexed = 1 << 0,
+        Stored = 1 << 1,
+        Tokenized = 1 << 2,
+        OmitNorms = 1 << 3,
+        StoreTermVectorOffsets = 1 << 4,
+        StoreTermVectorPayloads = 1 << 5,
+        StoreTermVectorPositions = 1 << 6,
+        StoreTermVectors = 1 << 7
+    }
+
 }

@@ -36,12 +36,12 @@ namespace DotJEM.Json.Index.Contexts.Test
                 SearchResults result = searcher.Search(q).Result.Result;
 
                 Assert.That(result, 
-                    Has.Exactly(1).Matches<ISearchHit>(hit => hit.Entity["$contentType"].Value<string>() == "album")
-                    & Has.Exactly(1).Matches<ISearchHit>(hit => hit.Entity["$contentType"].Value<string>() == "comment")
-                    & Has.Exactly(1).Matches<ISearchHit>(hit => hit.Entity["$contentType"].Value<string>() == "photo")
-                    & Has.Exactly(1).Matches<ISearchHit>(hit => hit.Entity["$contentType"].Value<string>() == "post")
-                    & Has.Exactly(1).Matches<ISearchHit>(hit => hit.Entity["$contentType"].Value<string>() == "todo")
-                    & Has.Exactly(1).Matches<ISearchHit>(hit => hit.Entity["$contentType"].Value<string>() == "user")
+                    Has.Exactly(1).Matches<ISearchResult>(hit => hit.Entity["$contentType"].Value<string>() == "album")
+                    & Has.Exactly(1).Matches<ISearchResult>(hit => hit.Entity["$contentType"].Value<string>() == "comment")
+                    & Has.Exactly(1).Matches<ISearchResult>(hit => hit.Entity["$contentType"].Value<string>() == "photo")
+                    & Has.Exactly(1).Matches<ISearchResult>(hit => hit.Entity["$contentType"].Value<string>() == "post")
+                    & Has.Exactly(1).Matches<ISearchResult>(hit => hit.Entity["$contentType"].Value<string>() == "todo")
+                    & Has.Exactly(1).Matches<ISearchResult>(hit => hit.Entity["$contentType"].Value<string>() == "user")
                     );
 
 

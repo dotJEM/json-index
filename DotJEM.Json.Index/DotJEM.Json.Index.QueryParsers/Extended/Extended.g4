@@ -24,20 +24,20 @@ clauseBasic
 
 atom
   : modifier? field multi_value term_modifier?
-  | modifier? field? value term_modifier?
+  | modifier? field? normal_value term_modifier?
   ;
 
 
 joinClause     : TERM_NORMAL sep IN sep? LPAREN sep? defaultClause sep? RPAREN;
-inClause       : TERM_NORMAL sep IN sep? LPAREN sep? value ( sep? COMMA sep? value )* sep? RPAREN;
-notInClause    : TERM_NORMAL sep NOT sep IN sep? LPAREN sep? value ( sep? COMMA sep? value )* sep? RPAREN;
+inClause       : TERM_NORMAL sep IN sep? LPAREN sep? normal_value ( sep? COMMA sep? normal_value )* sep? RPAREN;
+notInClause    : TERM_NORMAL sep NOT sep IN sep? LPAREN sep? normal_value ( sep? COMMA sep? normal_value )* sep? RPAREN;
 
 orderingClause : sep? ORDER sep BY sep orderingField ( sep? COMMA sep? orderingField )* sep?;
 orderingField  : sep? TERM_NORMAL (sep (ASC | DESC))?;
 
 field : TERM_NORMAL COLON sep?;
 
-value
+normal_value
   : range_term
   | normal
   | truncated

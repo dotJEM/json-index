@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
@@ -10,36 +10,23 @@
     <RepositoryUrl>https://github.com/dotJEM/json-index</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>Lucene Json Index Search</PackageTags>
+    <!--<EnableDefaultCompileItems>false</EnableDefaultCompileItems>-->
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <WarningLevel>4</WarningLevel>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Antlr4.CodeGenerator" Version="4.6.5-beta001" />
-    <PackageReference Include="Antlr4.Runtime" Version="4.6.4" />
+    <PackageReference Include="Antlr4" Version="4.6.6">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Antlr4.Runtime" Version="4.6.6" />
     <PackageReference Include="DotJEM.AdvParsers" Version="1.0.25" />
     <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Ast\" />
-  </ItemGroup>
-
-  <ItemGroup>
-
-    <!--<Antlr4 Include="Extended/Extended.g4">
-      <Generator>MSBuild:Compile</Generator>
-      <CustomToolNamespace>DotJEM.Index.QueryParsers.Extended</CustomToolNamespace>
-      <Listener>True</Listener>
-      <Visitor>True</Visitor>
-    </Antlr4>-->
-
-    <Antlr4 Include="Simplified/Simplified.g4">
-      <Generator>MSBuild:Compile</Generator>
-      <CustomToolNamespace>DotJEM.Index.QueryParsers.Simplified</CustomToolNamespace>
-      <Listener>True</Listener>
-      <Visitor>True</Visitor>
-    </Antlr4>
-  </ItemGroup>
-
+    
   <ItemGroup>
     <ProjectReference Include="..\DotJEM.Json.Index\DotJEM.Json.Index.csproj" />
   </ItemGroup>
