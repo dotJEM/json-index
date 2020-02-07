@@ -52,16 +52,14 @@ namespace DotJEM.Json.Index.Searching
             if (!index.Storage.Exists)
                 yield break;
 
-            using (IndexReader reader = index.Storage.OpenReader())
+            IndexReader reader = index.Storage.OpenReader();
+            TermEnum terms = reader.Terms(new Term(field));
+            do
             {
-                TermEnum terms = reader.Terms(new Term(field));
-                do
-                {
-                    if (terms.Term.Field != field)
-                        yield break;
-                    yield return terms.Term.Text;
-                } while (terms.Next());
-            }
+                if (terms.Term.Field != field)
+                    yield break;
+                yield return terms.Term.Text;
+            } while (terms.Next());
         }
     }
 }
