@@ -1,4 +1,5 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/y64ia7mb9e3uxks3/branch/master?svg=true)](https://ci.appveyor.com/project/jeme/json-index/branch/master)
+[![Black Duck Security Risk](https://copilot.blackducksoftware.com/github/repos/dotJEM/json-index/branches/master/badge-risk.svg)](https://copilot.blackducksoftware.com/github/repos/dotJEM/json-index/branches/master)
 
 dotJEM JSON Index
 =================
