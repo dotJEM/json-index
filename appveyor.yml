@@ -37,6 +37,10 @@ test:
   assemblies:
     - '**\*.test.dll'
 
+on_success:
+- curl -s -o copilot https://copilot.blackducksoftware.com/ci/appveyor/scripts/upload
+- bash copilot
+
 deploy:
   provider: NuGet
   api_key:
