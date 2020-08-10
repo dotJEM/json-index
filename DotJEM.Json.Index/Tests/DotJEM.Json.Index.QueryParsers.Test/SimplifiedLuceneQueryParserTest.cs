@@ -32,7 +32,7 @@ namespace DotJEM.Json.Index.QueryParsers.Test
         public IEnumerable<string> ContentTypes { get; } = new[] {"person"};
         public IEnumerable<IJsonFieldInfo> AllFields { get; }
 
-        public void Merge(string contentType, IFieldInfoCollection info)
+        public void Merge(string contentType, IContentTypeFieldInformation info)
         {
             throw new System.NotImplementedException();
         }

@@ -17,24 +17,24 @@ namespace DotJEM.Json.Index.Documents.Info
         IEnumerable<string> ContentTypes { get; }
         IEnumerable<IJsonFieldInfo> AllFields { get; }
 
-        void Merge(string contentType, IFieldInfoCollection info);
+        void Merge(string contentType, IContentTypeFieldInformation info);
 
         IJsonFieldInfo Lookup(string fieldName);
         IJsonFieldInfo Lookup(string contentType, string fieldName);
     }
 
     //TODO: How can we make the abstraction work with JSchema as well as our own simple collector?
-    public interface IFieldInfoCollection : IEnumerable<IJsonFieldInfo>
+    public interface IContentTypeFieldInformation
     {
-        IFieldInfoCollection Merge(IFieldInfoCollection other);
+        IContentTypeFieldInformation Merge(IContentTypeFieldInformation other);
         IJsonFieldInfo Lookup(string fieldName);
     }
 
-    public interface IJsonFieldInfo : IEnumerable<ILuceneFieldInfo>
+    public interface IJsonFieldInfo
     {
         string Name { get; }
         JTokenType TokenType { get; }
-        IEnumerable<Type> ClrType { get; }
+        IEnumerable<Type> SourceTypes { get; }
     }
     
     public interface ILuceneFieldInfo
