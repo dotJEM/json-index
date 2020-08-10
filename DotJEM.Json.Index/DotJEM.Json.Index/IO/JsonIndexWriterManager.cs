@@ -1,12 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading;
-using DotJEM.Json.Index.Storage;
 using DotJEM.Json.Index.Util;
 using Lucene.Net.Analysis;
 using Lucene.Net.Index;
-using Lucene.Net.Support;
 
 namespace DotJEM.Json.Index.IO
 {
@@ -34,8 +30,8 @@ namespace DotJEM.Json.Index.IO
         protected virtual IndexWriter Open(ILuceneJsonIndex index)
         {
             IndexWriterConfig config = new IndexWriterConfig(index.Configuration.Version, index.Services.Resolve<Analyzer>());
-            config.SetRAMBufferSizeMB(512);
-            config.SetOpenMode(OpenMode.CREATE_OR_APPEND);
+            config.RAMBufferSizeMB = 512;
+            config.OpenMode = OpenMode.CREATE_OR_APPEND;
             config.IndexDeletionPolicy = new SnapshotDeletionPolicy(config.IndexDeletionPolicy);
             return new IndexWriter(index.Storage.Directory, config);
         }

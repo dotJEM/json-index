@@ -1,16 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using DotJEM.Json.Index.IO;
-using DotJEM.Json.Index.Searching;
-using DotJEM.Json.Index.Serialization;
-using Lucene.Net.Analysis;
+﻿using DotJEM.Json.Index.Searching;
 using Lucene.Net.Analysis.Core;
-using Lucene.Net.Analysis.Standard;
-using Lucene.Net.Codecs;
 using Lucene.Net.Index;
 using Lucene.Net.Store;
-using Lucene.Net.Support;
 using Lucene.Net.Util;
 
 namespace DotJEM.Json.Index.Storage
@@ -52,7 +43,7 @@ namespace DotJEM.Json.Index.Storage
         {
             this.index = index;
             this.Directory = directory;
-            SearcherManager = new IndexSearcherManager(WriterManager);
+            //SearcherManager = new IndexSearcherManager(WriterManager);
         }
 
         public void Unlock()
@@ -64,12 +55,12 @@ namespace DotJEM.Json.Index.Storage
         public virtual void Delete()
         {
             IndexWriterConfig config = new IndexWriterConfig(version, new KeywordAnalyzer());
-            config.SetOpenMode(OpenMode.CREATE);
+            config.OpenMode =(OpenMode.CREATE);
 
             index.WriterManager.Close();
             //TODO: This will cause all index files to be deleted as we force it to create the index
             new IndexWriter(Directory, config).Dispose();
-            SearcherManager = new IndexSearcherManager(WriterManager);
+            //SearcherManager = new IndexSearcherManager(WriterManager);
             Unlock();
         }
     }

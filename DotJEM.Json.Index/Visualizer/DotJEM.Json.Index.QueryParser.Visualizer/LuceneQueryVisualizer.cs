@@ -89,7 +89,10 @@ namespace DotJEM.Json.Index.QueryParser.Visualizer
         public IInfoEventStream InfoStream { get; }
         public IFieldResolver Resolver { get; } = new FieldResolver(contentTypeField:"contentType");
         public IEnumerable<string> ContentTypes => "animal;diary".Split(';');
-        public IEnumerable<string> AllFields => "contentType;name;color;$created;type".Split(';');
+
+        public IEnumerable<IJsonFieldInfo> AllFields { get; }
+        //public IEnumerable<string> AllFields => "contentType;name;color;$created;type".Split(';');
+
         public void Merge(string contentType, IFieldInfoCollection info)
         {
             throw new NotImplementedException();

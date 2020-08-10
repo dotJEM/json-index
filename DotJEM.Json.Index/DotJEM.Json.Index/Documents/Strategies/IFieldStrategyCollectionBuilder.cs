@@ -1,13 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Text;
-using DotJEM.Json.Index.Documents.Builder;
-using Lucene.Net.Documents;
-using Lucene.Net.Index;
-using Lucene.Net.Search;
-using Lucene.Net.Util;
 using Newtonsoft.Json.Linq;
 
 namespace DotJEM.Json.Index.Documents.Strategies

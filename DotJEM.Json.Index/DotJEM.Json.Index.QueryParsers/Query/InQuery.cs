@@ -72,7 +72,7 @@ namespace DotJEM.Json.Index.QueryParsers.Query
 
         public override int GetHashCode()
         {
-            return Number.SingleToInt32Bits(Boost) ^ term.GetHashCode();
+            return Boost.GetHashCode() ^ term.GetHashCode();
         }
 
         internal sealed class CustomTermWeight : Weight

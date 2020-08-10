@@ -15,37 +15,37 @@ namespace DotJEM.Json.Index.Documents.Builder
     {
         private readonly IFieldStrategyCollection strategies;
 
-        public LuceneDocumentBuilder(IFieldStrategyCollection strategies = null, IFieldResolver fields = null, ILuceneJsonDocumentSerializer documentSerializer = null, IInfoEventStream infoStream = null) 
-            : base(fields, documentSerializer, infoStream)
+        public LuceneDocumentBuilder(IFieldStrategyCollection strategies = null, ILuceneJsonDocumentSerializer documentSerializer = null, IInfoEventStream infoStream = null) 
+            : base(documentSerializer, infoStream)
         {
             this.strategies = strategies ?? new NullFieldStrategyCollection();
         }
 
-        protected override void Visit(JArray json, IJsonPathContext context)
+        protected override void Visit(JArray json, IPathContext context)
         {
             IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Array)
                                       ?? new ArrayFieldStrategy();
-            context.Apply(strategy);
+            strategy.CreateFields(json, context);
             base.Visit(json, context);
         }
 
-        protected override void VisitInteger(JValue json, IJsonPathContext context)
+        protected override void VisitInteger(JValue json, IPathContext context)
         {
             IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Integer)
                                       ?? new Int64FieldStrategy();
-            context.Apply(strategy);
+            strategy.CreateFields(json, context);
             base.VisitInteger(json, context);
         }
 
-        protected override void VisitFloat(JValue json, IJsonPathContext context)
+        protected override void VisitFloat(JValue json, IPathContext context)
         {
             IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Float)
                                       ?? new DoubleFieldStrategy();
-            context.Apply(strategy);
+            strategy.CreateFields(json, context);
             base.VisitFloat(json, context);
         }
 
-        protected override void VisitString(JValue json, IJsonPathContext context)
+        protected override void VisitString(JValue json, IPathContext context)
         {
             IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.String);
             //
@@ -56,68 +56,70 @@ namespace DotJEM.Json.Index.Documents.Builder
             //      Then we can just use TextField always.
             if (str.Contains(" "))
             {
-                context.Apply(strategy ?? new TextFieldStrategy());
+                strategy = strategy ?? new TextFieldStrategy(); 
+                strategy.CreateFields(json, context);
             }
             else
             {
-                context.Apply(strategy ?? new StringFieldStrategy());
+                strategy = strategy ?? new StringFieldStrategy(); 
+                strategy.CreateFields(json, context);
             }
             base.VisitString(json, context);
         }
 
-        protected override void VisitBoolean(JValue json, IJsonPathContext context)
+        protected override void VisitBoolean(JValue json, IPathContext context)
         {
             IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Boolean)
                                       ?? new BooleanFieldStrategy();
-            context.Apply(strategy);
+            strategy.CreateFields(json, context);
             base.VisitBoolean(json, context);
         }
 
-        protected override void VisitNull(JValue json, IJsonPathContext context)
+        protected override void VisitNull(JValue json, IPathContext context)
         {
             IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Null)
                                       ?? new NullFieldStrategy("$$NULL$$");
-            context.Apply(strategy);
+            strategy.CreateFields(json, context);
             base.VisitNull(json, context);
         }
 
-        protected override void VisitUndefined(JValue json, IJsonPathContext context)
+        protected override void VisitUndefined(JValue json, IPathContext context)
         {
             IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Undefined)
                                       ?? new NullFieldStrategy("$$UNDEFINED$$");
-            context.Apply(strategy);
+            strategy.CreateFields(json, context);
             base.VisitUndefined(json, context);
         }
 
-        protected override void VisitDate(JValue json, IJsonPathContext context)
+        protected override void VisitDate(JValue json, IPathContext context)
         {
             IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Date)
                                       ?? new ExpandedDateTimeFieldStrategy();
-            context.Apply(strategy);
+            strategy.CreateFields(json, context);
             base.VisitDate(json, context);
         }
 
-        protected override void VisitGuid(JValue json, IJsonPathContext context)
+        protected override void VisitGuid(JValue json, IPathContext context)
         {
             IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Guid)
                                       ?? new IdentityFieldStrategy();
-            context.Apply(strategy);
+            strategy.CreateFields(json, context);
             base.VisitGuid(json, context);
         }
 
-        protected override void VisitUri(JValue json, IJsonPathContext context)
+        protected override void VisitUri(JValue json, IPathContext context)
         {
             IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Uri)
                                       ?? new StringFieldStrategy();
-            context.Apply(strategy);
+            strategy.CreateFields(json, context);
             base.VisitUri(json, context);
         }
 
-        protected override void VisitTimeSpan(JValue json, IJsonPathContext context)
+        protected override void VisitTimeSpan(JValue json, IPathContext context)
         {
             IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.TimeSpan)
                                       ?? new ExpandedTimeSpanFieldStrategy();
-            context.Apply(strategy);
+            strategy.CreateFields(json, context);
             base.VisitTimeSpan(json, context);
         }
     }

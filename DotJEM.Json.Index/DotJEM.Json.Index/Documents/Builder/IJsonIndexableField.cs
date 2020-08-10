@@ -1,38 +1,35 @@
 ﻿using System;
-using DotJEM.Json.Index.Documents.Info;
-using DotJEM.Json.Index.Documents.Strategies;
-using Lucene.Net.Documents;
+using System.Collections.Generic;
+using System.Linq;
+using J2N.Collections.ObjectModel;
 using Lucene.Net.Index;
-using Newtonsoft.Json.Linq;
 
 namespace DotJEM.Json.Index.Documents.Builder
 {
-    public interface IJsonIndexableField
+    public interface IIndexableJsonField
     {
-        string FieldName { get; }
-        Type ClrType { get; }
-        FieldType LuceneType { get; }
-        JObject MetaData { get; }
-        IIndexableField Field { get; }
+        string SourcePath { get; }
+        Type SourceType { get; }
+        IReadOnlyList<IIndexableField> LuceneFields { get; }
     }
 
-    public class JsonIndexableField<T> : IJsonIndexableField
+    public class IndexableJsonField<T> : IIndexableJsonField
     {
-        public string FieldName { get; }
-        public Type ClrType { get; } = typeof(T);
-        public FieldType LuceneType { get; }
-        public JObject MetaData { get; }
+        public string SourcePath { get; }
+        public Type SourceType { get; } = typeof(T);
 
-        public IIndexableField Field { get; }
+        public IReadOnlyList<IIndexableField> LuceneFields { get; }
 
-        public JsonIndexableField(Field field, JObject metaData = null)
+        public IndexableJsonField(string sourcePath, IIndexableField field)
+            : this(sourcePath, new [] { field })
         {
-            Field = field;
-            LuceneType = field.FieldType;
-            FieldName = field.Name;
-            MetaData = metaData;
         }
 
+        public IndexableJsonField(string sourcePath, IEnumerable<IIndexableField> fields)
+        {
+            SourcePath = sourcePath;
+            LuceneFields = new ReadOnlyList<IIndexableField>(fields.ToList());
+        }
     }
 
 }

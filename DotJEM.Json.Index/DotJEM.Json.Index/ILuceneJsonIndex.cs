@@ -5,6 +5,7 @@ using DotJEM.Json.Index.Documents;
 using DotJEM.Json.Index.IO;
 using DotJEM.Json.Index.Results;
 using DotJEM.Json.Index.Searching;
+using DotJEM.Json.Index.Serialization;
 using DotJEM.Json.Index.Storage;
 using Lucene.Net.Search;
 using Lucene.Net.Util;
@@ -55,7 +56,7 @@ namespace DotJEM.Json.Index
             Storage = storage.Create(this, configuration.Version);
 
             WriterManager = new IndexWriterManager(this);
-            SearcherManager = new IndexSearcherManager(WriterManager);
+            SearcherManager = new IndexSearcherManager(WriterManager, Services.Resolve<ILuceneJsonDocumentSerializer>());
         }
 
         public LuceneJsonIndex(ILuceneStorageFactory storage, IJsonIndexConfiguration configuration, IServiceResolver services)

@@ -19,7 +19,7 @@ namespace DotJEM.Json.Index.Configuration
         IServiceCollection Use<TService>(Func<TService> factory);
         IServiceCollection Use<TService>(Func<IServiceResolver, TService> factory);
         IServiceCollection Use(Type service, Func<IServiceResolver, object> factory);
-        
+
         bool Contains<T>();
         bool Contains(Type type);
 
@@ -80,6 +80,33 @@ namespace DotJEM.Json.Index.Configuration
 
         public virtual bool Contains(Type type) => factories.ContainsKey(type);
     }
+    
 
+    public interface IServices
+    {
+        IFieldResolver FieldResolver { get; }
+        IFieldInformationManager FieldInformationManager { get; }
+        ILuceneDocumentFactory DocumentFactory { get; }
+        ILuceneJsonDocumentSerializer Serializer { get; }
+    }
+
+    public class DefaultServices : IServices
+    {
+        public Analyzer Analyzer { get; }
+        public IFieldResolver FieldResolver { get; }
+        public IFieldInformationManager FieldInformationManager { get; }
+        public ILuceneDocumentFactory DocumentFactory { get; }
+        public ILuceneJsonDocumentSerializer Serializer { get; }
+
+        public DefaultServices()
+        {
+            Analyzer  = new StandardAnalyzer(LuceneVersion.LUCENE_48, CharArraySet.EMPTY_SET);
+            FieldResolver = new FieldResolver();
+            FieldInformationManager = null;
+            DocumentFactory = new LuceneDocumentFactory(FieldInformationManager);
+            Serializer = new GZipLuceneJsonDocumentSerialier();
+
+        }
+    }
 
 }
