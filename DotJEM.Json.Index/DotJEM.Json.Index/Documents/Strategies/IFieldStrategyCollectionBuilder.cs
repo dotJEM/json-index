@@ -59,4 +59,8 @@ namespace DotJEM.Json.Index.Documents.Strategies
             throw new NotImplementedException();
         }
     }
+
+    public class PatternFilter : IStrategySelector
+    {
+    }
 }

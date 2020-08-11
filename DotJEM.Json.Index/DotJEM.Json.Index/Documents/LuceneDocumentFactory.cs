@@ -41,7 +41,7 @@ namespace DotJEM.Json.Index.Documents
             string contentType = fieldsInfo.Resolver.ContentType(entity);
 
             ILuceneDocument doc = builder.Build(entity);
-            fieldsInfo.Merge(contentType, builder.FieldInfo);
+            fieldsInfo.Merge(contentType, doc.Info);
 
             return new LuceneDocumentEntry(fieldsInfo.Resolver.Identity(entity), contentType, doc.Document);
         }

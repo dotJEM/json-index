@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Mime;
 using DotJEM.Json.Index.Results;
 using DotJEM.Json.Index.TestData;
 using DotJEM.Json.Index.TestUtil;
-using Lucene.Net.Search;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 
@@ -91,13 +89,13 @@ namespace DotJEM.Json.Index.QueryParsers.IntegrationTest
                 .With(services => services.UseSimplifiedLuceneQueryParser())
                 .Build().Result;
 
-            ISearchHit lastHit = null;
+            ISearchResult lastHit = null;
             List<string[]> pages = new List<string[]>(numPages);
             for (int i = 0; i < numPages; i++)
             {
-                List<ISearchHit> hits = index.Search(query)
+                List<ISearchResult> hits = index.Search(query)
                     .Take(pageSize)
-                    .After(lastHit)
+                    //.After(lastHit)
                     .Execute()
                     .Result
                     .ToList();

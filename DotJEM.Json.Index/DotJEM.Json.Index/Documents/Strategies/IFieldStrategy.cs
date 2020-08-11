@@ -22,7 +22,7 @@ namespace DotJEM.Json.Index.Documents.Strategies
             //      
             //      The fields below may however provide other search capabilities such as all things creating during the morning etc.
 
-            yield return new JsonIndexableFieldBuilder<DateTime>(token, context)
+            yield return new JsonIndexableFieldBuilder<DateTime>(this, token, context)
                 .CreateStringField(v => v.ToString("s"))
                 .CreateInt64Field("@ticks", v => v.Ticks)
                 .CreateInt32Field("@year", v => v.Year)
@@ -37,14 +37,14 @@ namespace DotJEM.Json.Index.Documents.Strategies
 
     public class ExpandedTimeSpanFieldStrategy : IFieldStrategy
     {
-        public Query CreateQuery(IPathContext context)
-        {
-            throw new NotImplementedException();
-        }
+        //public Query CreateQuery(IPathContext context)
+        //{
+        //    throw new NotImplementedException();
+        //}
 
         public IEnumerable<IIndexableJsonField> CreateFields(JToken token, IPathContext context)
         {
-            yield return new JsonIndexableFieldBuilder<TimeSpan>(token, context)
+            yield return new JsonIndexableFieldBuilder<TimeSpan>(this, token, context)
                 .CreateStringField(v => v.ToString("g"))
                 .CreateInt64Field("@ticks", v => v.Ticks)
                 .CreateInt32Field("@days", v => v.Days)
@@ -58,7 +58,7 @@ namespace DotJEM.Json.Index.Documents.Strategies
     {
         public IEnumerable<IIndexableJsonField> CreateFields(JToken token, IPathContext context)
         {
-            yield return new JsonIndexableFieldBuilder<string>(token, context).CreateStringField().Build();
+            yield return new JsonIndexableFieldBuilder<string>(this, token, context).CreateStringField().Build();
         }
     }
 
@@ -66,7 +66,7 @@ namespace DotJEM.Json.Index.Documents.Strategies
     {
         public IEnumerable<IIndexableJsonField> CreateFields(JToken token, IPathContext context)
         {
-            yield return new JsonIndexableFieldBuilder<string>(token, context).CreateStringField().Build();
+            yield return new JsonIndexableFieldBuilder<string>(this, token, context).CreateStringField().Build();
         }
     }
 
@@ -74,14 +74,14 @@ namespace DotJEM.Json.Index.Documents.Strategies
     {
         public IEnumerable<IIndexableJsonField> CreateFields(JToken token, IPathContext context)
         {
-            yield return new JsonIndexableFieldBuilder<string>(token, context).CreateTextField().Build();
+            yield return new JsonIndexableFieldBuilder<string>(this, token, context).CreateTextField().Build();
         }
     }
     public class ArrayFieldStrategy : IFieldStrategy
     {
         public IEnumerable<IIndexableJsonField> CreateFields(JToken token, IPathContext context)
         {
-            yield return new JsonIndexableFieldBuilder<JArray>(token, context).CreateInt32Field("@count", v => v.Count).Build();
+            yield return new JsonIndexableFieldBuilder<JArray>(this, token, context).CreateInt32Field("@count", v => v.Count).Build();
         }
     }
 
@@ -89,7 +89,7 @@ namespace DotJEM.Json.Index.Documents.Strategies
     {
         public IEnumerable<IIndexableJsonField> CreateFields(JToken token, IPathContext context)
         {
-            yield return new JsonIndexableFieldBuilder<int>(token, context).CreateInt64Field().Build();
+            yield return new JsonIndexableFieldBuilder<int>(this, token, context).CreateInt64Field().Build();
         }
     }
 
@@ -97,7 +97,7 @@ namespace DotJEM.Json.Index.Documents.Strategies
     {
         public IEnumerable<IIndexableJsonField> CreateFields(JToken token, IPathContext context)
         {
-            yield return new JsonIndexableFieldBuilder<double>(token, context).CreateDoubleField().Build();
+            yield return new JsonIndexableFieldBuilder<double>(this, token, context).CreateDoubleField().Build();
         }
     }
 
@@ -105,7 +105,7 @@ namespace DotJEM.Json.Index.Documents.Strategies
     {
         public IEnumerable<IIndexableJsonField> CreateFields(JToken token, IPathContext context)
         {
-            yield return new JsonIndexableFieldBuilder<bool>(token, context).CreateStringField(b => b.ToString()).Build();
+            yield return new JsonIndexableFieldBuilder<bool>(this, token, context).CreateStringField(b => b.ToString()).Build();
         }
     }
 
@@ -120,7 +120,7 @@ namespace DotJEM.Json.Index.Documents.Strategies
 
         public IEnumerable<IIndexableJsonField> CreateFields(JToken token, IPathContext context)
         {
-            yield return new JsonIndexableFieldBuilder<object>(token, context).CreateStringField(b => nullValue).Build();
+            yield return new JsonIndexableFieldBuilder<object>(this, token, context).CreateStringField(b => nullValue).Build();
         }
     }
 }

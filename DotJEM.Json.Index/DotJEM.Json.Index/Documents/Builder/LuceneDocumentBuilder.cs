@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Text;
+﻿using System.Globalization;
 using DotJEM.Json.Index.Diagnostics;
 using DotJEM.Json.Index.Documents.Fields;
 using DotJEM.Json.Index.Documents.Strategies;
 using DotJEM.Json.Index.Serialization;
-using Lucene.Net.Index;
 using Newtonsoft.Json.Linq;
 
 namespace DotJEM.Json.Index.Documents.Builder
@@ -15,8 +11,12 @@ namespace DotJEM.Json.Index.Documents.Builder
     {
         private readonly IFieldStrategyCollection strategies;
 
-        public LuceneDocumentBuilder(IFieldStrategyCollection strategies = null, ILuceneJsonDocumentSerializer documentSerializer = null, IInfoEventStream infoStream = null) 
-            : base(documentSerializer, infoStream)
+        public LuceneDocumentBuilder(
+            IFieldResolver resolver = null, 
+            IFieldStrategyCollection strategies = null,
+            ILuceneJsonDocumentSerializer documentSerializer = null,
+            IInfoEventStream infoStream = null) 
+            : base(resolver, documentSerializer, infoStream)
         {
             this.strategies = strategies ?? new NullFieldStrategyCollection();
         }

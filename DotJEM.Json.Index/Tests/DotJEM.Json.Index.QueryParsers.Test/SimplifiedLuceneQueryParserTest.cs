@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using DotJEM.Json.Index.Diagnostics;
+using DotJEM.Json.Index.Documents.Builder;
 using DotJEM.Json.Index.Documents.Fields;
 using DotJEM.Json.Index.Documents.Info;
 using Lucene.Net.Analysis.Standard;
@@ -26,26 +27,24 @@ namespace DotJEM.Json.Index.QueryParsers.Test
 
     public class FakeFieldsInformationManager : IFieldInformationManager
     {
-        public IInfoEventStream InfoStream { get; } = new InfoEventStream();
-        public IFieldResolver Resolver { get; } = new FieldResolver();
-
-        public IEnumerable<string> ContentTypes { get; } = new[] {"person"};
-        public IEnumerable<IJsonFieldInfo> AllFields { get; }
-
-        public void Merge(string contentType, IContentTypeFieldInformation info)
+        public IInfoEventStream InfoStream { get; }
+        public IFieldResolver Resolver { get; }
+        public IEnumerable<string> ContentTypes { get; }
+        public IEnumerable<IIndexableJsonFieldInfo> AllFields { get; }
+        public IEnumerable<IIndexableFieldInfo> AllIndexedFields { get; }
+        public void Merge(string contentType, IContentTypeInfo info)
         {
             throw new System.NotImplementedException();
         }
 
-        public IJsonFieldInfo Lookup(string fieldName)
+        public IIndexableJsonFieldInfo Lookup(string fieldName)
         {
-            return null;
+            throw new System.NotImplementedException();
         }
 
-        public IJsonFieldInfo Lookup(string contentType, string fieldName)
+        public IIndexableJsonFieldInfo Lookup(string contentType, string fieldName)
         {
-            return null;
+            throw new System.NotImplementedException();
         }
-
     }
 }

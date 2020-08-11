@@ -1,4 +1,5 @@
 ﻿using DotJEM.Json.Index.Diagnostics;
+using DotJEM.Json.Index.Documents.Fields;
 using DotJEM.Json.Index.Serialization;
 using DotJEM.Json.Visitor;
 using Lucene.Net.Documents;
@@ -16,32 +17,43 @@ namespace DotJEM.Json.Index.Documents.Builder
     public interface ILuceneDocument
     {
         Document Document { get; } 
+        IContentTypeInfo Info { get; } 
         void Add(IIndexableJsonField field);
     }
 
     public class LuceneDocument : ILuceneDocument
     {
         public Document Document { get; } = new Document();
+        
+        public IContentTypeInfo Info { get; }
+
+        public LuceneDocument(string contentType)
+        {
+            Info = new ContentTypeInfo(contentType);
+        }
 
         public void Add(IIndexableJsonField field)
         {
             foreach (IIndexableField x in field.LuceneFields)
                 Document.Add(x);
 
-            //TODO: (jmd 2020-08-10) Build Meta Data 
+            Info.Add(field.Info());
         }
     }
 
     public abstract class AbstractLuceneDocumentBuilder : JValueVisitor<IPathContext>, ILuceneDocumentBuilder
     {
+        private readonly IFieldResolver resolver;
         private readonly ILuceneJsonDocumentSerializer documentSerializer;
         private readonly ITypeBoundInfoStream infoStream;
-        private readonly ILuceneDocument document = new LuceneDocument();
+
+        private ILuceneDocument document;
 
         public IInfoEventStream InfoStream => infoStream;
 
-        protected AbstractLuceneDocumentBuilder(ILuceneJsonDocumentSerializer documentSerializer = null, IInfoEventStream infoStream = null)
+        protected AbstractLuceneDocumentBuilder(IFieldResolver resolver = null, ILuceneJsonDocumentSerializer documentSerializer = null, IInfoEventStream infoStream = null)
         {
+            this.resolver = resolver ?? new FieldResolver();
             this.infoStream = (infoStream ?? InfoEventStream.DefaultStream).Bind<AbstractLuceneDocumentBuilder>();
             this.documentSerializer = documentSerializer ?? new GZipLuceneJsonDocumentSerialier();
         }
@@ -49,6 +61,7 @@ namespace DotJEM.Json.Index.Documents.Builder
 
         public ILuceneDocument Build(JObject json)
         {
+            document = new LuceneDocument(resolver.ContentType(json));
             PathContext context = new PathContext(this);
             documentSerializer.SerializeTo(json, document.Document);
             Visit(json, context);

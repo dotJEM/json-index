@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using DotJEM.Json.Index.Diagnostics;
+using DotJEM.Json.Index.Documents.Builder;
 using DotJEM.Json.Index.Documents.Fields;
 using DotJEM.Json.Index.Documents.Info;
 using DotJEM.Json.Index.QueryParsers;
@@ -26,7 +27,7 @@ namespace DotJEM.Json.Index.QueryParser.Visualizer
     public partial class LuceneQueryVisualizer : Form
     {
         private readonly SimplifiedLuceneQueryParser parser = new SimplifiedLuceneQueryParser(
-            new DefaultFieldInformationManager(new FieldResolver()), new StandardAnalyzer(LuceneVersion.LUCENE_48) );
+            new DefaultFieldInformationManager(), new StandardAnalyzer(LuceneVersion.LUCENE_48));
 
 
         private readonly GViewer viewer = new GViewer();
@@ -87,23 +88,21 @@ namespace DotJEM.Json.Index.QueryParser.Visualizer
     internal class DummyManager : IFieldInformationManager
     {
         public IInfoEventStream InfoStream { get; }
-        public IFieldResolver Resolver { get; } = new FieldResolver(contentTypeField:"contentType");
-        public IEnumerable<string> ContentTypes => "animal;diary".Split(';');
-
-        public IEnumerable<IJsonFieldInfo> AllFields { get; }
-        //public IEnumerable<string> AllFields => "contentType;name;color;$created;type".Split(';');
-
-        public void Merge(string contentType, IContentTypeFieldInformation info)
+        public IFieldResolver Resolver { get; }
+        public IEnumerable<string> ContentTypes { get; }
+        public IEnumerable<IIndexableJsonFieldInfo> AllFields { get; }
+        public IEnumerable<IIndexableFieldInfo> AllIndexedFields { get; }
+        public void Merge(string contentType, IContentTypeInfo info)
         {
             throw new NotImplementedException();
         }
 
-        public IJsonFieldInfo Lookup(string fieldName)
+        public IIndexableJsonFieldInfo Lookup(string fieldName)
         {
             throw new NotImplementedException();
         }
 
-        public IJsonFieldInfo Lookup(string contentType, string fieldName)
+        public IIndexableJsonFieldInfo Lookup(string contentType, string fieldName)
         {
             throw new NotImplementedException();
         }

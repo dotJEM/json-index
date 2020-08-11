@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using DotJEM.Json.Index.Documents.Builder;
 using DotJEM.Json.Index.Documents.Fields;
 using DotJEM.Json.Index.Documents.Info;
 using DotJEM.Json.Index.Documents.Strategies;
@@ -89,10 +90,10 @@ namespace DotJEM.Json.Index.QueryParsers
             if (ast.Name != null)
             {
                 // If we have a contentType context, use that.
-                IJsonFieldInfo field = fields.Lookup(ast.Name);
+                IIndexableJsonFieldInfo field = fields.Lookup(ast.Name);
                 if (field != null)
                 {
-                    foreach (ILuceneFieldInfo info in field)
+                    foreach (IIndexableFieldInfo info in field.LuceneFieldInfos)
                     {
                         //Note: in the most common scenarios, there should only be one FieldInfo here.
                     }

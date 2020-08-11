@@ -14,15 +14,20 @@ namespace DotJEM.Json.Index.Documents.Strategies
         IJsonIndexableFieldBuilder<TValue> Add(IIndexableField field);
         IIndexableJsonField Build();
     }
+
     public class JsonIndexableFieldBuilder<TValue> : IJsonIndexableFieldBuilder<TValue>
     {
+        private readonly JToken token;
+        private readonly IFieldStrategy strategy;
         public IPathContext Context { get; }
         public TValue DeserializedValue { get; }
 
-        private List<IIndexableField> fields = new List<IIndexableField>();
+        private readonly List<IIndexableField> fields = new List<IIndexableField>();
 
-        public JsonIndexableFieldBuilder(JToken token, IPathContext context, Func<JToken, TValue> converter = null)
+        public JsonIndexableFieldBuilder(IFieldStrategy strategy, JToken token, IPathContext context, Func<JToken, TValue> converter = null)
         {
+            this.strategy = strategy;
+            this.token = token;
             converter = converter ?? (t => t.ToObject<TValue>());
             Context = context;
             DeserializedValue = converter(token);
@@ -36,7 +41,7 @@ namespace DotJEM.Json.Index.Documents.Strategies
 
         public IIndexableJsonField Build()
         {
-            return new IndexableJsonField<TValue>(Context.Path, fields);
+            return new IndexableJsonField<TValue>(Context.Path, token.Type, fields, strategy.GetType());
         }
     }
 

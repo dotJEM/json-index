@@ -3,9 +3,7 @@ using System.Linq;
 using DotJEM.Json.Index.Diagnostics;
 using DotJEM.Json.Index.Results;
 using DotJEM.Json.Index.Searching;
-using DotJEM.Json.Index.Serialization;
 using DotJEM.Json.Index.Util;
-using Lucene.Net.Index;
 using Lucene.Net.Search;
 
 namespace DotJEM.Json.Index.Contexts.Searching
@@ -25,7 +23,7 @@ namespace DotJEM.Json.Index.Contexts.Searching
 
         public Search Search(Query query)
         {
-            return new Search(new MultiIndexJsonSearcherManager(indicies), InfoStream, query);
+            return new Search(new MultiIndexJsonSearcherManager(indicies, null), InfoStream, query);
         }
     }
 }

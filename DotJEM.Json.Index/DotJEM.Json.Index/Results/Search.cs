@@ -2,20 +2,14 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.IO.Compression;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using DotJEM.Json.Index.Diagnostics;
 using DotJEM.Json.Index.Searching;
 using DotJEM.Json.Index.Serialization;
-using Lucene.Net.Analysis.Util;
-using Lucene.Net.Documents;
 using Lucene.Net.Index;
 using Lucene.Net.Search;
 using Lucene.Net.Util;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace DotJEM.Json.Index.Results
@@ -86,7 +80,8 @@ namespace DotJEM.Json.Index.Results
         }
 
         public Task<int> Count => Execute(query, 0, 1, null, filter, false, false).ContinueWith(t => t.Result.TotalHits);
-        public Task<SearchResults> Result => Execute(query, skip, take, sort, filter, doDocScores, doMaxScores);
+        public Task<SearchResults> Results => Execute(query, skip, take, sort, filter, doDocScores, doMaxScores);
+        public Task<SearchResults> Execute() => Execute(query, skip, take, sort, filter, doDocScores, doMaxScores);
 
         private async Task<SearchResults> Execute(Query query, int skip, int take, Sort sort, Filter filter, bool doDocScores, bool doMaxScores)
         {
@@ -138,7 +133,7 @@ namespace DotJEM.Json.Index.Results
 
         public IEnumerator<ISearchResult> GetEnumerator()
         {
-            return Result.ConfigureAwait(false).GetAwaiter().GetResult().GetEnumerator();
+            return Results.ConfigureAwait(false).GetAwaiter().GetResult().GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
@@ -158,7 +153,7 @@ namespace DotJEM.Json.Index.Results
         public IEnumerator<ISearchResult> GetEnumerator() => Hits.AsEnumerable().GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        public static implicit operator SearchResults(Search search) => search.Result.Result;
+        public static implicit operator SearchResults(Search search) => search.Results.Result;
     }
 
     public class PagingCollector : TopDocsCollector<ScoreDoc>

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using DotJEM.Json.Index;
 using DotJEM.Json.Index.Contexts;
 using DotJEM.Json.Index.Documents.Strategies;
@@ -37,6 +38,7 @@ namespace HowTo
             //index.Configuration.SetSerializer(new ZipJsonDocumentSerializer());
         }
 
+        [SuppressMessage("ReSharper", "UnusedMember.Local")]
         static void LuceneJsonIndexBuilderExample()
         {
             LuceneJsonIndexBuilder index = new LuceneJsonIndexBuilder("indexName");
@@ -49,14 +51,16 @@ namespace HowTo
             builder.Use<ExpandedDateTimeFieldStrategy>().For(new TypeFilter<DateTime>());
             builder.Use<ExpandedDateTimeFieldStrategy>().For(new TypeFilter(JTokenType.Date));
             builder.Use<ExpandedDateTimeFieldStrategy>().For<DateTime>();
+            builder.Use<ExpandedDateTimeFieldStrategy>().For(new PatternFilter());
+            builder.Use<ExpandedDateTimeFieldStrategy>().For(new PatternFilter());
 
             //builder.For("contentType").Use<ExpandedDateTimeFieldStrategy>().On("field");
             //builder.Use<IdentityFieldStrategy>().For("*", "$created");
 
-
-            builder.When(json => json.contentType == "notification").Use<IdentityFieldStrategy>().For("id");
-            builder.When("contentType", field => field == "notification").Use<IdentityFieldStrategy>().For("id");
-            builder.When("contentType", Is("notification")).Use<IdentityFieldStrategy>().For("id");
+            dynamic builder2 = builder;
+            //builder2.When(json => json.contentType == "notification").Use<IdentityFieldStrategy>().For("id");
+            //builder2.When("contentType", field => field == "notification").Use<IdentityFieldStrategy>().For("id");
+            builder2.When("contentType", builder2.Is("notification")).Use<IdentityFieldStrategy>().For("id");
 
             index.Services.Use<IFieldStrategyCollection>(builder.Build);
         }
