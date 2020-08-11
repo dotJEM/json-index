@@ -11,6 +11,20 @@ namespace DotJEM.Json.Index.QueryParsers.Query
 {
     public class InQuery : LuceneQuery
     {
+        // Important resources:
+        // https://events.static.linuxfound.org/sites/events/files/slides/CustomLuceneQueries.pdf
+        // https://github.com/sing1ee/lucene-custom-query
+        // https://github.com/o19s/lucene-query-example/blob/master/src/main/java/com/o19s/BackwardsTermQuery.java
+        // https://opensourceconnections.com/blog/2014/01/20/build-your-own-custom-lucene-query-and-scorer/
+
+
+        private IEnumerable<Term> terms;
+
+        public InQuery(IEnumerable<Term> terms)
+        {
+            this.terms = terms;
+        }
+
         public override string ToString(string field)
         {
             throw new NotImplementedException();
