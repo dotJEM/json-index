@@ -92,20 +92,25 @@ namespace DotJEM.Json.Index.Configuration
 
     public class DefaultServices : IServices
     {
-        public Analyzer Analyzer { get; }
-        public IFieldResolver FieldResolver { get; }
-        public IFieldInformationManager FieldInformationManager { get; }
-        public ILuceneDocumentFactory DocumentFactory { get; }
-        public ILuceneJsonDocumentSerializer Serializer { get; }
+        private Lazy<Analyzer> analyzer;
+        private Lazy<IFieldResolver> fieldResolver;
+        private Lazy<IFieldInformationManager> fieldInformationManager;
+        private Lazy<ILuceneDocumentFactory> documentFactory;
+        private Lazy<ILuceneJsonDocumentSerializer> serializer;
+
+        public Analyzer Analyzer => analyzer.Value;
+        public IFieldResolver FieldResolver => fieldResolver.Value;
+        public IFieldInformationManager FieldInformationManager => fieldInformationManager.Value;
+        public ILuceneDocumentFactory DocumentFactory => documentFactory.Value;
+        public ILuceneJsonDocumentSerializer Serializer => serializer.Value;
 
         public DefaultServices()
         {
-            Analyzer  = new StandardAnalyzer(LuceneVersion.LUCENE_48, CharArraySet.EMPTY_SET);
-            FieldResolver = new FieldResolver();
-            FieldInformationManager = null;
-            DocumentFactory = new LuceneDocumentFactory(FieldInformationManager);
-            Serializer = new GZipLuceneJsonDocumentSerialier();
-
+            this.analyzer = new Lazy<Analyzer>(() => new StandardAnalyzer(LuceneVersion.LUCENE_48, CharArraySet.EMPTY_SET));
+            this.serializer = new Lazy<ILuceneJsonDocumentSerializer>(() => new GZipLuceneJsonDocumentSerialier());
+            this.documentFactory = new Lazy<ILuceneDocumentFactory>(() => new LuceneDocumentFactory(FieldInformationManager));
+            this.fieldInformationManager = new Lazy<IFieldInformationManager>(() => new DefaultFieldInformationManager(FieldResolver));
+            this.fieldResolver = new Lazy<IFieldResolver>(() => new FieldResolver());
         }
     }
 

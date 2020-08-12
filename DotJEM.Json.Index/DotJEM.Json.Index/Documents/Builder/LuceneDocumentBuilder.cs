@@ -21,11 +21,12 @@ namespace DotJEM.Json.Index.Documents.Builder
             this.strategies = strategies ?? new NullFieldStrategyCollection();
         }
 
+
         protected override void Visit(JArray json, IPathContext context)
         {
             IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Array)
                                       ?? new ArrayFieldStrategy();
-            strategy.CreateFields(json, context);
+            Add(strategy.CreateFields(json, context));
             base.Visit(json, context);
         }
 
@@ -33,7 +34,7 @@ namespace DotJEM.Json.Index.Documents.Builder
         {
             IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Integer)
                                       ?? new Int64FieldStrategy();
-            strategy.CreateFields(json, context);
+            Add(strategy.CreateFields(json, context));
             base.VisitInteger(json, context);
         }
 
@@ -41,7 +42,7 @@ namespace DotJEM.Json.Index.Documents.Builder
         {
             IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Float)
                                       ?? new DoubleFieldStrategy();
-            strategy.CreateFields(json, context);
+            Add(strategy.CreateFields(json, context));
             base.VisitFloat(json, context);
         }
 
@@ -57,13 +58,12 @@ namespace DotJEM.Json.Index.Documents.Builder
             if (str.Contains(" "))
             {
                 strategy = strategy ?? new TextFieldStrategy(); 
-                strategy.CreateFields(json, context);
             }
             else
             {
                 strategy = strategy ?? new StringFieldStrategy(); 
-                strategy.CreateFields(json, context);
             }
+            Add(strategy.CreateFields(json, context));
             base.VisitString(json, context);
         }
 
@@ -71,7 +71,7 @@ namespace DotJEM.Json.Index.Documents.Builder
         {
             IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Boolean)
                                       ?? new BooleanFieldStrategy();
-            strategy.CreateFields(json, context);
+            Add(strategy.CreateFields(json, context));
             base.VisitBoolean(json, context);
         }
 
@@ -79,7 +79,7 @@ namespace DotJEM.Json.Index.Documents.Builder
         {
             IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Null)
                                       ?? new NullFieldStrategy("$$NULL$$");
-            strategy.CreateFields(json, context);
+            Add(strategy.CreateFields(json, context));
             base.VisitNull(json, context);
         }
 
@@ -87,7 +87,7 @@ namespace DotJEM.Json.Index.Documents.Builder
         {
             IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Undefined)
                                       ?? new NullFieldStrategy("$$UNDEFINED$$");
-            strategy.CreateFields(json, context);
+            Add(strategy.CreateFields(json, context));
             base.VisitUndefined(json, context);
         }
 
@@ -95,7 +95,7 @@ namespace DotJEM.Json.Index.Documents.Builder
         {
             IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Date)
                                       ?? new ExpandedDateTimeFieldStrategy();
-            strategy.CreateFields(json, context);
+            Add(strategy.CreateFields(json, context));
             base.VisitDate(json, context);
         }
 
@@ -103,7 +103,7 @@ namespace DotJEM.Json.Index.Documents.Builder
         {
             IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Guid)
                                       ?? new IdentityFieldStrategy();
-            strategy.CreateFields(json, context);
+            Add(strategy.CreateFields(json, context));
             base.VisitGuid(json, context);
         }
 
@@ -111,7 +111,7 @@ namespace DotJEM.Json.Index.Documents.Builder
         {
             IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.Uri)
                                       ?? new StringFieldStrategy();
-            strategy.CreateFields(json, context);
+            Add(strategy.CreateFields(json, context));
             base.VisitUri(json, context);
         }
 
@@ -119,7 +119,7 @@ namespace DotJEM.Json.Index.Documents.Builder
         {
             IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.TimeSpan)
                                       ?? new ExpandedTimeSpanFieldStrategy();
-            strategy.CreateFields(json, context);
+            Add(strategy.CreateFields(json, context));
             base.VisitTimeSpan(json, context);
         }
     }

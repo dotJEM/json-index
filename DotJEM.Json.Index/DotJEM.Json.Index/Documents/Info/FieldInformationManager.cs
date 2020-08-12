@@ -29,23 +29,30 @@ namespace DotJEM.Json.Index.Documents.Info
 
         public IInfoEventStream InfoStream { get; }
         public IFieldResolver Resolver { get; }
-        public IEnumerable<string> ContentTypes { get; }
+        public IEnumerable<string> ContentTypes => contentTypes.Keys;
+
         public IEnumerable<IIndexableJsonFieldInfo> AllFields { get; }
         public IEnumerable<IIndexableFieldInfo> AllIndexedFields { get; }
 
+        public DefaultFieldInformationManager(IFieldResolver resolver, IInfoEventStream infoStream = null)
+        {
+            InfoStream = infoStream ?? InfoEventStream.DefaultStream.Bind<DefaultFieldInformationManager>();
+            Resolver = resolver;
+        }
+
         public void Merge(string contentType, IContentTypeInfo info)
         {
-            throw new NotImplementedException();
+            contentTypes[contentType] = info;
         }
 
         public IIndexableJsonFieldInfo Lookup(string fieldName)
         {
-            throw new NotImplementedException();
+            return null;
         }
 
         public IIndexableJsonFieldInfo Lookup(string contentType, string fieldName)
         {
-            throw new NotImplementedException();
+            return null;
         }
     }
 

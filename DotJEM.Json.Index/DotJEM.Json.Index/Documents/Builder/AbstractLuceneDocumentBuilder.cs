@@ -1,4 +1,6 @@
-﻿using DotJEM.Json.Index.Diagnostics;
+﻿using System.Collections.Generic;
+using System.Linq;
+using DotJEM.Json.Index.Diagnostics;
 using DotJEM.Json.Index.Documents.Fields;
 using DotJEM.Json.Index.Serialization;
 using DotJEM.Json.Visitor;
@@ -81,6 +83,13 @@ namespace DotJEM.Json.Index.Documents.Builder
         protected void Add(IIndexableJsonField field) 
             => document.Add(field);
 
+        protected void Add(IEnumerable<IIndexableJsonField> fields)
+        {
+            foreach (IIndexableJsonField field in fields)
+            {
+                Add(field);
+            }
+        }
         /*
          * TODO: Because we are adding configurabel strategies, much of the pieces below should be replaced by
          * a more simple concept of IFieldContext...
