@@ -55,10 +55,10 @@ namespace DotJEM.Json.Index.Documents.Builder
     public interface IContentTypeInfo
     {
         string Name { get; }
-
+        IEnumerable<IIndexableJsonFieldInfo> FieldInfos { get; }
         //IContentTypeInfo Merge(IContentTypeInfo other);
         //IIndexableJsonFieldInfo Lookup(string fieldName);
-        void Add(IIndexableJsonFieldInfo field);
+        IContentTypeInfo Add(IIndexableJsonFieldInfo field);
     }
 
     public class ContentTypeInfo : IContentTypeInfo
@@ -69,6 +69,8 @@ namespace DotJEM.Json.Index.Documents.Builder
         private Dictionary<string, string> indexedFields
             = new Dictionary<string, string>();
 
+        public IEnumerable<IIndexableJsonFieldInfo> FieldInfos => fields.Values;
+
         public string Name { get; }
 
         public ContentTypeInfo(string name)
@@ -76,7 +78,7 @@ namespace DotJEM.Json.Index.Documents.Builder
             Name = name;
         }
 
-        public void Add(IIndexableJsonFieldInfo field)
+        public IContentTypeInfo Add(IIndexableJsonFieldInfo field)
         {
             lock (fields)
             {
@@ -94,6 +96,8 @@ namespace DotJEM.Json.Index.Documents.Builder
                     indexedFields[info.FieldName] = field.SourcePath;
                 }
             }
+
+            return this;
         }
     }
 

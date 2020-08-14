@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using DotJEM.Json.Index.Diagnostics;
 using DotJEM.Json.Index.Documents.Builder;
 using DotJEM.Json.Index.Documents.Fields;
@@ -26,6 +28,7 @@ namespace DotJEM.Json.Index.Documents.Info
     public class DefaultFieldInformationManager : IFieldInformationManager
     {
         private Dictionary<string, IContentTypeInfo> contentTypes = new Dictionary<string, IContentTypeInfo>();
+        private ConcurrentDictionary<string, IContentTypeInfo> map = new ConcurrentDictionary<string, IContentTypeInfo>();
 
         public IInfoEventStream InfoStream { get; }
         public IFieldResolver Resolver { get; }
@@ -42,6 +45,7 @@ namespace DotJEM.Json.Index.Documents.Info
 
         public void Merge(string contentType, IContentTypeInfo info)
         {
+            map.AddOrUpdate(contentType, info, (_, current) => current.Merge(info));
             contentTypes[contentType] = info;
         }
 
@@ -56,6 +60,13 @@ namespace DotJEM.Json.Index.Documents.Info
         }
     }
 
+    public static class IContentTypeInfoExt
+    {
+        public static IContentTypeInfo Merge(this IContentTypeInfo self, IContentTypeInfo other)
+        {
+            return other.FieldInfos.Aggregate(self, (info, fieldInfo) => info.Add(fieldInfo));
+        }
+    }
 
     //public interface IJsonFieldInfo
     //{
