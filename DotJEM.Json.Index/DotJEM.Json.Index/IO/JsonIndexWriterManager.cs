@@ -43,7 +43,6 @@ namespace DotJEM.Json.Index.IO
             
             writer.Value.Dispose();
             writer.Reset();
-
             RaiseOnClose();
         }
 

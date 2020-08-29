@@ -10,6 +10,8 @@ namespace DotJEM.Json.Index.Searching
     {
         ILuceneJsonDocumentSerializer Serializer { get; }
         IIndexSearcherContext Acquire();
+
+        void Close();
     }
 
     public class IndexSearcherManager : Disposable, IIndexSearcherManager
@@ -22,13 +24,18 @@ namespace DotJEM.Json.Index.Searching
         {
             Serializer = serializer;
             manager = new ResetableLazy<SearcherManager>(() => new SearcherManager(writerManager.Writer, true, new SearcherFactory()));
-            writerManager.OnClose += (sender, args) => manager.Reset();
         }
 
         public IIndexSearcherContext Acquire()
         {
             manager.Value.MaybeRefreshBlocking();
             return new IndexSearcherContext(manager.Value.Acquire(), searcher => manager.Value.Release(searcher));
+        }
+
+        public void Close()
+        {
+            manager.Value.Dispose();
+            manager.Reset();
         }
     }
 }

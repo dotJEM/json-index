@@ -27,7 +27,7 @@ namespace DotJEM.Json.Index.QueryParser.Visualizer
     public partial class LuceneQueryVisualizer : Form
     {
         private readonly SimplifiedLuceneQueryParser parser = new SimplifiedLuceneQueryParser(
-            new DefaultFieldInformationManager(), new StandardAnalyzer(LuceneVersion.LUCENE_48));
+            new DefaultFieldInformationManager(null), new StandardAnalyzer(LuceneVersion.LUCENE_48));
 
 
         private readonly GViewer viewer = new GViewer();

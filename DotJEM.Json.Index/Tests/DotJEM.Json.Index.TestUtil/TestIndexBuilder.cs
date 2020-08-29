@@ -35,15 +35,21 @@ namespace DotJEM.Json.Index.TestUtil
 
     public class TestIndexContextBuilder : ITestIndexContextBuilder
     {
-        private Lazy<ILuceneIndexContext> context;
+        private readonly Lazy<ILuceneIndexContext> context;
 
-        public ILuceneIndexContextBuilder ContextBuilder { get; } = new LuceneIndexContextBuilder();
+        public ILuceneIndexContextBuilder ContextBuilder { get; }
         public ILuceneIndexContext Context => context.Value;
 
         private readonly Dictionary<string, TestIndexBuilder> indexBuilders = new Dictionary<string, TestIndexBuilder>();
 
         public TestIndexContextBuilder()
         {
+            ContextBuilder = new LuceneIndexContextBuilder();
+            context = new Lazy<ILuceneIndexContext>(() => ContextBuilder.Build());
+        }
+        public TestIndexContextBuilder(string path)
+        {
+            ContextBuilder = new LuceneIndexContextBuilder(path);
             context = new Lazy<ILuceneIndexContext>(() => ContextBuilder.Build());
         }
 
@@ -104,14 +110,12 @@ namespace DotJEM.Json.Index.TestUtil
 
         public async Task<ILuceneJsonIndex> Build()
         {
-            
-            
             //context.Configure(name, config =>
             //{
             //    config.UseMemoryStorage();
             //});
             ILuceneIndexContext context = contextBuilder.Context;
-            
+
             ILuceneJsonIndex index = context.Open(name);
             index.InfoStream.Subscribe(new TestInfoStreamObserver());
             index.Storage.Delete();

@@ -1,8 +1,13 @@
-﻿using DotJEM.Json.Index.Searching;
+﻿using System;
+using System.IO;
+using DotJEM.Json.Index.IO;
+using DotJEM.Json.Index.Searching;
+using DotJEM.Json.Index.Serialization;
 using Lucene.Net.Analysis.Core;
 using Lucene.Net.Index;
 using Lucene.Net.Store;
 using Lucene.Net.Util;
+using Directory = Lucene.Net.Store.Directory;
 
 namespace DotJEM.Json.Index.Storage
 {
@@ -11,39 +16,62 @@ namespace DotJEM.Json.Index.Storage
         IJsonIndexStorage Create(ILuceneJsonIndex index, LuceneVersion version);
     }
 
-    public interface IJsonIndexStorage
-    {
-        bool Exists { get; }
-        Directory Directory { get; }
-        void Unlock();
-        void Delete();
-    }
-
     public class LuceneRamStorageFactory : ILuceneStorageFactory
     {
-        public IJsonIndexStorage Create(ILuceneJsonIndex index, LuceneVersion configurationVersion) => new JsonIndexStorage(index, new RAMDirectory());
+        public IJsonIndexStorage Create(ILuceneJsonIndex index, LuceneVersion configurationVersion) => new RamJsonIndexStorage(index);
     }
 
     public class LuceneSimpleFileSystemStorageFactory : ILuceneStorageFactory
     {
         private readonly string path;
         public LuceneSimpleFileSystemStorageFactory(string path) => this.path = path;
-        public IJsonIndexStorage Create(ILuceneJsonIndex index, LuceneVersion configurationVersion) => new JsonIndexStorage(index, new SimpleFSDirectory(path));
+        public IJsonIndexStorage Create(ILuceneJsonIndex index, LuceneVersion configurationVersion) => new SimpleFSJsonIndexStorage(index, path);
     }
 
-    public class JsonIndexStorage : IJsonIndexStorage
+
+    public interface IJsonIndexStorage
+    {
+        bool Exists { get; }
+        Directory Directory { get; }
+        IIndexWriterManager WriterManager { get; }
+        IIndexSearcherManager SearcherManager { get; }
+        void Unlock();
+        void Delete();
+        void Close();
+    }
+
+    public abstract class JsonIndexStorage : IJsonIndexStorage
     {
         private readonly ILuceneJsonIndex index;
-        private readonly LuceneVersion version = LuceneVersion.LUCENE_48;
+        private readonly object padlock = new object();
+
+        private Directory directory;
+
+        public IIndexWriterManager WriterManager { get; }
+        public IIndexSearcherManager SearcherManager { get; }
 
         public bool Exists => DirectoryReader.IndexExists(Directory);
-        public Directory Directory { get; }
 
-        public JsonIndexStorage(ILuceneJsonIndex index, Directory directory)
+        public Directory Directory
+        {
+            get
+            {
+                if (directory != null)
+                    return directory;
+
+                lock (padlock)
+                {
+                    return directory ?? (directory = Create());
+                }
+            }
+            protected set => directory = value;
+        }
+
+        protected JsonIndexStorage(ILuceneJsonIndex index)
         {
             this.index = index;
-            this.Directory = directory;
-            //SearcherManager = new IndexSearcherManager(WriterManager);
+            WriterManager = new IndexWriterManager(index);
+            SearcherManager = new IndexSearcherManager(WriterManager, index.Services.Resolve<ILuceneJsonDocumentSerializer>());
         }
 
         public void Unlock()
@@ -52,16 +80,61 @@ namespace DotJEM.Json.Index.Storage
                 IndexWriter.Unlock(Directory);
         }
 
-        public virtual void Delete()
-        {
-            IndexWriterConfig config = new IndexWriterConfig(version, new KeywordAnalyzer());
-            config.OpenMode =(OpenMode.CREATE);
 
-            index.WriterManager.Close();
-            //TODO: This will cause all index files to be deleted as we force it to create the index
-            new IndexWriter(Directory, config).Dispose();
-            //SearcherManager = new IndexSearcherManager(WriterManager);
+        public void Close()
+        {
+            SearcherManager.Close();
+            WriterManager.Close();
+        }
+
+        public abstract void Delete();
+        protected abstract Directory Create();
+    }
+
+    public class RamJsonIndexStorage : JsonIndexStorage
+    {
+        public RamJsonIndexStorage(ILuceneJsonIndex index) : base(index)
+        {
+        }
+
+        protected override Directory Create()
+        {
+            return new RAMDirectory();
+        }
+
+        public override void Delete()
+        {
+            this.Directory.Dispose();
+            this.Directory = null;
+        }
+    }
+
+    public class SimpleFSJsonIndexStorage : JsonIndexStorage
+    {
+        private readonly string path;
+
+        public SimpleFSJsonIndexStorage(ILuceneJsonIndex index, string path) : base(index)
+        {
+            this.path = path;
+        }
+
+        protected override Directory Create()
+        {
+            return new SimpleFSDirectory(path);
+        }
+
+        public override void Delete()
+        {
+            Close();
             Unlock();
+            this.Directory.Dispose();
+            this.Directory = null;
+            
+            DirectoryInfo dir = new DirectoryInfo(path);
+            if(!dir.Exists)
+                return;
+            foreach (FileInfo fileInfo in dir.GetFiles())
+                fileInfo.Delete();
         }
     }
 }

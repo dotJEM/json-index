@@ -18,7 +18,6 @@ namespace DotJEM.Json.Index.Contexts.Searching
             Serializer = serializer;
         }
 
-
         public IIndexSearcherContext Acquire()
         {
             IndexReader[] readers = indicies
@@ -29,6 +28,10 @@ namespace DotJEM.Json.Index.Contexts.Searching
 
             MultiReader reader = new MultiReader(readers, false);
             return new IndexSearcherContext(new IndexSearcher(reader), searcher => {});
+        }
+
+        public void Close()
+        {
         }
     }
 }

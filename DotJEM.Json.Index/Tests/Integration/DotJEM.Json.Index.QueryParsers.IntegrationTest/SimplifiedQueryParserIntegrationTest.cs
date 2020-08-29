@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using DotJEM.Json.Index.Backup;
 using DotJEM.Json.Index.Results;
+using DotJEM.Json.Index.Storage;
 using DotJEM.Json.Index.TestData;
 using DotJEM.Json.Index.TestUtil;
 using Newtonsoft.Json.Linq;
@@ -106,8 +109,77 @@ namespace DotJEM.Json.Index.QueryParsers.IntegrationTest
             string results = string.Join(";", pages.Select(p => string.Join(",", p)));
             Assert.That(results, Is.EqualTo(expected));
         }
+
+        [Test]
+        public void BackupIndexTest()
+        {
+            using (TestDirectory dir = TestDirectory.Generate())
+            {
+                TestIndexContextBuilder contextBuilder = new TestIndexContextBuilder(dir.FullName);
+                //contextBuilder.ContextBuilder.Configure("main", builder => builder.AddFacility(() => new LuceneSimpleFileSystemStorageFactory(dir.CreateSubdirectory("Index"))));
+
+                ILuceneJsonIndex index = new TestIndexBuilder(context: contextBuilder)
+                    .With(JsonPlaceholder.Albums.Select(data => new TestObject("album", (JObject)data)))
+                    .With(JsonPlaceholder.Comments.Select(data => new TestObject("comment", (JObject)data)))
+                    .With(JsonPlaceholder.Photos.Select(data => new TestObject("photo", (JObject)data)))
+                    .With(JsonPlaceholder.Posts.Select(data => new TestObject("post", (JObject)data)))
+                    .With(JsonPlaceholder.Todos.Select(data => new TestObject("todo", (JObject)data)))
+                    .With(JsonPlaceholder.Users.Select(data => new TestObject("user", (JObject)data)))
+                    .With(services => services.UseSimplifiedLuceneQueryParser())
+                    .Build().Result;
+
+                string directory = dir.CreateSubdirectory("backups");
+                index.Backup(new IndexZipBackupTarget(directory));
+                Assert.That(index.Search("name:*").Execute().Result.TotalHits, Is.GreaterThan(0));
+
+                index.Restore(new IndexZipBackupSource(directory));
+                Assert.That(index.Search("name:*").Execute().Result.TotalHits, Is.GreaterThan(0));
+
+                index.Close();
+            }
+        }
     }
 
+    public class TestDirectory : IDisposable
+    {
+        public static TestDirectory Generate()
+        {
+            string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("D"));
+            return new TestDirectory(Directory.CreateDirectory(path));
+        }
+
+        private readonly DirectoryInfo dir;
+
+        private TestDirectory(DirectoryInfo dir)
+        {
+            this.dir = dir;
+        }
+
+        public FileInfo[] GetFiles(string searchPattern) => dir.GetFiles(searchPattern);
+
+        public FileInfo[] GetFiles()
+        {
+            return dir.GetFiles();
+        }
+
+        public DirectoryInfo[] GetDirectories()
+        {
+            return dir.GetDirectories();
+        }
+
+        public string FullName => dir.FullName;
+
+        public void Dispose()
+        {
+            dir?.Refresh();
+            dir?.Delete(true);
+        }
+
+        public string CreateSubdirectory(string name)
+        {
+            return dir.CreateSubdirectory(name).FullName;
+        }
+    }
 
     public class TestObjects
     {

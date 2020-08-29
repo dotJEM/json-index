@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using System.IO.Compression;
 using DotJEM.Json.Index.Configuration;
 using DotJEM.Json.Index.Diagnostics;
 using DotJEM.Json.Index.Documents;
@@ -7,11 +9,19 @@ using DotJEM.Json.Index.Results;
 using DotJEM.Json.Index.Searching;
 using DotJEM.Json.Index.Serialization;
 using DotJEM.Json.Index.Storage;
+using Lucene.Net.Index;
 using Lucene.Net.Search;
+using Lucene.Net.Store;
 using Lucene.Net.Util;
+using Directory = Lucene.Net.Store.Directory;
 
 namespace DotJEM.Json.Index
 {
+
+    public interface ILuceneJsonIndexSearcherProvider
+    {
+        ILuceneJsonIndexSearcher CreateSearcher();
+    }
     public interface ILuceneJsonIndex : ILuceneJsonIndexSearcherProvider
     {
         IInfoEventStream InfoStream { get; }
@@ -21,6 +31,8 @@ namespace DotJEM.Json.Index
         IIndexWriterManager WriterManager { get; }
         IIndexSearcherManager SearcherManager { get; }
         IJsonIndexWriter CreateWriter();
+
+        void Close();
     }
 
     public class LuceneJsonIndex : ILuceneJsonIndex
@@ -30,8 +42,8 @@ namespace DotJEM.Json.Index
         public IJsonIndexConfiguration Configuration { get; }
         public IServiceResolver Services { get; }
 
-        public IIndexWriterManager WriterManager { get; }
-        public IIndexSearcherManager SearcherManager { get; }
+        public IIndexWriterManager WriterManager => Storage.WriterManager;
+        public IIndexSearcherManager SearcherManager => Storage.SearcherManager;
 
         public LuceneJsonIndex()
             : this(new LuceneRamStorageFactory(), new JsonIndexConfiguration(), ServiceCollection.CreateDefault())
@@ -54,9 +66,6 @@ namespace DotJEM.Json.Index
             Services = new ServiceResolver(services);
 
             Storage = storage.Create(this, configuration.Version);
-
-            WriterManager = new IndexWriterManager(this);
-            SearcherManager = new IndexSearcherManager(WriterManager, Services.Resolve<ILuceneJsonDocumentSerializer>());
         }
 
         public LuceneJsonIndex(ILuceneStorageFactory storage, IJsonIndexConfiguration configuration, IServiceResolver services)
@@ -76,21 +85,13 @@ namespace DotJEM.Json.Index
         {
             return new JsonIndexWriter(this, Services.Resolve<ILuceneDocumentFactory>(), WriterManager);
         }
-    }
 
-    public interface ILuceneJsonIndexSearcherProvider
-    {
-        ILuceneJsonIndexSearcher CreateSearcher();
-    }
-
-    public static class LuceneIndexExtension
-    {
-        public static Search Search(this ILuceneJsonIndexSearcherProvider self, Query query)
+        public void Close()
         {
-            using (var searcher = self.CreateSearcher())
-            {
-                return searcher.Search(query);
-            }
+            WriterManager.Close();
+            Storage.Close();
         }
     }
+
+  
 }
