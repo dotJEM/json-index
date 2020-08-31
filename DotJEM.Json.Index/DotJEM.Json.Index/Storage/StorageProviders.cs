@@ -1,13 +1,11 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using DotJEM.Json.Index.IO;
 using DotJEM.Json.Index.Searching;
 using DotJEM.Json.Index.Serialization;
-using Lucene.Net.Analysis.Core;
 using Lucene.Net.Index;
 using Lucene.Net.Store;
 using Lucene.Net.Util;
-using Directory = Lucene.Net.Store.Directory;
+using LuceneDirectory = Lucene.Net.Store.Directory;
 
 namespace DotJEM.Json.Index.Storage
 {
@@ -32,7 +30,7 @@ namespace DotJEM.Json.Index.Storage
     public interface IJsonIndexStorage
     {
         bool Exists { get; }
-        Directory Directory { get; }
+        LuceneDirectory Directory { get; }
         IIndexWriterManager WriterManager { get; }
         IIndexSearcherManager SearcherManager { get; }
         void Unlock();
@@ -45,14 +43,14 @@ namespace DotJEM.Json.Index.Storage
         private readonly ILuceneJsonIndex index;
         private readonly object padlock = new object();
 
-        private Directory directory;
+        private LuceneDirectory directory;
 
         public IIndexWriterManager WriterManager { get; }
         public IIndexSearcherManager SearcherManager { get; }
 
         public bool Exists => DirectoryReader.IndexExists(Directory);
 
-        public Directory Directory
+        public LuceneDirectory Directory
         {
             get
             {
@@ -79,8 +77,7 @@ namespace DotJEM.Json.Index.Storage
             if (IndexWriter.IsLocked(Directory))
                 IndexWriter.Unlock(Directory);
         }
-
-
+        
         public void Close()
         {
             SearcherManager.Close();
@@ -88,7 +85,7 @@ namespace DotJEM.Json.Index.Storage
         }
 
         public abstract void Delete();
-        protected abstract Directory Create();
+        protected abstract LuceneDirectory Create();
     }
 
     public class RamJsonIndexStorage : JsonIndexStorage
@@ -97,13 +94,15 @@ namespace DotJEM.Json.Index.Storage
         {
         }
 
-        protected override Directory Create()
+        protected override LuceneDirectory Create()
         {
             return new RAMDirectory();
         }
 
         public override void Delete()
         {
+            Close();
+            Unlock();
             this.Directory.Dispose();
             this.Directory = null;
         }
@@ -118,7 +117,7 @@ namespace DotJEM.Json.Index.Storage
             this.path = path;
         }
 
-        protected override Directory Create()
+        protected override LuceneDirectory Create()
         {
             return new SimpleFSDirectory(path);
         }
@@ -133,6 +132,7 @@ namespace DotJEM.Json.Index.Storage
             DirectoryInfo dir = new DirectoryInfo(path);
             if(!dir.Exists)
                 return;
+
             foreach (FileInfo fileInfo in dir.GetFiles())
                 fileInfo.Delete();
         }

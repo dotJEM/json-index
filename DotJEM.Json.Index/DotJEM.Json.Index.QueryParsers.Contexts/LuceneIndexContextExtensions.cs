@@ -10,7 +10,7 @@ namespace DotJEM.Json.Index.QueryParsers.Contexts
         {
             ILuceneQueryParser parser = self.ResolveParser();
             LuceneQueryInfo queryInfo = parser.Parse(query);
-            return self.Search(queryInfo.Query).OrderBy(queryInfo.Sort);
+            return self.CreateSearcher().Search(queryInfo.Query).OrderBy(queryInfo.Sort);
         }
 
         private static ILuceneQueryParser ResolveParser(this ILuceneIndexContext self)
