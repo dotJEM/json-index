@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using DotJEM.Json.Index.QueryParsers.Ast;
 
 namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast.Optimizer
 {

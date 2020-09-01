@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using Antlr4.Runtime.Tree;
+using DotJEM.Json.Index.QueryParsers.Ast;
 using DotJEM.Json.Index.QueryParsers.Simplified.Ast;
 using DotJEM.Json.Index.QueryParsers.Simplified.Parser;
 

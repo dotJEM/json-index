@@ -1,6 +1,7 @@
 ﻿using System;
 using Antlr4.Runtime;
 using DotJEM.Json.Index.Documents.Info;
+using DotJEM.Json.Index.QueryParsers.Ast;
 using DotJEM.Json.Index.QueryParsers.Simplified;
 using DotJEM.Json.Index.QueryParsers.Simplified.Ast;
 using DotJEM.Json.Index.QueryParsers.Simplified.Ast.Optimizer;

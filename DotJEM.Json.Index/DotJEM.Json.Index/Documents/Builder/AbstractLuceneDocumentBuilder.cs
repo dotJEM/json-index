@@ -90,15 +90,6 @@ namespace DotJEM.Json.Index.Documents.Builder
                 Add(field);
             }
         }
-        /*
-         * TODO: Because we are adding configurabel strategies, much of the pieces below should be replaced by
-         * a more simple concept of IFieldContext...
-         *
-         * A Field context will capture the current path and value... (Just like the IJsonPathContext)
-         * however it would be far more simple in that it is not meant for navigation like the PathContext is.
-         *
-         * Instead it's merely meant for input to a FieldFactory, which replaces the FieldBuilder (It's a factory as things are now anyways).
-         */
 
         public class PathContext : IPathContext
         {

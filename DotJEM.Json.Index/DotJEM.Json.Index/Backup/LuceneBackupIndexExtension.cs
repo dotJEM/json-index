@@ -93,18 +93,12 @@ namespace DotJEM.Json.Index.Backup
                 dir.Sync(new [] { sementsFile.Name });
 
                 SegmentInfos.WriteSegmentsGen(dir, reader.Generation);
-
-
-                var last = DirectoryReader.ListCommits(dir).Last();
-
-                if (last != null)
-                {
-                    ISet<string> commitFiles = new HashSet<string>(last.FileNames);
-                    commitFiles.Add(IndexFileNames.SEGMENTS_GEN);
-
-
-
-                }
+                //var last = DirectoryReader.ListCommits(dir).Last();
+                //if (last != null)
+                //{
+                //    ISet<string> commitFiles = new HashSet<string>(last.FileNames);
+                //    commitFiles.Add(IndexFileNames.SEGMENTS_GEN);
+                //}
 
             }
 

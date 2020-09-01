@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using DotJEM.Json.Index.Documents.Info;
+using DotJEM.Json.Index.QueryParsers.Ast;
 
 namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast.Scanner
 {

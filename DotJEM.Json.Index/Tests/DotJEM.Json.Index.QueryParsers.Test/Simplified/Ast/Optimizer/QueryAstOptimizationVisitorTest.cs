@@ -1,4 +1,5 @@
-﻿using DotJEM.Json.Index.QueryParsers.Simplified.Ast;
+﻿using DotJEM.Json.Index.QueryParsers.Ast;
+using DotJEM.Json.Index.QueryParsers.Simplified.Ast;
 using DotJEM.Json.Index.QueryParsers.Simplified.Ast.Optimizer;
 using DotJEM.Json.Index.TestUtil;
 using NUnit.Framework;

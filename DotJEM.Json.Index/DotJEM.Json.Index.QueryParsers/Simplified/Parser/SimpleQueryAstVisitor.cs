@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using DotJEM.Json.Index.QueryParsers.Ast;
 using DotJEM.Json.Index.QueryParsers.Simplified.Ast;
 
 namespace DotJEM.Json.Index.QueryParsers.Simplified

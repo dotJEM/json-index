@@ -8,6 +8,7 @@ using DotJEM.Json.Index.Documents.Builder;
 using DotJEM.Json.Index.Documents.Fields;
 using DotJEM.Json.Index.Documents.Info;
 using DotJEM.Json.Index.Documents.Strategies;
+using DotJEM.Json.Index.QueryParsers.Ast;
 using DotJEM.Json.Index.QueryParsers.Query;
 using DotJEM.Json.Index.QueryParsers.Simplified;
 using DotJEM.Json.Index.QueryParsers.Simplified.Ast;

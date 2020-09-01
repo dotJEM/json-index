@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using DotJEM.AdvParsers;
+using DotJEM.Json.Index.QueryParsers.Simplified;
 
-namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast
+namespace DotJEM.Json.Index.QueryParsers.Ast
 {
     public enum FieldOperator
     {
@@ -42,7 +43,7 @@ namespace DotJEM.Json.Index.QueryParsers.Simplified.Ast
                 value = (TData) val;
                 return true;
             }
-            value = default(TData);
+            value = default;
             return false;
         }
 
