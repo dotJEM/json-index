@@ -4,7 +4,7 @@ using System.IO.Compression;
 using System.Linq;
 using Lucene.Net.Store;
 
-namespace DotJEM.Json.Index.Backup
+namespace DotJEM.Json.Index.Snapshots
 {
     public class LuceneZipDirectory : Directory
     {

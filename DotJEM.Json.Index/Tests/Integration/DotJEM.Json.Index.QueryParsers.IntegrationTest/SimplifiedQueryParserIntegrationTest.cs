@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using DotJEM.Json.Index.Backup;
 using DotJEM.Json.Index.Results;
+using DotJEM.Json.Index.Snapshots;
 using DotJEM.Json.Index.Storage;
 using DotJEM.Json.Index.TestData;
 using DotJEM.Json.Index.TestUtil;

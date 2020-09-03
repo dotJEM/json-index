@@ -5,22 +5,15 @@ using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using DotJEM.Json.Index.Results;
-using DotJEM.Json.Index.Searching;
 using DotJEM.Json.Index.Util;
 using Lucene.Net.Index;
-using Lucene.Net.Search;
 using Lucene.Net.Store;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Bson;
-using Newtonsoft.Json.Linq;
 using Directory = System.IO.Directory;
 using LuceneDirectory = Lucene.Net.Store.Directory;
 
 
-namespace DotJEM.Json.Index.Backup
+namespace DotJEM.Json.Index.Snapshots
 {
     public static class LuceneBackupIndexExtension
     {
@@ -41,17 +34,15 @@ namespace DotJEM.Json.Index.Backup
                 LuceneDirectory dir = commit.Directory;
                 string segmentsFile = commit.SegmentsFileName;
 
-                using (IIndexSnapshotWriter snapshotWriter = target.Open(commit.Generation))
-                {
-                    snapshotWriter.WriteProperties(properties);
-                    foreach (string fileName in commit.FileNames)
-                    {
-                        if (!fileName.Equals(segmentsFile, StringComparison.Ordinal))
-                            snapshotWriter.WriteFile(fileName, dir);
-                    }
+                using IIndexSnapshotWriter snapshotWriter = target.Open(commit.Generation);
 
-                    snapshotWriter.WriteSegmentsFile(segmentsFile, dir);
+                if(properties != null) snapshotWriter.WriteProperties(properties);
+                foreach (string fileName in commit.FileNames)
+                {
+                    if (!fileName.Equals(segmentsFile, StringComparison.Ordinal))
+                        snapshotWriter.WriteFile(fileName, dir);
                 }
+                snapshotWriter.WriteSegmentsFile(segmentsFile, dir);
             }
             finally
             {
@@ -70,6 +61,8 @@ namespace DotJEM.Json.Index.Backup
             LuceneDirectory dir = self.Storage.Directory;
             using (IIndexSnapshotReader reader = source.Open())
             {
+                
+
                 ILuceneFile sementsFile = null;
                 List<string> files = new List<string>();
                 foreach (ILuceneFile file in reader)
@@ -211,8 +204,7 @@ namespace DotJEM.Json.Index.Backup
             this.Generation = long.Parse(generation, NumberStyles.AllowHexSpecifier);
             this.archive = ZipFile.Open(path, ZipArchiveMode.Read);
         }
-
-
+        
         public IEnumerator<ILuceneFile> GetEnumerator()
         {
             return archive.Entries.Select(entry =>

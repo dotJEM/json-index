@@ -1,13 +1,16 @@
 ﻿using System;
 using System.Linq;
-using DotJEM.Json.Index.Backup;
 using DotJEM.Json.Index.IO;
+using DotJEM.Json.Index.Snapshots;
 using DotJEM.Json.Index.Util;
 using Newtonsoft.Json.Linq;
 
 
 namespace DotJEM.Json.Index.Manager
 {
+    //TODO: Index Ingest Manager.
+    public interface IIndexManager {}
+
     public interface IIndexSynchronizationHandler
     {
     }
@@ -25,33 +28,23 @@ namespace DotJEM.Json.Index.Manager
 
         public void Initialize()
         {
-            source.Subscribe(new ActionSink<IndexUpdate>(OnSource));
+            source.Subscribe(new ActionSink<IJsonIndexWriterCommand>(OnSource));
         }
 
-        public void OnSource(IndexUpdate update)
+        public void OnSource(IJsonIndexWriterCommand update)
         {
             IJsonIndexWriter writer = index.CreateWriter();
-            switch (update.Action)
-            {
-                case IndexAction.Create:
-                    writer.Create(update.Entity);
-                    break;
-                case IndexAction.Update:
-                    writer.Update(update.Entity);
-                    break;
-                case IndexAction.Delete:
-                    writer.Delete(update.Entity);
-                    break;
-            }
+            update.Execute(writer);
         }
 
         public ISnapshotInfo TakeSnapshot()
         {
+            ISnapshotInfo sourceSnapshot = source.TakeSnapshot();
+
             IIndexSnapshotTarget target = new IndexZipSnapshotTarget("");
             ISnapshot snapshot = index.Snapshot(target);
-            
 
-            return source.TakeSnapshot();
+            return null;
         }
     }
 
@@ -76,7 +69,7 @@ namespace DotJEM.Json.Index.Manager
     /// <summary>
     /// In context of DotJEM.Json.Storage as a DataSource, a data source can be one or more storage areas, this 
     /// </summary>
-    public interface ILuceneJsonIndexDataSource : IObservable<IndexUpdate>
+    public interface ILuceneJsonIndexDataSource : IObservable<IJsonIndexWriterCommand>
     {
         ISnapshotInfo TakeSnapshot();
     }
@@ -90,7 +83,7 @@ namespace DotJEM.Json.Index.Manager
             this.sources = sources;
         }
 
-        public IDisposable Subscribe(IObserver<IndexUpdate> observer)
+        public IDisposable Subscribe(IObserver<IJsonIndexWriterCommand> observer)
         {
             return new CompositeDisposeable(Array.ConvertAll(sources, source => source.Subscribe(observer)));
         }
@@ -132,15 +125,4 @@ namespace DotJEM.Json.Index.Manager
         }
     }
 
-    public enum IndexAction
-    {
-        Create, Update, Delete
-    }
-
-    public struct IndexUpdate
-    {
-        public IndexAction Action { get; }
-        public JObject Entity { get; }
-        
-    }
 }
