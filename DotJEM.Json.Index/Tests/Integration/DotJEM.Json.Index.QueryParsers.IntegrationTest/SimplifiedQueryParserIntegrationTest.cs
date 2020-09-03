@@ -129,10 +129,10 @@ namespace DotJEM.Json.Index.QueryParsers.IntegrationTest
                     .Build().Result;
 
                 string directory = dir.CreateSubdirectory("backups");
-                index.Backup(new IndexZipBackupTarget(directory));
+                index.Snapshot(new IndexZipSnapshotTarget(directory));
                 Assert.That(index.Search("name:*").Execute().Result.TotalHits, Is.GreaterThan(0));
 
-                index.Restore(new IndexZipBackupSource(directory));
+                index.Restore(new IndexZipSnapshotSource(directory));
                 Assert.That(index.Search("name:*").Execute().Result.TotalHits, Is.GreaterThan(0));
 
                 index.Close();

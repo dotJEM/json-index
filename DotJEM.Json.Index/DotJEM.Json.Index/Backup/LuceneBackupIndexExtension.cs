@@ -9,9 +9,13 @@ using System.Text;
 using System.Text.RegularExpressions;
 using DotJEM.Json.Index.Results;
 using DotJEM.Json.Index.Searching;
+using DotJEM.Json.Index.Util;
 using Lucene.Net.Index;
 using Lucene.Net.Search;
 using Lucene.Net.Store;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Bson;
+using Newtonsoft.Json.Linq;
 using Directory = System.IO.Directory;
 using LuceneDirectory = Lucene.Net.Store.Directory;
 
@@ -21,7 +25,7 @@ namespace DotJEM.Json.Index.Backup
     public static class LuceneBackupIndexExtension
     {
 
-        public static void Backup(this ILuceneJsonIndex self, IIndexBackupTarget target)
+        public static ISnapshot Snapshot(this ILuceneJsonIndex self, IIndexSnapshotTarget target, ISnapshotProperties properties = null)
         {
             IndexWriter writer = self.WriterManager.Writer;
             SnapshotDeletionPolicy sdp = writer.Config.IndexDeletionPolicy as SnapshotDeletionPolicy;
@@ -37,15 +41,16 @@ namespace DotJEM.Json.Index.Backup
                 LuceneDirectory dir = commit.Directory;
                 string segmentsFile = commit.SegmentsFileName;
 
-                using (IIndexBackupWriter backupWriter = target.Open(commit.Generation))
+                using (IIndexSnapshotWriter snapshotWriter = target.Open(commit.Generation))
                 {
+                    snapshotWriter.WriteProperties(properties);
                     foreach (string fileName in commit.FileNames)
                     {
                         if (!fileName.Equals(segmentsFile, StringComparison.Ordinal))
-                            backupWriter.AddFile(fileName, dir);
+                            snapshotWriter.WriteFile(fileName, dir);
                     }
 
-                    backupWriter.AddSegmentsFile(segmentsFile, dir);
+                    snapshotWriter.WriteSegmentsFile(segmentsFile, dir);
                 }
             }
             finally
@@ -55,13 +60,15 @@ namespace DotJEM.Json.Index.Backup
                     sdp.Release(commit);
                 }
             }
+
+            return target.Snapshots.Last();
         }
 
-        public static void Restore(this ILuceneJsonIndex self, IIndexBackupSource source)
+        public static void Restore(this ILuceneJsonIndex self, IIndexSnapshotSource source, ISnapshotProperties properties = null)
         {
             self.Storage.Delete();
             LuceneDirectory dir = self.Storage.Directory;
-            using (IIndexBackupReader reader = source.Open())
+            using (IIndexSnapshotReader reader = source.Open())
             {
                 ILuceneFile sementsFile = null;
                 List<string> files = new List<string>();
@@ -106,38 +113,40 @@ namespace DotJEM.Json.Index.Backup
         }
     }
 
-    public interface IIndexBackupSource
+    public interface ISnapshotProperties
     {
-        IIndexBackupReader Open();
+        void WriteTo(Stream target);
     }
 
-    public class IndexZipBackupSource : IIndexBackupSource
+    public interface IIndexSnapshotSource
+    {
+        IIndexSnapshotReader Open();
+    }
+
+    public class IndexZipSnapshotSource : IIndexSnapshotSource
     {
         private readonly string path;
         private readonly long? generation;
 
-        public IndexZipBackupSource(string path, long? generation = null)
+        public IndexZipSnapshotSource(string path, long? generation = null)
         {
             this.path = path;
             this.generation = generation;
         }
 
-        public IIndexBackupReader Open()
+        public IIndexSnapshotReader Open()
         {
-            if (generation == null)
-            {
-                string file = Directory.GetFiles(path, "*.zip")
-                    .OrderByDescending(f => f)
-                    .FirstOrDefault();
-                //TODO: Verify generation exist!!
-                return new IndexZipBackupReader(file);
-            }
             //TODO: Verify generation exist!!
-            return new IndexZipBackupReader(Path.Combine(path, $"{generation:x8}.zip"));
+            if (generation != null) return new IndexZipSnapshotReader(Path.Combine(path, $"{generation:x8}.zip"));
+            
+            string file = Directory.GetFiles(path, "*.zip")
+                .OrderByDescending(f => f)
+                .FirstOrDefault();
+            return new IndexZipSnapshotReader(file);
         }
     }
 
-    public interface IIndexBackupReader : IDisposable, IEnumerable<ILuceneFile>
+    public interface IIndexSnapshotReader : IDisposable, IEnumerable<ILuceneFile>
     {
         long Generation { get; }
     }
@@ -163,23 +172,40 @@ namespace DotJEM.Json.Index.Backup
         }
     }
 
-    public interface IIndexBackupTarget
+    public interface IIndexSnapshotTarget
     {
-        IIndexBackupWriter Open(long generation);
+        IReadOnlyCollection<ISnapshot> Snapshots { get; }
+        IIndexSnapshotWriter Open(long generation);
     }
 
-    public interface IIndexBackupWriter : IDisposable
+    public interface ISnapshot
     {
-        void AddFile(string fileName, LuceneDirectory dir);
-        void AddSegmentsFile(string segmentsFile, LuceneDirectory dir);
     }
 
-    public class IndexZipBackupReader : IIndexBackupReader
+    public class SingleFileSnapshot : ISnapshot
+    {
+        public string Path { get; }
+
+        public SingleFileSnapshot(string path)
+        {
+            Path = path;
+        }
+    }
+
+    public interface IIndexSnapshotWriter : IDisposable
+    {
+        void WriteFile(string fileName, LuceneDirectory dir);
+        void WriteSegmentsFile(string segmentsFile, LuceneDirectory dir);
+        void WriteProperties(ISnapshotProperties properties);
+    }
+
+
+    public class IndexZipSnapshotReader : Disposable, IIndexSnapshotReader
     {
         private readonly ZipArchive archive;
         public long Generation { get; }
 
-        public IndexZipBackupReader(string path)
+        public IndexZipSnapshotReader(string path)
         {
             string generation = Path.GetFileNameWithoutExtension(path);
             this.Generation = long.Parse(generation, NumberStyles.AllowHexSpecifier);
@@ -191,14 +217,11 @@ namespace DotJEM.Json.Index.Backup
         {
             return archive.Entries.Select(entry =>
             {
-                using (MemoryStream target = new MemoryStream())
-                {
-                    using (Stream source = entry.Open())
-                    {
-                        source.CopyTo(target);
-                    }
-                    return new LuceneFile(entry.Name, target.ToArray());
-                }
+                using MemoryStream target = new MemoryStream();
+                using Stream source = entry.Open();
+                source.CopyTo(target);
+                
+                return new LuceneFile(entry.Name, target.ToArray());
             }).GetEnumerator();
         }
 
@@ -207,56 +230,70 @@ namespace DotJEM.Json.Index.Backup
             return GetEnumerator();
         }
 
-        public void Dispose()
+        protected override void Dispose(bool disposing)
         {
-            this.archive.Dispose();
+            if (disposing)
+            {
+                archive.Dispose();
+            }
+            base.Dispose(disposing);
         }
     }
 
-    public class IndexZipBackupWriter : IIndexBackupWriter
+    public class IndexZipSnapshotWriter : Disposable, IIndexSnapshotWriter
     {
         private readonly ZipArchive archive;
-        private readonly List<string> fileListings = new List<string>();
 
-        public IndexZipBackupWriter(string path)
+        public IndexZipSnapshotWriter(string path)
         {
             this.archive = ZipFile.Open(path, ZipArchiveMode.Create);
         }
 
-        public void AddFile(string fileName, LuceneDirectory dir)
+        public void WriteFile(string fileName, LuceneDirectory dir)
         {
-            using (IndexInputStream source = new IndexInputStream(dir.OpenInput(fileName, IOContext.READ_ONCE)))
+            using IndexInputStream source = new IndexInputStream(dir.OpenInput(fileName, IOContext.READ_ONCE));
+            using Stream target = archive.CreateEntry(fileName).Open();
+            source.CopyTo(target);
+        }
+
+        public void WriteSegmentsFile(string segmentsFile, LuceneDirectory dir)
+        {
+            this.WriteFile(segmentsFile, dir);
+        }
+
+        public void WriteProperties(ISnapshotProperties properties)
+        {
+            using Stream target = archive.CreateEntry("_properties").Open();
+            properties.WriteTo(target);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
             {
-                using (Stream target = archive.CreateEntry(fileName).Open())
-                {
-                    source.CopyTo(target);
-                }
+                archive?.Dispose();
             }
-        }
-
-        public void AddSegmentsFile(string segmentsFile, LuceneDirectory dir)
-        {
-            this.AddFile(segmentsFile, dir);
-        }
-
-        public void Dispose()
-        {
-            archive?.Dispose();
+            base.Dispose(disposing);
         }
     }
 
-    public class IndexZipBackupTarget : IIndexBackupTarget
+    public class IndexZipSnapshotTarget : IIndexSnapshotTarget
     {
         private readonly string path;
+        private readonly List<SingleFileSnapshot> snapShots = new List<SingleFileSnapshot>();
 
-        public IndexZipBackupTarget(string path)
+        public IReadOnlyCollection<ISnapshot> Snapshots => snapShots.AsReadOnly(); 
+
+        public IndexZipSnapshotTarget(string path)
         {
             this.path = path;
         }
 
-        public IIndexBackupWriter Open(long generation)
+        public IIndexSnapshotWriter Open(long generation)
         {
-            return new IndexZipBackupWriter(Path.Combine(path, $"{generation:x8}.zip"));
+            string snapshotPath = Path.Combine(path, $"{generation:x8}.zip");
+            snapShots.Add(new SingleFileSnapshot(snapshotPath));
+            return new IndexZipSnapshotWriter(snapshotPath);
         }
     }
 }

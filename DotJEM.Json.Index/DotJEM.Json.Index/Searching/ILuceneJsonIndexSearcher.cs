@@ -9,14 +9,14 @@ namespace DotJEM.Json.Index.Searching
     public interface ILuceneJsonIndexSearcher : IDisposable
     {
         ILuceneJsonIndex Index { get; }
-        IInfoEventStream InfoStream { get; }
+        IEventInfoStream InfoStream { get; }
         Search Search(Query query);
     }
 
     public class LuceneJsonIndexSearcher : Disposable, ILuceneJsonIndexSearcher
     {
         public ILuceneJsonIndex Index { get; }
-        public IInfoEventStream InfoStream { get; } = InfoEventStream.DefaultStream.Bind<LuceneJsonIndexSearcher>();
+        public IEventInfoStream InfoStream { get; } = EventInfoStream.Default.Bind<LuceneJsonIndexSearcher>();
 
         public LuceneJsonIndexSearcher(ILuceneJsonIndex index)
         {
@@ -25,7 +25,6 @@ namespace DotJEM.Json.Index.Searching
 
         public Search Search(Query query)
         {
-            //TODO: Retrieve InfoEventStream
             return new Search(Index.SearcherManager, InfoStream, query);
         }
     }

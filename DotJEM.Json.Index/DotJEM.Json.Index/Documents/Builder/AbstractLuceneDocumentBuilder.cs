@@ -12,7 +12,7 @@ namespace DotJEM.Json.Index.Documents.Builder
 {
     public interface ILuceneDocumentBuilder
     {
-        IInfoEventStream InfoStream { get; }
+        IEventInfoStream EventInfoStream { get; }
         ILuceneDocument Build(JObject json);
     }
 
@@ -47,16 +47,16 @@ namespace DotJEM.Json.Index.Documents.Builder
     {
         private readonly IFieldResolver resolver;
         private readonly ILuceneJsonDocumentSerializer documentSerializer;
-        private readonly ITypeBoundInfoStream infoStream;
+        private readonly ITypeBoundEventInfoStream eventInfoStream;
 
         private ILuceneDocument document;
 
-        public IInfoEventStream InfoStream => infoStream;
+        public IEventInfoStream EventInfoStream => eventInfoStream;
 
-        protected AbstractLuceneDocumentBuilder(IFieldResolver resolver = null, ILuceneJsonDocumentSerializer documentSerializer = null, IInfoEventStream infoStream = null)
+        protected AbstractLuceneDocumentBuilder(IFieldResolver resolver = null, ILuceneJsonDocumentSerializer documentSerializer = null, IEventInfoStream eventInfoStream = null)
         {
             this.resolver = resolver ?? new FieldResolver();
-            this.infoStream = (infoStream ?? InfoEventStream.DefaultStream).Bind<AbstractLuceneDocumentBuilder>();
+            this.eventInfoStream = (eventInfoStream ?? Diagnostics.EventInfoStream.Default).Bind<AbstractLuceneDocumentBuilder>();
             this.documentSerializer = documentSerializer ?? new GZipLuceneJsonDocumentSerialier();
         }
 

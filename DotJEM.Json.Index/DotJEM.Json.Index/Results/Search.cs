@@ -48,28 +48,28 @@ namespace DotJEM.Json.Index.Results
         private readonly bool doDocScores;
         private readonly bool doMaxScores;
         private readonly Sort sort;
-        public IInfoEventStream InfoStream { get; }
+        public IEventInfoStream EventInfoStream { get; }
 
         public Guid CorrelationId { get; } = Guid.NewGuid();
 
-        public Search Take(int newTake) => new Search(manager, InfoStream, query, skip, newTake, sort, filter, doDocScores, doMaxScores);
-        public Search Skip(int newSkip) => new Search(manager, InfoStream, query, newSkip, take, sort, filter, doDocScores, doMaxScores);
-        public Search Query(Query newQuery) => new Search(manager, InfoStream, newQuery, skip, take, sort, filter, doDocScores, doMaxScores);
-        public Search OrderBy(Sort newSort) => new Search(manager, InfoStream, query, skip, take, newSort, filter, doDocScores, doMaxScores);
-        public Search Filter(Filter newFilter) => new Search(manager, InfoStream, query, skip, take, sort, newFilter, doDocScores, doMaxScores);
+        public Search Take(int newTake) => new Search(manager, EventInfoStream, query, skip, newTake, sort, filter, doDocScores, doMaxScores);
+        public Search Skip(int newSkip) => new Search(manager, EventInfoStream, query, newSkip, take, sort, filter, doDocScores, doMaxScores);
+        public Search Query(Query newQuery) => new Search(manager, EventInfoStream, newQuery, skip, take, sort, filter, doDocScores, doMaxScores);
+        public Search OrderBy(Sort newSort) => new Search(manager, EventInfoStream, query, skip, take, newSort, filter, doDocScores, doMaxScores);
+        public Search Filter(Filter newFilter) => new Search(manager, EventInfoStream, query, skip, take, sort, newFilter, doDocScores, doMaxScores);
 
-        public Search WithoutDocScores() => new Search(manager, InfoStream, query, skip, take, sort, filter, false, doMaxScores);
-        public Search WithoutMaxScores() => new Search(manager, InfoStream, query, skip, take, sort, filter, doDocScores, false);
-        public Search WithoutScores() => new Search(manager, InfoStream, query, skip, take, sort, filter, false, false);
+        public Search WithoutDocScores() => new Search(manager, EventInfoStream, query, skip, take, sort, filter, false, doMaxScores);
+        public Search WithoutMaxScores() => new Search(manager, EventInfoStream, query, skip, take, sort, filter, doDocScores, false);
+        public Search WithoutScores() => new Search(manager, EventInfoStream, query, skip, take, sort, filter, false, false);
 
-        public Search WithDocScores() => new Search(manager, InfoStream, query, skip, take, sort, filter, true, doMaxScores);
-        public Search WithMaxScores() => new Search(manager, InfoStream, query, skip, take, sort, filter, doDocScores, true);
-        public Search WithScores() => new Search(manager, InfoStream, query, skip, take, sort, filter, true, true);
+        public Search WithDocScores() => new Search(manager, EventInfoStream, query, skip, take, sort, filter, true, doMaxScores);
+        public Search WithMaxScores() => new Search(manager, EventInfoStream, query, skip, take, sort, filter, doDocScores, true);
+        public Search WithScores() => new Search(manager, EventInfoStream, query, skip, take, sort, filter, true, true);
 
-        public Search(IIndexSearcherManager manager, IInfoEventStream info, Query query = null, int skip = 0, int take = 25, Sort sort = null, Filter filter = null, bool doDocScores = true, bool doMaxScores = true)
+        public Search(IIndexSearcherManager manager, IEventInfoStream eventInfo, Query query = null, int skip = 0, int take = 25, Sort sort = null, Filter filter = null, bool doDocScores = true, bool doMaxScores = true)
         {
             this.manager = manager;
-            this.InfoStream = info;
+            this.EventInfoStream = eventInfo;
             this.skip = skip;
             this.take = take;
             this.query = query;
@@ -86,7 +86,7 @@ namespace DotJEM.Json.Index.Results
         private async Task<SearchResults> Execute(Query query, int skip, int take, Sort sort, Filter filter, bool doDocScores, bool doMaxScores)
         {
             await Task.Yield();
-            using (IInfoStreamCorrelationScope scope = InfoStream.Scope(GetType(), CorrelationId))
+            using (IInfoStreamCorrelationScope scope = EventInfoStream.Scope(GetType(), CorrelationId))
             {
                 scope.Debug($"Execute Search for query: {query}", new object[] { query, skip, take, sort, filter, doDocScores, doMaxScores });
 

@@ -12,7 +12,7 @@ namespace DotJEM.Json.Index.Documents.Info
 {
     public interface IFieldInformationManager
     {
-        IInfoEventStream InfoStream { get; }
+        IEventInfoStream InfoStream { get; }
         IFieldResolver Resolver { get; }
 
         IEnumerable<string> ContentTypes { get; }
@@ -30,16 +30,16 @@ namespace DotJEM.Json.Index.Documents.Info
         private Dictionary<string, IContentTypeInfo> contentTypes = new Dictionary<string, IContentTypeInfo>();
         private ConcurrentDictionary<string, IContentTypeInfo> map = new ConcurrentDictionary<string, IContentTypeInfo>();
 
-        public IInfoEventStream InfoStream { get; }
+        public IEventInfoStream InfoStream { get; }
         public IFieldResolver Resolver { get; }
         public IEnumerable<string> ContentTypes => contentTypes.Keys;
 
         public IEnumerable<IIndexableJsonFieldInfo> AllFields { get; }
         public IEnumerable<IIndexableFieldInfo> AllIndexedFields { get; }
 
-        public DefaultFieldInformationManager(IFieldResolver resolver, IInfoEventStream infoStream = null)
+        public DefaultFieldInformationManager(IFieldResolver resolver, IEventInfoStream eventInfoStream = null)
         {
-            InfoStream = infoStream ?? InfoEventStream.DefaultStream.Bind<DefaultFieldInformationManager>();
+            InfoStream = eventInfoStream ?? EventInfoStream.Default.Bind<DefaultFieldInformationManager>();
             Resolver = resolver;
         }
 

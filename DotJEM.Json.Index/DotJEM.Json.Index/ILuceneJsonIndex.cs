@@ -1,19 +1,10 @@
 ﻿using System;
-using System.IO;
-using System.IO.Compression;
 using DotJEM.Json.Index.Configuration;
 using DotJEM.Json.Index.Diagnostics;
 using DotJEM.Json.Index.Documents;
 using DotJEM.Json.Index.IO;
-using DotJEM.Json.Index.Results;
 using DotJEM.Json.Index.Searching;
-using DotJEM.Json.Index.Serialization;
 using DotJEM.Json.Index.Storage;
-using Lucene.Net.Index;
-using Lucene.Net.Search;
-using Lucene.Net.Store;
-using Lucene.Net.Util;
-using Directory = Lucene.Net.Store.Directory;
 
 namespace DotJEM.Json.Index
 {
@@ -24,7 +15,7 @@ namespace DotJEM.Json.Index
     }
     public interface ILuceneJsonIndex : ILuceneJsonIndexSearcherProvider
     {
-        IInfoEventStream InfoStream { get; }
+        IEventInfoStream InfoStream { get; }
         IServiceResolver Services { get; }
         IJsonIndexStorage Storage { get; }
         IJsonIndexConfiguration Configuration { get; }
@@ -37,7 +28,7 @@ namespace DotJEM.Json.Index
 
     public class LuceneJsonIndex : ILuceneJsonIndex
     {
-        public IInfoEventStream InfoStream { get; } = InfoEventStream.DefaultStream.Bind<LuceneJsonIndex>();
+        public IEventInfoStream InfoStream { get; } = EventInfoStream.Default.Bind<LuceneJsonIndex>();
         public IJsonIndexStorage Storage { get; }
         public IJsonIndexConfiguration Configuration { get; }
         public IServiceResolver Services { get; }

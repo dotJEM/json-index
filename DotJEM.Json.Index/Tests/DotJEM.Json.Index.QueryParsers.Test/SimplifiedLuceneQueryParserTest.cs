@@ -27,7 +27,7 @@ namespace DotJEM.Json.Index.QueryParsers.Test
 
     public class FakeFieldsInformationManager : IFieldInformationManager
     {
-        public IInfoEventStream InfoStream { get; }
+        public IEventInfoStream InfoStream { get; }
         public IFieldResolver Resolver { get; }
         public IEnumerable<string> ContentTypes { get; }
         public IEnumerable<IIndexableJsonFieldInfo> AllFields { get; }

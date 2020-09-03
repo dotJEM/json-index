@@ -15,8 +15,8 @@ namespace DotJEM.Json.Index.Documents.Builder
             IFieldResolver resolver = null, 
             IFieldStrategyCollection strategies = null,
             ILuceneJsonDocumentSerializer documentSerializer = null,
-            IInfoEventStream infoStream = null) 
-            : base(resolver, documentSerializer, infoStream)
+            IEventInfoStream eventInfoStream = null) 
+            : base(resolver, documentSerializer, eventInfoStream)
         {
             this.strategies = strategies ?? new NullFieldStrategyCollection();
         }

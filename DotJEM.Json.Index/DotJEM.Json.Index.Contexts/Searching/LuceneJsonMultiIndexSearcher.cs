@@ -12,7 +12,7 @@ namespace DotJEM.Json.Index.Contexts.Searching
     {
         public ILuceneJsonIndex Index { get; }
 
-        public IInfoEventStream InfoStream { get; } = new InfoEventStream();
+        public IEventInfoStream InfoStream { get; } = EventInfoStream.Default.Bind<LuceneJsonMultiIndexSearcher>();
 
         private readonly ILuceneJsonIndex[] indicies;
 

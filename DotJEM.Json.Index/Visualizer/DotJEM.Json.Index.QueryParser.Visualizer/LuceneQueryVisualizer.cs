@@ -88,7 +88,7 @@ namespace DotJEM.Json.Index.QueryParser.Visualizer
 
     internal class DummyManager : IFieldInformationManager
     {
-        public IInfoEventStream InfoStream { get; }
+        public IEventInfoStream InfoStream { get; }
         public IFieldResolver Resolver { get; }
         public IEnumerable<string> ContentTypes { get; }
         public IEnumerable<IIndexableJsonFieldInfo> AllFields { get; }

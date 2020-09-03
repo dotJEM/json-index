@@ -1,18 +1,15 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using System.Text;
 using DotJEM.Json.Index.Util;
 
 namespace DotJEM.Json.Index.Diagnostics
 {
     // TODO: Split into exposed and "internal" parts - internal parts should still be public but not part of the interface.
-    public interface IInfoEventStream : IObservable<InfoEventArgs>
+    public interface IEventInfoStream : IObservable<InfoEventArgs>
     {
-        ITypeBoundInfoStream Bind<TCaller>();
-        ITypeBoundInfoStream Bind(Type callerType);
+        ITypeBoundEventInfoStream Bind<TCaller>();
+        ITypeBoundEventInfoStream Bind(Type callerType);
         IInfoStreamCorrelationScope Scope(Type callerType);
         IInfoStreamCorrelationScope Scope(Type callerType, Guid correlationId);
 
@@ -99,9 +96,9 @@ namespace DotJEM.Json.Index.Diagnostics
         public void Dispose() => unsubscribe(Key);
     }
 
-    public sealed class InfoEventStream : IInfoEventStream
+    public sealed class EventInfoStream : IEventInfoStream
     {
-        public static IInfoEventStream DefaultStream { get; } = new InfoEventStream();
+        public static IEventInfoStream Default { get; } = new EventInfoStream();
 
         private readonly ConcurrentDictionary<Guid, IObserver<InfoEventArgs>> observers
             = new ConcurrentDictionary<Guid, IObserver<InfoEventArgs>>();
@@ -114,10 +111,10 @@ namespace DotJEM.Json.Index.Diagnostics
         }
 
         private void Unsubscribe(Guid key) => observers.TryRemove(key, out var _);
-        public ITypeBoundInfoStream Bind<TCaller>()
+        public ITypeBoundEventInfoStream Bind<TCaller>()
             => Bind(typeof(TCaller));
-        public ITypeBoundInfoStream Bind(Type callerType)
-            => new TypeBoundInfoStream(this, callerType);
+        public ITypeBoundEventInfoStream Bind(Type callerType)
+            => new TypeBoundEventInfoStream(this, callerType);
 
         public IInfoStreamCorrelationScope Scope(Type callerType)
             => new InfoStreamCorrelationScope(this, callerType, Guid.NewGuid());
@@ -153,7 +150,7 @@ namespace DotJEM.Json.Index.Diagnostics
 
     }
 
-    public interface ITypeBoundInfoStream : IInfoEventStream
+    public interface ITypeBoundEventInfoStream : IEventInfoStream
     {
         IInfoStreamCorrelationScope Scope();
         IInfoStreamCorrelationScope Scope(Guid correlationId);
@@ -170,12 +167,12 @@ namespace DotJEM.Json.Index.Diagnostics
         void Exception(string message, Exception ex, object[] args, [CallerMemberName]string member = null);
     }
 
-    public class TypeBoundInfoStream : ITypeBoundInfoStream
+    public class TypeBoundEventInfoStream : ITypeBoundEventInfoStream
     {
-        private readonly IInfoEventStream inner;
+        private readonly IEventInfoStream inner;
         private readonly Type callerType;
 
-        public TypeBoundInfoStream(IInfoEventStream inner, Type callerType)
+        public TypeBoundEventInfoStream(IEventInfoStream inner, Type callerType)
         {
             this.inner = inner;
             this.callerType = callerType;
@@ -208,9 +205,9 @@ namespace DotJEM.Json.Index.Diagnostics
         public IDisposable Subscribe(IObserver<InfoEventArgs> observer) 
             => inner.Subscribe(observer);
 
-        public ITypeBoundInfoStream Bind<TCaller>()
+        public ITypeBoundEventInfoStream Bind<TCaller>()
             => inner.Bind<TCaller>();
-        public ITypeBoundInfoStream Bind(Type callerType)
+        public ITypeBoundEventInfoStream Bind(Type callerType)
             => inner.Bind(callerType);
         public IInfoStreamCorrelationScope Scope(Type callerType) 
             => inner.Scope(callerType);
@@ -249,11 +246,11 @@ namespace DotJEM.Json.Index.Diagnostics
 
     public class InfoStreamCorrelationScope : Disposable, IInfoStreamCorrelationScope
     {
-        private readonly IInfoEventStream inner;
+        private readonly IEventInfoStream inner;
         private readonly Type callerType;
         private readonly Guid correlationId;
 
-        public InfoStreamCorrelationScope(IInfoEventStream inner, Type callerType, Guid correlationId)
+        public InfoStreamCorrelationScope(IEventInfoStream inner, Type callerType, Guid correlationId)
         {
             this.inner = inner;
             this.callerType = callerType;
