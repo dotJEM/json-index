@@ -36,8 +36,17 @@ namespace DotJEM.Json.Index.Manager
 
         public void OnSource(IJsonIndexWriterCommand update)
         {
-            IJsonIndexWriter writer = index.CreateWriter();
-            update.Execute(writer);
+            try
+            {
+                IJsonIndexWriter writer = index.CreateWriter();
+                update.Execute(writer);
+                writer.Commit();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
         }
 
         public ISnapshot TakeSnapshot()

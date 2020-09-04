@@ -55,14 +55,12 @@ namespace DotJEM.Json.Index.Snapshots
             return target.Snapshots.Last();
         }
 
-        public static void Restore(this ILuceneJsonIndex self, IIndexSnapshotSource source, ISnapshotProperties properties = null)
+        public static ISnapshot Restore(this ILuceneJsonIndex self, IIndexSnapshotSource source, ISnapshotProperties properties = null)
         {
             self.Storage.Delete();
             LuceneDirectory dir = self.Storage.Directory;
             using (IIndexSnapshotReader reader = source.Open())
             {
-                
-
                 ILuceneFile sementsFile = null;
                 List<string> files = new List<string>();
                 foreach (ILuceneFile file in reader)
@@ -103,6 +101,7 @@ namespace DotJEM.Json.Index.Snapshots
             }
 
             self.WriterManager.Close();
+            return null;
         }
     }
 

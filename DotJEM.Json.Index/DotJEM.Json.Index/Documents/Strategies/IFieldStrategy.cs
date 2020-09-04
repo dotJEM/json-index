@@ -89,7 +89,7 @@ namespace DotJEM.Json.Index.Documents.Strategies
     {
         public IEnumerable<IIndexableJsonField> CreateFields(JToken token, IPathContext context)
         {
-            yield return new JsonIndexableFieldBuilder<int>(this, token, context).CreateInt64Field().Build();
+            yield return new JsonIndexableFieldBuilder<long>(this, token, context).CreateInt64Field().Build();
         }
     }
 

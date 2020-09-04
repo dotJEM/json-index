@@ -45,8 +45,8 @@ namespace DotJEM.Json.Index.Documents.Info
 
         public void Merge(string contentType, IContentTypeInfo info)
         {
-            map.AddOrUpdate(contentType, info, (_, current) => current.Merge(info));
-            contentTypes[contentType] = info;
+            //map.AddOrUpdate(contentType, info, (_, current) => current.Merge(info));
+            //contentTypes[contentType] = info;
         }
 
         public IIndexableJsonFieldInfo Lookup(string fieldName)
