@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -31,12 +32,33 @@ namespace Ingest
             IndexIngestHandler handler = new IndexIngestHandler(builder.Build(), new CompositeIngestDataSource(sources));
             handler.Initialize();
 
+            DateTime start = DateTime.Now;
+            Stopwatch timer = Stopwatch.StartNew();
+            
             foreach (StorageAreaIngestDataSource source in sources)
             {
                 source.Start();
+                source.OnReady += CheckSources;
             }
 
-            Console.ReadLine();
+            while (!IsExit(Console.ReadLine()))
+            {
+                CheckSources(null, null);
+            }
+
+
+            bool IsExit(string str)
+            {
+                return "Q;QUIT;EXIT".Split(';').Any(s => s.Equals(str, StringComparison.OrdinalIgnoreCase));
+            }
+
+            void CheckSources(object sender, EventArgs eventArgs)
+            {
+                TimeSpan elapsed = timer.Elapsed;
+                int ready = sources.Count(s => s.Ready);
+                Console.WriteLine($"{ready} Sources Ready of {sources.Length}");
+                Console.WriteLine($"Elapsed time: {elapsed.Hours}h {elapsed.Minutes}m {elapsed.Seconds}s {elapsed.Milliseconds}f");
+            }
         }
     }
 
@@ -83,12 +105,7 @@ namespace Ingest
                     FaultyChange[] faults = changes.OfType<FaultyChange>().ToArray();
                     if (faults.Length > 0)
                     {
-                        foreach (FaultyChange fault in faults)
-                        {
-                            Console.WriteLine($"{fault.Id} - {fault.Type}");
-                            
-                        }
-
+                        Console.WriteLine($"{faults.Length} Faults found in: {area.Name}");
                     }
                     if (changes.Count.Created > 0)
                     {
@@ -107,16 +124,28 @@ namespace Ingest
                         JObject[] deleted = changes.Deleted.AsParallel().Where(c => !(c is FaultyChange)).Select(c => c.Entity).ToArray();
                         observer.OnNext(new JsonIndexMultiDelete(deleted));
                     }
-                    Console.WriteLine($"Ingesting {changes} changes from {area.Name}");
+
+                    ingestedCount += changes.Count;
+
+                    Console.WriteLine($"Ingesting {changes} changes from {area.Name} [{ingestedCount:N}, {changes.Generation:N}/{initialGeneration:N}]");
                     if (changes.Count == 5000)
                         continue;
                 }
                 else
                 {
-                    Console.WriteLine($"No changes from {area.Name}");
+                    if (!Ready)
+                    {
+                        Console.WriteLine($"No changes from {area.Name}");
+                        Ready = true;
+                        OnReady?.Invoke(this, EventArgs.Empty);
+                    }
                 }
                 await Task.Delay(10000);
             }
         }
+
+        private long ingestedCount = 0;
+        public bool Ready { get; private set; } = false;
+        public event EventHandler<EventArgs> OnReady;
     }
 }
