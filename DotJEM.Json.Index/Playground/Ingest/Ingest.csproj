@@ -34,6 +34,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Antlr4.Runtime, Version=4.6.0.0, Culture=neutral, PublicKeyToken=09abb75b9ed49849, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Antlr4.Runtime.4.6.6\lib\net45\Antlr4.Runtime.dll</HintPath>
+    </Reference>
     <Reference Include="DotJEM.Json.Storage, Version=0.3.12.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\packages\DotJEM.Json.Storage.0.3.12\lib\net45\DotJEM.Json.Storage.dll</HintPath>
     </Reference>
@@ -215,6 +218,10 @@
     <ProjectReference Include="..\..\DotJEM.Json.Index.Ingest\DotJEM.Json.Index.Ingest.csproj">
       <Project>{F58085A9-86BD-4E29-8766-AB0C9B0A0BA7}</Project>
       <Name>DotJEM.Json.Index.Ingest</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\DotJEM.Json.Index.QueryParsers\DotJEM.Json.Index.QueryParsers.csproj">
+      <Project>{A7C92428-A327-4E1A-9CC4-341D9E3868A4}</Project>
+      <Name>DotJEM.Json.Index.QueryParsers</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\DotJEM.Json.Index\DotJEM.Json.Index.csproj">
       <Project>{2987D5EB-2353-42F3-AE2E-B166B5093EEF}</Project>

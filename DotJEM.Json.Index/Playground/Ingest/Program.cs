@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 using DotJEM.Json.Index;
 using DotJEM.Json.Index.Documents.Fields;
 using DotJEM.Json.Index.Manager;
+using DotJEM.Json.Index.QueryParsers;
+using DotJEM.Json.Index.Results;
 using DotJEM.Json.Storage;
 using DotJEM.Json.Storage.Adapter;
 using DotJEM.Json.Storage.Adapter.Materialize.ChanceLog;
@@ -28,11 +30,13 @@ namespace Ingest
 
             LuceneJsonIndexBuilder builder = new LuceneJsonIndexBuilder("main");
             builder.UseMemoryStorage();
+            builder.Services.Use<ILuceneQueryParser, SimplifiedLuceneQueryParser>();
 
-            IndexIngestHandler handler = new IndexIngestHandler(builder.Build(), new CompositeIngestDataSource(sources));
+            ILuceneJsonIndex index = builder.Build();
+
+            IndexIngestHandler handler = new IndexIngestHandler(index, new CompositeIngestDataSource(sources));
             handler.Initialize();
 
-            DateTime start = DateTime.Now;
             Stopwatch timer = Stopwatch.StartNew();
             
             foreach (StorageAreaIngestDataSource source in sources)
@@ -49,7 +53,23 @@ namespace Ingest
 
             bool IsExit(string str)
             {
-                return "Q;QUIT;EXIT".Split(';').Any(s => s.Equals(str, StringComparison.OrdinalIgnoreCase));
+                if ("Q;QUIT;EXIT".Split(';').Any(s => s.Equals(str, StringComparison.OrdinalIgnoreCase)))
+                    return true;
+
+                if (string.IsNullOrEmpty(str))
+                    return false;
+
+                try
+                {
+                    Stopwatch searchtimer = Stopwatch.StartNew();
+                    SearchResults results = index.Search(str).Take(25).Execute().Result;
+                    Console.WriteLine($"Search for '{str}' resulted in {results.TotalHits} results in {searchtimer.ElapsedMilliseconds} ms...");
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                }
+                return false;
             }
 
             void CheckSources(object sender, EventArgs eventArgs)
@@ -93,7 +113,7 @@ namespace Ingest
 
         private async Task Ingest()
         {
-            Console.WriteLine($"Starting Ingest from {area.Name}");
+            //Console.WriteLine($"Starting Ingest from {area.Name}");
 
             IStorageAreaLog log = area.Log;
             long initialGeneration = log.LatestGeneration;
@@ -105,7 +125,7 @@ namespace Ingest
                     FaultyChange[] faults = changes.OfType<FaultyChange>().ToArray();
                     if (faults.Length > 0)
                     {
-                        Console.WriteLine($"{faults.Length} Faults found in: {area.Name}");
+                        //Console.WriteLine($"{faults.Length} Faults found in: {area.Name}");
                     }
                     if (changes.Count.Created > 0)
                     {
@@ -127,7 +147,7 @@ namespace Ingest
 
                     ingestedCount += changes.Count;
 
-                    Console.WriteLine($"Ingesting {changes} changes from {area.Name} [{ingestedCount:N}, {changes.Generation:N}/{initialGeneration:N}]");
+                    //Console.WriteLine($"Ingesting {changes} changes from {area.Name} [{ingestedCount:N}, {changes.Generation:N}/{initialGeneration:N}]");
                     if (changes.Count == 5000)
                         continue;
                 }
@@ -135,7 +155,7 @@ namespace Ingest
                 {
                     if (!Ready)
                     {
-                        Console.WriteLine($"No changes from {area.Name}");
+                        //Console.WriteLine($"No changes from {area.Name}");
                         Ready = true;
                         OnReady?.Invoke(this, EventArgs.Empty);
                     }

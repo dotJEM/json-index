@@ -47,6 +47,8 @@ namespace DotJEM.Json.Index.QueryParsers
         private readonly Analyzer analyzer;
         private readonly IFieldInformationManager fields;
 
+        public static bool EnableExperimentalParsing { get; set; } = false;
+
         public SimplifiedLuceneQueryAstVisitor(IFieldInformationManager fields, Analyzer analyzer)
         {
             this.fields = fields;
@@ -88,27 +90,30 @@ namespace DotJEM.Json.Index.QueryParsers
         {
             BooleanQuery query = new BooleanQuery(true);
 
-            if (ast.Name != null)
+            if (EnableExperimentalParsing)
             {
-                // If we have a contentType context, use that.
-                IIndexableJsonFieldInfo field = fields.Lookup(ast.Name);
-                if (field != null)
+                if (ast.Name != null)
                 {
-                    foreach (IIndexableFieldInfo info in field.LuceneFieldInfos)
+                    // If we have a contentType context, use that.
+                    IIndexableJsonFieldInfo field = fields.Lookup(ast.Name);
+                    if (field != null)
                     {
-                        //Note: in the most common scenarios, there should only be one FieldInfo here.
+                        foreach (IIndexableFieldInfo info in field.LuceneFieldInfos)
+                        {
+                            //Note: in the most common scenarios, there should only be one FieldInfo here.
+                        }
                     }
-                }
-                
 
-                //IReadOnlyFieldinformation fieldInfo = fields.Lookup(ast.Name);
-                //foreach (IFieldMetaData metaData in fieldInfo.MetaData)
-                //{
-                //}
-            }
-            else
-            {
-                // Calculate relevant fields from context.
+
+                    //IReadOnlyFieldinformation fieldInfo = fields.Lookup(ast.Name);
+                    //foreach (IFieldMetaData metaData in fieldInfo.MetaData)
+                    //{
+                    //}
+                }
+                else
+                {
+                    // Calculate relevant fields from context.
+                }
             }
 
 
