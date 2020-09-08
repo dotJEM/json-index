@@ -15,10 +15,15 @@ using LuceneDirectory = Lucene.Net.Store.Directory;
 
 namespace DotJEM.Json.Index.Snapshots
 {
-    public static class LuceneBackupIndexExtension
+    public interface IIndexSnapshotHandler
     {
+        ISnapshot Snapshot(ILuceneJsonIndex self, IIndexSnapshotTarget target);
+        ISnapshot Restore(ILuceneJsonIndex self, IIndexSnapshotSource source);
+    }
 
-        public static ISnapshot Snapshot(this ILuceneJsonIndex self, IIndexSnapshotTarget target, ISnapshotProperties properties = null)
+    public class DefaultIndexSnapshotHandler : IIndexSnapshotHandler
+    {
+        public ISnapshot Snapshot(ILuceneJsonIndex self, IIndexSnapshotTarget target)
         {
             IndexWriter writer = self.WriterManager.Writer;
             SnapshotDeletionPolicy sdp = writer.Config.IndexDeletionPolicy as SnapshotDeletionPolicy;
@@ -35,8 +40,6 @@ namespace DotJEM.Json.Index.Snapshots
                 string segmentsFile = commit.SegmentsFileName;
 
                 using IIndexSnapshotWriter snapshotWriter = target.Open(commit.Generation);
-
-                if(properties != null) snapshotWriter.WriteProperties(properties);
                 foreach (string fileName in commit.FileNames)
                 {
                     if (!fileName.Equals(segmentsFile, StringComparison.Ordinal))
@@ -55,8 +58,9 @@ namespace DotJEM.Json.Index.Snapshots
             return target.Snapshots.Last();
         }
 
-        public static ISnapshot Restore(this ILuceneJsonIndex self, IIndexSnapshotSource source, ISnapshotProperties properties = null)
+        public ISnapshot Restore(ILuceneJsonIndex self, IIndexSnapshotSource source)
         {
+
             self.Storage.Delete();
             LuceneDirectory dir = self.Storage.Directory;
             using (IIndexSnapshotReader reader = source.Open())
@@ -102,6 +106,22 @@ namespace DotJEM.Json.Index.Snapshots
 
             self.WriterManager.Close();
             return null;
+        }
+    }
+
+    public static class LuceneSnapshotIndexExtension
+    {
+
+        public static ISnapshot Snapshot(this ILuceneJsonIndex self, IIndexSnapshotTarget target)
+        {
+            IIndexSnapshotHandler handler = self.Services.Resolve<IIndexSnapshotHandler>() ?? new DefaultIndexSnapshotHandler();
+            return handler.Snapshot(self, target);
+        }
+
+        public static ISnapshot Restore(this ILuceneJsonIndex self, IIndexSnapshotSource source)
+        {
+            IIndexSnapshotHandler handler = self.Services.Resolve<IIndexSnapshotHandler>() ?? new DefaultIndexSnapshotHandler();
+            return handler.Restore(self, source);
         }
     }
 
@@ -188,7 +208,6 @@ namespace DotJEM.Json.Index.Snapshots
     {
         void WriteFile(string fileName, LuceneDirectory dir);
         void WriteSegmentsFile(string segmentsFile, LuceneDirectory dir);
-        void WriteProperties(ISnapshotProperties properties);
     }
 
 
@@ -250,12 +269,6 @@ namespace DotJEM.Json.Index.Snapshots
         public void WriteSegmentsFile(string segmentsFile, LuceneDirectory dir)
         {
             this.WriteFile(segmentsFile, dir);
-        }
-
-        public void WriteProperties(ISnapshotProperties properties)
-        {
-            using Stream target = archive.CreateEntry("_properties").Open();
-            properties.WriteTo(target);
         }
 
         protected override void Dispose(bool disposing)
