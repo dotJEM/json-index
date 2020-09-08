@@ -148,6 +148,8 @@ namespace DotJEM.Json.Index.Snapshots
 
         public IIndexSnapshotReader Open()
         {
+
+
             //TODO: Verify generation exist!!
             if (generation != null) return new IndexZipSnapshotReader(Path.Combine(path, $"{generation:x8}.zip"));
             
@@ -155,6 +157,46 @@ namespace DotJEM.Json.Index.Snapshots
                 .OrderByDescending(f => f)
                 .FirstOrDefault();
             return new IndexZipSnapshotReader(file);
+        }
+    }
+
+
+    public class IndexZipSnapshotReader : Disposable, IIndexSnapshotReader
+    {
+        private readonly ZipArchive archive;
+        public long Generation { get; }
+
+        public IndexZipSnapshotReader(string path)
+        {
+            string generation = Path.GetFileNameWithoutExtension(path);
+            this.Generation = long.Parse(generation, NumberStyles.AllowHexSpecifier);
+            this.archive = ZipFile.Open(path, ZipArchiveMode.Read);
+        }
+
+        public IEnumerator<ILuceneFile> GetEnumerator()
+        {
+            return archive.Entries.Select(entry =>
+            {
+                using MemoryStream target = new MemoryStream();
+                using Stream source = entry.Open();
+                source.CopyTo(target);
+
+                return new LuceneFile(entry.Name, target.ToArray());
+            }).GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                archive.Dispose();
+            }
+            base.Dispose(disposing);
         }
     }
 
@@ -208,46 +250,6 @@ namespace DotJEM.Json.Index.Snapshots
     {
         void WriteFile(string fileName, LuceneDirectory dir);
         void WriteSegmentsFile(string segmentsFile, LuceneDirectory dir);
-    }
-
-
-    public class IndexZipSnapshotReader : Disposable, IIndexSnapshotReader
-    {
-        private readonly ZipArchive archive;
-        public long Generation { get; }
-
-        public IndexZipSnapshotReader(string path)
-        {
-            string generation = Path.GetFileNameWithoutExtension(path);
-            this.Generation = long.Parse(generation, NumberStyles.AllowHexSpecifier);
-            this.archive = ZipFile.Open(path, ZipArchiveMode.Read);
-        }
-        
-        public IEnumerator<ILuceneFile> GetEnumerator()
-        {
-            return archive.Entries.Select(entry =>
-            {
-                using MemoryStream target = new MemoryStream();
-                using Stream source = entry.Open();
-                source.CopyTo(target);
-                
-                return new LuceneFile(entry.Name, target.ToArray());
-            }).GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                archive.Dispose();
-            }
-            base.Dispose(disposing);
-        }
     }
 
     public class IndexZipSnapshotWriter : Disposable, IIndexSnapshotWriter

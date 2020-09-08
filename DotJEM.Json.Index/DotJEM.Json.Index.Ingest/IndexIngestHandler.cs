@@ -1,17 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.IO.Compression;
-using System.Linq;
 using DotJEM.Json.Index.IO;
+using DotJEM.Json.Index.Manager;
 using DotJEM.Json.Index.Snapshots;
 using DotJEM.Json.Index.Util;
-using Lucene.Net.Store;
 using Newtonsoft.Json.Linq;
-using Directory = Lucene.Net.Store.Directory;
 
-
-namespace DotJEM.Json.Index.Manager
+namespace DotJEM.Json.Index.Ingest
 {
     //TODO: Index Ingest Manager.
     public interface IIndexIngestManager
@@ -59,9 +53,17 @@ namespace DotJEM.Json.Index.Manager
             IIngestDataSourceState state = new IngestDataSourceState();
             source.SaveState(state);
 
-            IIndexSnapshotTarget target = new IngestIndexZipSnapshotTarget("");
-            ISnapshot snapshot = index.Snapshot(target);
-            return null;
+            IIndexSnapshotTarget target = new IngestIndexZipSnapshotTarget("", JObject.FromObject(state));
+            return index.Snapshot(target);
+        }
+
+        public void RestoreSnapshot()
+        {
+            IngestIndexZipSnapshotSource snapshotSource = new IngestIndexZipSnapshotSource("");
+            index.Restore(snapshotSource);
+
+            IIngestDataSourceState state = snapshotSource.RecentProperties.ToObject<IngestDataSourceState>();
+            this.source.RestoreState(state);
         }
     }
 
@@ -154,65 +156,6 @@ namespace DotJEM.Json.Index.Manager
         public JToken ReadState(string key)
         {
             return state[key];
-        }
-    }
-
-
-
-    public class IngestIndexZipSnapshotTarget : IIndexSnapshotTarget
-    {
-        private readonly string path;
-        private readonly List<SingleFileSnapshot> snapShots = new List<SingleFileSnapshot>();
-
-        public IReadOnlyCollection<ISnapshot> Snapshots => snapShots.AsReadOnly(); 
-
-        public IngestIndexZipSnapshotTarget(string path)
-        {
-            this.path = path;
-        }
-
-        public virtual IIndexSnapshotWriter Open(long generation)
-        {
-            string snapshotPath = Path.Combine(path, $"{generation:x8}.zip");
-            snapShots.Add(new SingleFileSnapshot(snapshotPath));
-            return new Writer(snapshotPath);
-        }
-
-        private class Writer : Disposable, IIndexSnapshotWriter
-        {
-            private readonly ZipArchive archive;
-
-            public Writer(string path)
-            {
-                this.archive = ZipFile.Open(path, ZipArchiveMode.Create);
-            }
-
-            public void WriteFile(string fileName, Directory dir)
-            {
-                using IndexInputStream source = new IndexInputStream(dir.OpenInput(fileName, IOContext.READ_ONCE));
-                using Stream target = archive.CreateEntry(fileName).Open();
-                source.CopyTo(target);
-            }
-
-            public void WriteSegmentsFile(string segmentsFile, Directory dir)
-            {
-                this.WriteFile(segmentsFile, dir);
-            }
-
-            public void WriteProperties(ISnapshotProperties properties)
-            {
-                using Stream target = archive.CreateEntry("_properties").Open();
-                properties.WriteTo(target);
-            }
-
-            protected override void Dispose(bool disposing)
-            {
-                if (disposing)
-                {
-                    archive?.Dispose();
-                }
-                base.Dispose(disposing);
-            }
         }
     }
 }

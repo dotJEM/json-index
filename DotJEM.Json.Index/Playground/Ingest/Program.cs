@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using DotJEM.Json.Index;
 using DotJEM.Json.Index.Documents.Fields;
+using DotJEM.Json.Index.Ingest;
 using DotJEM.Json.Index.Manager;
 using DotJEM.Json.Index.QueryParsers;
 using DotJEM.Json.Index.Results;
