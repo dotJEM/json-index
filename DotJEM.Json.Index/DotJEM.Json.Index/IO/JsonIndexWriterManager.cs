@@ -15,6 +15,8 @@ namespace DotJEM.Json.Index.IO
 
     public class IndexWriterManager : Disposable, IIndexWriterManager
     {
+        public static int DEFAULT_RAM_BUFFER_SIZE_MB { get; set; } = 512;
+
         public event EventHandler<EventArgs> OnClose;
 
         private readonly ResetableLazy<IndexWriter> writer;
@@ -29,7 +31,7 @@ namespace DotJEM.Json.Index.IO
         protected virtual IndexWriter Open(ILuceneJsonIndex index)
         {
             IndexWriterConfig config = new IndexWriterConfig(index.Configuration.Version, index.Services.Resolve<Analyzer>());
-            config.RAMBufferSizeMB = 512;
+            config.RAMBufferSizeMB = DEFAULT_RAM_BUFFER_SIZE_MB;
             config.OpenMode = OpenMode.CREATE_OR_APPEND;
             config.IndexDeletionPolicy = new SnapshotDeletionPolicy(config.IndexDeletionPolicy);
             return new IndexWriter(index.Storage.Directory, config);

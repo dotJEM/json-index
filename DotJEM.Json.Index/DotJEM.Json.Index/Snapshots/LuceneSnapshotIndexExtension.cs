@@ -60,7 +60,7 @@ namespace DotJEM.Json.Index.Snapshots
 
         public ISnapshot Restore(ILuceneJsonIndex self, IIndexSnapshotSource source)
         {
-
+            
             self.Storage.Delete();
             LuceneDirectory dir = self.Storage.Directory;
             using (IIndexSnapshotReader reader = source.Open())
@@ -73,7 +73,6 @@ namespace DotJEM.Json.Index.Snapshots
                     {
                         sementsFile = file;
                         continue;
-                        
                     }
                     IndexOutput output = dir.CreateOutput(file.Name, IOContext.DEFAULT);
                     output.WriteBytes(file.Bytes, 0, file.Length);

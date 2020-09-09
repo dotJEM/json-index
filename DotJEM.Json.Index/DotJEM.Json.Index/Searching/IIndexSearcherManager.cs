@@ -28,6 +28,7 @@ namespace DotJEM.Json.Index.Searching
 
         public IIndexSearcherContext Acquire()
         {
+
             manager.Value.MaybeRefreshBlocking();
             return new IndexSearcherContext(manager.Value.Acquire(), searcher => manager.Value.Release(searcher));
         }
