@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading;
+using System.Runtime;
 using System.Threading.Tasks;
 using DotJEM.Json.Index;
-using DotJEM.Json.Index.Documents.Fields;
 using DotJEM.Json.Index.Ingest;
 using DotJEM.Json.Index.IO;
 using DotJEM.Json.Index.Manager;
@@ -16,7 +15,6 @@ using DotJEM.Json.Storage;
 using DotJEM.Json.Storage.Adapter;
 using DotJEM.Json.Storage.Adapter.Materialize.ChanceLog;
 using DotJEM.Json.Storage.Adapter.Materialize.Log;
-using Lucene.Net.Index;
 using Newtonsoft.Json.Linq;
 
 namespace Ingest
@@ -25,17 +23,23 @@ namespace Ingest
     {
         static void Main(string[] args)
         {
-            IndexWriterManager.DEFAULT_RAM_BUFFER_SIZE_MB = 1024 * 8; // 8GB.
+            string path = "G:\\INDEX";
+            Directory.CreateDirectory(path);
+            foreach (string file in Directory.GetFiles(path))
+                File.Delete(file);
+
+            //IndexWriterManager.DEFAULT_RAM_BUFFER_SIZE_MB = 1024 * 8; // 8GB.
 
             IStorageContext context = new SqlServerStorageContext("Data Source=.\\DEV;Initial Catalog=SSN3DB;Integrated Security=True");
 
             StorageAreaIngestDataSource[] sources = context
                 .AreaInfos
+                .Where(info => info.Name != "audit")
                 .Select(info => new StorageAreaIngestDataSource(context.Area(info.Name)))
                 .ToArray();
 
             LuceneJsonIndexBuilder builder = new LuceneJsonIndexBuilder("main");
-            builder.UseMemoryStorage();
+            builder.UseSimpleFileStorage(path);
             builder.Services.Use<ILuceneQueryParser, SimplifiedLuceneQueryParser>();
 
             ILuceneJsonIndex index = builder.Build();
@@ -75,6 +79,9 @@ namespace Ingest
                 {
                     Console.WriteLine(e);
                 }
+
+                GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
+                GC.Collect();
                 return false;
             }
 
@@ -129,7 +136,7 @@ namespace Ingest
                     ingestedCount += changes.Count;
 
                     Console.WriteLine($"Ingesting {changes} changes from {area.Name} [{ingestedCount:N}, {changes.Generation:N}/{initialGeneration:N}]");
-                    await Task.Delay(1000);
+                    await Task.Delay(10000);
                     if (changes.Count == 5000)
                         continue;
                 }
@@ -187,7 +194,6 @@ namespace Ingest
                             catch (Exception e)
                             {
                                 Console.WriteLine(e);
-                                throw;
                             }
                         }
                         await Task.Delay(1000);
@@ -236,26 +242,27 @@ namespace Ingest
             switch (change)
             {
                 case SqlServerInsertedChange _:
-                    created[createOffset++] = change.Entity;
+                    created[createOffset++] = change.CreateEntity();
                     break;
                 case SqlServerEntityChange regularChange:
                     switch (regularChange.Type)
                     {
                         case ChangeType.Create:
-                            created[createOffset++] = change.Entity;
+                            created[createOffset++] = change.CreateEntity();
                             break;
                         case ChangeType.Update:
-                            updated[updateOffset++] = change.Entity;
+                            updated[updateOffset++] = change.CreateEntity();
                             break;
                         case ChangeType.Delete:
-                            deleted[deleteOffset++] = change.Entity;
+                            deleted[deleteOffset++] = change.CreateEntity();
                             break;
                     }
                     break;
                 case SqlServerDeleteChange _:
-                    deleted[deleteOffset++] = change.Entity;
+                    deleted[deleteOffset++] = change.CreateEntity();
                     break;
             }
+            
             return this;
         }
 
@@ -266,6 +273,8 @@ namespace Ingest
                 writer.Create(created);
                 writer.Update(updated);
                 writer.Delete(deleted);
+                //writer.Commit();
+                //writer.Flush(true, true);
             }
             catch (Exception e)
             {
@@ -283,51 +292,5 @@ namespace Ingest
     }
 
 
-    //public class IngestQueue<TIn, TOut>
-    //{
-    //    private readonly IFlowControl ctrl;
-    //    private Func<int, TIn[]> onQueueReady;
-    //    private Func<TOut[]> onItemsReady;
-
-    //    private Queue<AsyncJob> jobs = new Queue<AsyncJob>();
-    //    private Queue<TOut> ready = new Queue<TOut>();
-        
-    //    private Thread[] workers;
-
-    //    public IngestQueue(IFlowControl ctrl, Func<int, TIn[]> onQueueReady, Func<TOut[]> onItemsReady)
-    //    {
-    //        this.ctrl = ctrl;
-    //        this.onQueueReady = onQueueReady;
-    //        this.onItemsReady = onItemsReady;
-    //        this.workers = Enumerable.Repeat(0, Environment.ProcessorCount).Select(_ => new Thread(Ingest)).ToArray();
-    //    }
-
-    //    private void Ingest()
-    //    {
-    //        if (ctrl.HasCapacity)
-    //        {
-
-    //        }
-    //    }
-
-    //    public void Start()
-    //    {
-    //        foreach (Thread worker in workers)
-    //            worker.Start();
-    //    }
-    //}
-
-    //public interface IFlowControl
-    //{
-    //    bool HasCapacity { get; }
-
-    //    void Increment();
-    //    void Decrement();
-    //}
-
-    //public class AsyncJob
-    //{
-
-    //}
 
 }
