@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using Newtonsoft.Json.Linq;
 
 namespace DotJEM.Json.Index.Ingest
 {
@@ -13,7 +14,7 @@ namespace DotJEM.Json.Index.Ingest
         private Func<int, TIn[]> onQueueReady;
         private Func<TOut[]> onItemsReady;
 
-        private Queue<AsyncJob<TOut>> jobs = new Queue<AsyncJob<TOut>>();
+        private Queue<IAsyncJob<TOut>> jobs = new Queue<IAsyncJob<TOut>>();
         private Queue<TOut> ready = new Queue<TOut>();
 
         private Thread[] workers;
@@ -30,7 +31,7 @@ namespace DotJEM.Json.Index.Ingest
         {
             while (true)
             {
-                AsyncJob<TOut> task;
+                IAsyncJob<TOut> task;
                 lock (padlock)
                 {
                     while (jobs.Count == 0) Monitor.Wait(padlock);
@@ -46,7 +47,7 @@ namespace DotJEM.Json.Index.Ingest
             ready.Enqueue(obj);
         }
 
-        public void Enqueue(AsyncJob<TOut> task)
+        public void Enqueue(IAsyncJob<TOut> task)
         {
             lock (padlock)
             {
@@ -74,11 +75,37 @@ namespace DotJEM.Json.Index.Ingest
         void Decrement();
     }
 
-    public class AsyncJob<T>
+
+
+    public interface IAsyncJob<T>
     {
-        public void Execute(Action<AsyncJob<T>> enqueue, Action<T> ready)
+        int Priority { get; }
+
+        void Execute(Action<IAsyncJob<T>> enqueue, Action<T> ready);
+    }
+
+    public class LoadAsyncJob : IAsyncJob<JObject>
+    {
+        public int Priority { get; } = 10;
+
+        public void Execute(Action<IAsyncJob<JObject>> enqueue, Action<JObject> ready)
         {
-            throw new NotImplementedException();
+            enqueue(new MaterializeAsyncJob());
         }
     }
+
+    public class MaterializeAsyncJob : IAsyncJob<JObject>
+    {
+        public int Priority { get; } = 5;
+
+        public void Execute(Action<IAsyncJob<JObject>> enqueue, Action<JObject> ready)
+        {
+        }
+    }
+
+    //TODO
+    // - Job Scheduler
+    // - Priority Queue (Fixed, enum [High, Medium, Low])
+    // - Bulking of changes - Order must be preserved.
+
 }
