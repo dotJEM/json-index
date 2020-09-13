@@ -40,30 +40,26 @@ namespace DotJEM.Json.Index.Serialization
 
         public JObject Deserialize(byte[] value)
         {
-            using (MemoryStream stream = new MemoryStream(value))
-            {
-                using (GZipStream zip = new GZipStream(stream, CompressionMode.Decompress))
-                {
-                    JsonTextReader reader = new JsonTextReader(new StreamReader(zip));
-                    var entity = (JObject)JToken.ReadFrom(reader);
-                    reader.Close();
-                    return entity;
-                }
-            }
+            using MemoryStream stream = new MemoryStream(value);
+            using GZipStream zip = new GZipStream(stream, CompressionMode.Decompress);
+            using JsonTextReader reader = new JsonTextReader(new StreamReader(zip));
+
+            var entity = (JObject)JToken.ReadFrom(reader);
+            reader.Close();
+            return entity;
         }
 
         public byte[] Serialize(JObject json)
         {
-            using (MemoryStream stream = new MemoryStream())
-            {
-                using (GZipStream zip = new GZipStream(stream, CompressionLevel.Optimal))
-                {
-                    JsonTextWriter jsonWriter = new JsonTextWriter(new StreamWriter(zip));
-                    json.WriteTo(jsonWriter);
-                    jsonWriter.Close();
-                }
-                return stream.GetBuffer();
-            }
+            using MemoryStream stream = new MemoryStream();
+            using GZipStream zip = new GZipStream(stream, CompressionLevel.Optimal);
+            using JsonTextWriter jsonWriter = new JsonTextWriter(new StreamWriter(zip));
+            
+            json.WriteTo(jsonWriter);
+            jsonWriter.Flush();
+            jsonWriter.Close();
+            
+            return stream.GetBuffer();
         }
     }
 }
