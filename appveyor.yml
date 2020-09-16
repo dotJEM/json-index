@@ -1,5 +1,5 @@
-version: 0.0.{build}
-image: Visual Studio 2017
+version: 0.1.{build}
+image: Visual Studio 2019
 
 init:
 - ps: Update-AppveyorBuild -Version "$env:appveyor_build_version+sha.$($env:appveyor_repo_commit.substring(0,7))"
@@ -34,7 +34,7 @@ deploy:
   provider: NuGet
   api_key:
     secure: KEHWtW02rf5aCAlwchP0Siow5EA24hwtm09uvsR58bMWirJ8uXl1SidBnNCfJ3cw
-  skip_symbols: false
+  skip_symbols: true
 
 for:
 -

@@ -17,7 +17,7 @@ namespace DotJEM.Json.Index.Contexts.Test
     [TestFixture]
     public class LuceneIndexContextTest
     {
-        [Test]
+        [Explicit, Test]
         public void Search_AcrossAllIndexes_ReturnsFromEach()
         {
             ILuceneIndexContext context = new TestIndexContextBuilder()

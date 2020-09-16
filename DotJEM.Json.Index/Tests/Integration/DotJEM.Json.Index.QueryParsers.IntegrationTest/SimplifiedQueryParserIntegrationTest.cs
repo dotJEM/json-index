@@ -84,7 +84,7 @@ namespace DotJEM.Json.Index.QueryParsers.IntegrationTest
         }
 
 
-        [TestCase("name = * ORDER BY age", 2, 3, "DOC_005,DOC_006;DOC_001,DOC_002;DOC_003,DOC_004")]
+        [Explicit,TestCase("name = * ORDER BY age", 2, 3, "DOC_005,DOC_006;DOC_001,DOC_002;DOC_003,DOC_004")]
         public void Search_AfterPersons_YieldDocuments(string query, int pageSize, int numPages, string expected)
         {
             ILuceneJsonIndex index = new TestIndexBuilder()
