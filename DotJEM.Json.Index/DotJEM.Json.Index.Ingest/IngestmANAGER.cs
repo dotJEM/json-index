@@ -7,21 +7,23 @@ using Newtonsoft.Json.Linq;
 
 namespace DotJEM.Json.Index.Ingest
 {
-    public class IngestQueue
+    public class IngestManager
     {
         private bool active;
-        private readonly object padlock = new object();
         private readonly ICapacityControl flow;
         private readonly IIngestInload inLoad;
-        private readonly IngestScheduler scheduler;
+        private readonly IAsyncJobQueue queue;
+        private readonly IIngestScheduler scheduler;
 
         private readonly Thread[] workers;
 
         public static bool pause = false;
 
-        public IngestQueue(ICapacityControl flow, IIngestInload inLoad)
+        public IngestManager(ICapacityControl flow, IIngestInload inLoad)
         {
-            scheduler = new IngestScheduler(flow);
+            queue = new AsyncJobQueue();
+            scheduler = new IngestScheduler(queue, flow);
+
             this.flow = flow;
             this.inLoad = inLoad;
             this.workers = Enumerable.Repeat(0, Environment.ProcessorCount).Select(_ => new Thread(ConsumeLoop)).ToArray();
@@ -31,13 +33,13 @@ namespace DotJEM.Json.Index.Ingest
         {
             flow.CheckCapacity(() =>
             {
-                scheduler.Enqueue(inLoad.CreateInloadJob(), JobPriority.Medium);
+                queue.Enqueue(inLoad.CreateInloadJob(), JobPriority.Medium);
             });
         }
 
         private void ConsumeLoop(object obj)
         {
-            while (active || scheduler.Any)
+            while (active || !queue.IsEmpty)
             {
                 if (pause)
                 {
@@ -46,9 +48,9 @@ namespace DotJEM.Json.Index.Ingest
                 }
 
                 CheckCapacity();
-                IAsyncJob job = scheduler.Next();
+                IAsyncJob job = queue.Dequeue();
                 job.Execute(scheduler); //TODO: Execute should take the scheduller.
-                scheduler.Decrement(job.Cost);
+                flow.Decrement(job.Cost);
             }
         }
 
@@ -105,50 +107,63 @@ namespace DotJEM.Json.Index.Ingest
     public interface IAsyncJob
     {
         long Cost { get; }
-        void Execute(IScheduler scheduler);
+        void Execute(IIngestScheduler ingestScheduler);
     }
 
 
     public enum JobPriority { High, Medium, Low }
 
-    public interface IScheduler
+    public interface IIngestScheduler
     {
         void Enqueue(IAsyncJob job, JobPriority priority);
     }
 
-    public class IngestScheduler : IScheduler
+    public class IngestScheduler : IIngestScheduler
     {
+        private readonly IAsyncJobQueue queue;
+        private readonly ICapacityControl flow;
+
+        public IngestScheduler(IAsyncJobQueue queue, ICapacityControl flow)
+        {
+            this.queue = queue;
+            this.flow = flow;
+        }
+
+        public void Enqueue(IAsyncJob job, JobPriority priority)
+        {
+            flow.Increment(job.Cost);
+            queue.Enqueue(job, priority);
+        }
+    }
+
+
+    public interface IAsyncJobQueue
+    {
+        bool IsEmpty { get; }
+        void Enqueue(IAsyncJob job, JobPriority priority);
+        IAsyncJob Dequeue();
+    }
+
+    public class AsyncJobQueue : IAsyncJobQueue
+    {
+        private object padlock = new { };
         private readonly Queue<IAsyncJob> high = new Queue<IAsyncJob>();
         private readonly Queue<IAsyncJob> medium = new Queue<IAsyncJob>();
         private readonly Queue<IAsyncJob> low = new Queue<IAsyncJob>();
-        private readonly ICapacityControl capacity;
 
-        private object padlock = new { };
-
-        public IngestScheduler(ICapacityControl capacity)
-        {
-            this.capacity = capacity;
-        }
-
-        public bool Any => !Empty;
-        public bool Empty => Waiting == 0;
+        public bool IsEmpty => Waiting == 0;
         public int Waiting => high.Count + medium.Count + low.Count;
 
-        public int Count => capacity.ActiveJobs;
 
-        public IAsyncJob Next()
+        public IAsyncJob Dequeue()
         {
             lock (padlock)
             {
-                while (Empty) Monitor.Wait(padlock);
+                while (IsEmpty) Monitor.Wait(padlock);
                 return InternalDequeue();
             }
         }
 
-        public void Decrement(long jobCost)
-        {
-            capacity.Decrement(jobCost);
-        }
 
         private IAsyncJob InternalDequeue()
         {
@@ -171,7 +186,6 @@ namespace DotJEM.Json.Index.Ingest
             lock (padlock)
             {
                 queue.Enqueue(job);
-                capacity.Increment(job.Cost);
                 Monitor.PulseAll(padlock);
             }
         }

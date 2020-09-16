@@ -47,7 +47,7 @@ namespace Ingest
 
             ILuceneJsonIndex index = builder.Build();
 
-            IngestQueue ingest = new IngestQueue(new SimpleCountingCapacityControl(), new StorageAreaInloadSource(areas, index));
+            IngestManager ingest = new IngestManager(new SimpleCountingCapacityControl(), new StorageAreaInloadSource(areas, index));
             ingest.Start();
 
 
@@ -86,7 +86,7 @@ namespace Ingest
 
             void CheckSources(object sender, EventArgs eventArgs)
             {
-                IngestQueue.pause = true;
+                IngestManager.pause = true;
 
                 TimeSpan elapsed = timer.Elapsed;
                 //int ready = sources.Count(s => s.Ready);
@@ -99,7 +99,7 @@ namespace Ingest
                 index.WriterManager.Writer.Flush(true, true);
                 index.WriterManager.Writer.Commit();
 
-                IngestQueue.pause = false;
+                IngestManager.pause = false;
             }
         }
     }
@@ -196,7 +196,7 @@ namespace Ingest
             JobMetrics.Initiate(nameof(StorageAreaLoad));
         }
 
-        public void Execute(IScheduler scheduler)
+        public void Execute(IIngestScheduler ingestScheduler)
         {
             IStorageChangeCollection changes = area.Log.Get(includeDeletes: false, count: 2500);
             if (changes.Count < 1)
@@ -205,9 +205,9 @@ namespace Ingest
             JobMetrics.Complete(nameof(StorageAreaLoad));
             Console.WriteLine($"[{area.Name}] Loading {changes} changes ({changes.Generation}/{area.Log.LatestGeneration})");
 
-            if (changes.Count.Created > 0) scheduler.Enqueue(new Materialize(index, ChangeType.Create, changes.Created), JobPriority.Low);
-            if (changes.Count.Updated > 0) scheduler.Enqueue(new Materialize(index, ChangeType.Update, changes.Updated), JobPriority.Low);
-            if (changes.Count.Deleted > 0) scheduler.Enqueue(new Materialize(index, ChangeType.Delete, changes.Deleted), JobPriority.Low);
+            if (changes.Count.Created > 0) ingestScheduler.Enqueue(new Materialize(IngestFlowControl.ReserveSlot(area.Name), index, ChangeType.Create, changes.Created), JobPriority.Low);
+            if (changes.Count.Updated > 0) ingestScheduler.Enqueue(new Materialize(IngestFlowControl.ReserveSlot(area.Name), index, ChangeType.Update, changes.Updated), JobPriority.Low);
+            if (changes.Count.Deleted > 0) ingestScheduler.Enqueue(new Materialize(IngestFlowControl.ReserveSlot(area.Name), index, ChangeType.Delete, changes.Deleted), JobPriority.Low);
         }
 
         ~StorageAreaLoad()
@@ -225,7 +225,7 @@ namespace Ingest
 
         public long Cost => changes.Count;
 
-        public Materialize(ILuceneJsonIndex index, ChangeType type, IEnumerable<IChangeLogRow> changes)
+        public Materialize(Guid reserveSlot, ILuceneJsonIndex index, ChangeType type, IEnumerable<IChangeLogRow> changes)
         {
             this.index = index;
             this.type = type;
@@ -233,14 +233,14 @@ namespace Ingest
             JobMetrics.Initiate(nameof(Materialize));
         }
 
-        public void Execute(IScheduler scheduler)
+        public void Execute(IIngestScheduler ingestScheduler)
         {
             Console.WriteLine($"Executing {GetType()} materializing {changes.Count} objects...");
             JObject[] objects = changes
                 .Select(change => DUMMY ?? change.CreateEntity())
                 .ToArray();
             JobMetrics.Complete(nameof(Materialize));
-            scheduler.Enqueue(CreateJob(objects), JobPriority.High);
+            ingestScheduler.Enqueue(CreateJob(objects), JobPriority.High);
         }
 
         private IAsyncJob CreateJob(JObject[] objects)
@@ -280,7 +280,7 @@ namespace Ingest
             JobMetrics.Initiate(name);
         }
 
-        public void Execute(IScheduler scheduler)
+        public void Execute(IIngestScheduler ingestScheduler)
         {
             try
             {
@@ -294,7 +294,7 @@ namespace Ingest
 
             JobMetrics.Complete(name);
 
-            if(rand.Next(10) > 8) scheduler.Enqueue(new CommitJob(index), JobPriority.High );
+            if(rand.Next(10) > 8) ingestScheduler.Enqueue(new CommitJob(index), JobPriority.High );
         }
 
         protected abstract void Write(JObject[] objects, IJsonIndexWriter writer);
@@ -317,7 +317,7 @@ namespace Ingest
             JobMetrics.Initiate(nameof(CommitJob));
         }
 
-        public void Execute(IScheduler scheduler)
+        public void Execute(IIngestScheduler ingestScheduler)
         {
             Console.WriteLine($"Executing {GetType()} committing objects...");
             index.CreateWriter().Commit();
@@ -366,6 +366,13 @@ namespace Ingest
         }
     }
 
+    public class IngestFlowControl
+    {
+        public static Guid ReserveSlot(string key)
+        {
+            return Guid.NewGuid();
+        }
+    }
 
     //public class StorageAreaIngestDataSource : IIngestDataSource
     //{
