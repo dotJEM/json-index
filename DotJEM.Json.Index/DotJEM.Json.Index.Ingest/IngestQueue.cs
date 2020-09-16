@@ -13,36 +13,42 @@ namespace DotJEM.Json.Index.Ingest
         private readonly object padlock = new object();
         private readonly ICapacityControl flow;
         private readonly IIngestInload inLoad;
-        private readonly IngestScheduler scheduler = new IngestScheduler();
+        private readonly IngestScheduler scheduler;
 
         private readonly Thread[] workers;
 
+        public static bool pause = false;
+
         public IngestQueue(ICapacityControl flow, IIngestInload inLoad)
         {
+            scheduler = new IngestScheduler(flow);
             this.flow = flow;
             this.inLoad = inLoad;
             this.workers = Enumerable.Repeat(0, Environment.ProcessorCount).Select(_ => new Thread(ConsumeLoop)).ToArray();
+        }
+
+        public void CheckCapacity()
+        {
+            flow.CheckCapacity(() =>
+            {
+                scheduler.Enqueue(inLoad.CreateInloadJob(), JobPriority.Medium);
+            });
         }
 
         private void ConsumeLoop(object obj)
         {
             while (active || scheduler.Any)
             {
-                flow.CheckCapacity(() =>
+                if (pause)
                 {
-                    scheduler.Enqueue(inLoad.CreateInloadJob(), JobPriority.High);
-                });
-                IAsyncJob job = scheduler.Next();
-                IAsyncJob[] next = job.Execute(); //TODO: Execute should take the scheduller.
-                if (next != null && next.Any())
-                {
-                    foreach (IAsyncJob asyncJob in next)
-                    {
-                        flow.Increment(asyncJob.Cost);
-                        scheduler.Enqueue(asyncJob, JobPriority.Medium);
-                    }
+                    Thread.Sleep(5000);
+                    continue;
                 }
-                flow.Decrement(job.Cost);
+
+                CheckCapacity();
+                IAsyncJob job = scheduler.Next();
+                job.Execute(scheduler); //TODO: Execute should take the scheduller.
+                scheduler.Decrement(job.Cost);
             }
         }
 
@@ -61,6 +67,7 @@ namespace DotJEM.Json.Index.Ingest
 
     public interface ICapacityControl
     {
+        int ActiveJobs { get; }
         void Increment(long cost);
         void Decrement(long cost);
         void CheckCapacity(Action onHasCapacity);
@@ -69,6 +76,8 @@ namespace DotJEM.Json.Index.Ingest
     public class SimpleCountingCapacityControl : ICapacityControl
     {
         private int count;
+
+        public int ActiveJobs => count;
 
         public void Increment(long cost)
         {
@@ -87,7 +96,6 @@ namespace DotJEM.Json.Index.Ingest
             lock (this)
             {
                 if (count >= 20) return;
-                Increment(1);
                 onHasCapacity();
             }
         }
@@ -97,39 +105,56 @@ namespace DotJEM.Json.Index.Ingest
     public interface IAsyncJob
     {
         long Cost { get; }
-        IAsyncJob[] Execute();
+        void Execute(IScheduler scheduler);
     }
 
 
     public enum JobPriority { High, Medium, Low }
 
-    public class IngestScheduler
+    public interface IScheduler
     {
-        private int count = 0;
-        private Queue<IAsyncJob> high = new Queue<IAsyncJob>();
-        private Queue<IAsyncJob> medium = new Queue<IAsyncJob>();
-        private Queue<IAsyncJob> low = new Queue<IAsyncJob>();
+        void Enqueue(IAsyncJob job, JobPriority priority);
+    }
+
+    public class IngestScheduler : IScheduler
+    {
+        private readonly Queue<IAsyncJob> high = new Queue<IAsyncJob>();
+        private readonly Queue<IAsyncJob> medium = new Queue<IAsyncJob>();
+        private readonly Queue<IAsyncJob> low = new Queue<IAsyncJob>();
+        private readonly ICapacityControl capacity;
+
         private object padlock = new { };
 
-        public IngestScheduler()
+        public IngestScheduler(ICapacityControl capacity)
         {
+            this.capacity = capacity;
         }
 
-        public bool Any => count > 0;
-        public bool Empty => count == 0;
-        public int Count => count;
+        public bool Any => !Empty;
+        public bool Empty => Waiting == 0;
+        public int Waiting => high.Count + medium.Count + low.Count;
+
+        public int Count => capacity.ActiveJobs;
 
         public IAsyncJob Next()
         {
             lock (padlock)
             {
                 while (Empty) Monitor.Wait(padlock);
-                count--;
-                if (high.Count > 0) return high.Dequeue();
-                if (medium.Count > 0) return medium.Dequeue();
-                if (low.Count > 0) return low.Dequeue();
+                return InternalDequeue();
             }
+        }
 
+        public void Decrement(long jobCost)
+        {
+            capacity.Decrement(jobCost);
+        }
+
+        private IAsyncJob InternalDequeue()
+        {
+            if (high.Count > 0) return high.Dequeue();
+            if (medium.Count > 0) return medium.Dequeue();
+            if (low.Count > 0) return low.Dequeue();
             return null;
         }
 
@@ -145,9 +170,9 @@ namespace DotJEM.Json.Index.Ingest
 
             lock (padlock)
             {
-                count++;
                 queue.Enqueue(job);
-                Monitor.Pulse(padlock);
+                capacity.Increment(job.Cost);
+                Monitor.PulseAll(padlock);
             }
         }
     }
