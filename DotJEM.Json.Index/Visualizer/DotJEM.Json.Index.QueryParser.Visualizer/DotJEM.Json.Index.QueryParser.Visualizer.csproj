@@ -37,7 +37,7 @@
       <HintPath>..\..\packages\Antlr4.Runtime.4.6.6\lib\net45\Antlr4.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="J2N, Version=2.0.0.0, Culture=neutral, PublicKeyToken=f39447d697a969af, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\J2N.2.0.0-beta-0008\lib\net45\J2N.dll</HintPath>
+      <HintPath>..\..\packages\J2N.2.0.0-beta-0009\lib\net45\J2N.dll</HintPath>
     </Reference>
     <Reference Include="Lucene.Net, Version=4.0.0.0, Culture=neutral, PublicKeyToken=85089178b9ac3181, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Lucene.Net.4.8.0-beta00011\lib\net45\Lucene.Net.dll</HintPath>
@@ -254,11 +254,11 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="j2n-icon-100x100.png" />
-    <Content Include="LICENSE.txt" />
+    <Analyzer Include="..\..\packages\Lucene.Net.4.8.0-beta00011\analyzers\dotnet\cs\Lucene.Net.CodeAnalysis.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Analyzer Include="..\..\packages\Lucene.Net.4.8.0-beta00011\analyzers\dotnet\cs\Lucene.Net.CodeAnalysis.dll" />
+    <Content Include="j2n-icon-100x100.png" />
+    <Content Include="LICENSE.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
