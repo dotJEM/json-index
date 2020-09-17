@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -218,15 +219,16 @@ namespace Ingest
 
     public class Materialize : IAsyncJob
     {
-        public static JObject DUMMY;
+        private readonly Slot slot;
         private readonly ChangeType type;
         private readonly ILuceneJsonIndex index;
         private readonly List<IChangeLogRow> changes;
 
         public long Cost => changes.Count;
 
-        public Materialize(Guid reserveSlot, ILuceneJsonIndex index, ChangeType type, IEnumerable<IChangeLogRow> changes)
+        public Materialize(Slot slot, ILuceneJsonIndex index, ChangeType type, IEnumerable<IChangeLogRow> changes)
         {
+            this.slot = slot;
             this.index = index;
             this.type = type;
             this.changes = changes.ToList();
@@ -237,7 +239,7 @@ namespace Ingest
         {
             Console.WriteLine($"Executing {GetType()} materializing {changes.Count} objects...");
             JObject[] objects = changes
-                .Select(change => DUMMY ?? change.CreateEntity())
+                .Select(change => change.CreateEntity())
                 .ToArray();
             JobMetrics.Complete(nameof(Materialize));
             ingestScheduler.Enqueue(CreateJob(objects), JobPriority.High);
@@ -248,11 +250,11 @@ namespace Ingest
             switch (type)
             {
                 case ChangeType.Create:
-                    return new CreateWriteJob(index, objects);
+                    return new CreateWriteJob(slot, index, objects);
                 case ChangeType.Update:
-                    return new UpdateWriteJob(index, objects);
+                    return new UpdateWriteJob(slot, index, objects);
                 case ChangeType.Delete:
-                    return new DeleteWriteJob(index, objects);
+                    return new DeleteWriteJob(slot, index, objects);
             }
             throw new ArgumentOutOfRangeException(nameof(type));
         }
@@ -266,17 +268,21 @@ namespace Ingest
     public abstract class WriteJob : IAsyncJob
     {
         private static Random rand = new Random();
+
+        private readonly Slot slot;
         private readonly ILuceneJsonIndex index;
         private readonly JObject[] objects;
         private readonly string name;
 
         public long Cost => objects.LongLength;
 
-        public WriteJob(ILuceneJsonIndex index, JObject[] objects)
+        protected WriteJob(Slot slot, ILuceneJsonIndex index, JObject[] objects)
         {
+            this.slot = slot;
             this.index = index;
             this.objects = objects;
             this.name = this.GetType().Name;
+
             JobMetrics.Initiate(name);
         }
 
@@ -294,7 +300,7 @@ namespace Ingest
 
             JobMetrics.Complete(name);
 
-            if(rand.Next(10) > 8) ingestScheduler.Enqueue(new CommitJob(index), JobPriority.High );
+            if(rand.Next(10) > 8) ingestScheduler.Enqueue(new CommitJob(slot, index), JobPriority.High );
         }
 
         protected abstract void Write(JObject[] objects, IJsonIndexWriter writer);
@@ -307,12 +313,14 @@ namespace Ingest
 
     public class CommitJob : IAsyncJob
     {
+        private readonly Slot slot;
         private readonly ILuceneJsonIndex index;
 
         public long Cost { get; } = 1;
 
-        public CommitJob(ILuceneJsonIndex index)
+        public CommitJob(Slot slot, ILuceneJsonIndex index)
         {
+            this.slot = slot;
             this.index = index;
             JobMetrics.Initiate(nameof(CommitJob));
         }
@@ -332,7 +340,7 @@ namespace Ingest
 
     public class CreateWriteJob : WriteJob
     {
-        public CreateWriteJob(ILuceneJsonIndex index, JObject[] objects) : base(index, objects)
+        public CreateWriteJob(Slot slot,ILuceneJsonIndex index, JObject[] objects) : base(slot,index, objects)
         {
         }
 
@@ -344,7 +352,7 @@ namespace Ingest
 
     public class UpdateWriteJob : WriteJob
     {
-        public UpdateWriteJob(ILuceneJsonIndex index, JObject[] objects) : base(index, objects)
+        public UpdateWriteJob(Slot slot,ILuceneJsonIndex index, JObject[] objects) : base(slot, index, objects)
         {
         }
 
@@ -356,7 +364,7 @@ namespace Ingest
 
     public class DeleteWriteJob : WriteJob
     {
-        public DeleteWriteJob(ILuceneJsonIndex index, JObject[] objects) : base(index, objects)
+        public DeleteWriteJob(Slot slot,ILuceneJsonIndex index, JObject[] objects) : base(slot, index, objects)
         {
         }
 
@@ -368,208 +376,26 @@ namespace Ingest
 
     public class IngestFlowControl
     {
-        public static Guid ReserveSlot(string key)
+        private static readonly ConcurrentDictionary<string, Queue<Slot>> slots = new ConcurrentDictionary<string, Queue<Slot>>();
+
+        public static Slot ReserveSlot(string key)
         {
-            return Guid.NewGuid();
+            Slot slot = new Slot();
+            slots.AddOrUpdate(key, s => new Queue<Slot>(new []{slot}), (s, queue) =>
+            {
+                queue.Enqueue(slot);
+                return queue;
+            });
+            return slot;
         }
     }
 
-    //public class StorageAreaIngestDataSource : IIngestDataSource
-    //{
-    //    private readonly IStorageArea area;
-    //    private AsyncIngestQueue queue = new AsyncIngestQueue();
-
-    //    public StorageAreaIngestDataSource(IStorageArea area)
-    //    {
-    //        this.area = area;
-    //    }
-
-    //    public IDisposable Subscribe(IObserver<IJsonIndexWriterCommand> observer)
-    //    {
-    //        return queue.Subscribe(observer);
-    //    }
-
-    //    public void SaveState(IIngestDataSourceState state)
-    //    {
-    //    }
-
-    //    public void RestoreState(IIngestDataSourceState state)
-    //    {
-    //    }
-
-    //    public void Start()
-    //    {
-    //        Task.Factory.StartNew(Ingest, TaskCreationOptions.LongRunning);
-    //    }
-
-    //    private async Task Ingest()
-    //    {
-    //        IStorageAreaLog log = area.Log;
-    //        long initialGeneration = log.LatestGeneration;
-    //        while (true)
-    //        {
-    //            IStorageChangeCollection changes = log.Get(log.CurrentGeneration >= initialGeneration, 5000);
-    //            if (changes.Count > 0)
-    //            {
-    //                queue.Enqueue(changes);
-    //                ingestedCount += changes.Count;
-
-    //                Console.WriteLine($"Ingesting {changes} changes from {area.Name} [{ingestedCount:N}, {changes.Generation:N}/{initialGeneration:N}]");
-    //                await Task.Delay(10000);
-    //                if (changes.Count == 5000)
-    //                    continue;
-    //            }
-    //            else
-    //            {
-    //                if (!Ready)
-    //                {
-    //                    Console.WriteLine($"No changes from {area.Name}");
-    //                    Ready = true;
-    //                    OnReady?.Invoke(this, EventArgs.Empty);
-    //                }
-    //            }
-    //            await Task.Delay(10000);
-    //        }
-    //    }
-
-    //    private long ingestedCount = 0;
-    //    public bool Ready { get; private set; } = false;
-    //    public event EventHandler<EventArgs> OnReady;
-    //}
-
-    //public class AsyncIngestQueue : IObservable<IJsonIndexWriterCommand>
-    //{
-    //    private readonly Queue<Task<DbIngestCommand>> commands = new Queue<Task<DbIngestCommand>>();
-
-    //    public void Enqueue(IStorageChangeCollection changes)
-    //    {
-    //        Drain();
-    //        commands.Enqueue(Task.Run(() => Materialize(changes)));
-    //    }
-
-    //    private Task asyncDrain;
-    //    private IObserver<IJsonIndexWriterCommand> observer;
-
-    //    private void Drain()
-    //    {
-    //        if (asyncDrain == null || asyncDrain.IsCompleted)
-    //            asyncDrain = InternalDrain();
-
-    //        Task InternalDrain()
-    //        {
-    //            return Task.Factory.StartNew(async () =>
-    //            {
-    //                while (true)
-    //                {
-    //                    while (commands.Count > 0)
-    //                    {
-    //                        try
-    //                        {
-    //                            DbIngestCommand command = await commands.Dequeue();
-    //                            Console.WriteLine($"Draining {command.ChangesCount}");
-    //                            observer.OnNext(command);
-    //                            Console.WriteLine($"Drained {command.ChangesCount}");
-    //                        }
-    //                        catch (Exception e)
-    //                        {
-    //                            Console.WriteLine(e);
-    //                        }
-    //                    }
-    //                    await Task.Delay(1000);
-    //                }
-    //            }, TaskCreationOptions.LongRunning);
-    //        }
-    //    }
-    //    private DbIngestCommand Materialize(IStorageChangeCollection changes)
-    //    {
-    //        var cmd = changes.Partitioned.Aggregate(new DbIngestCommand(changes.Count), (command, change) => command.Enqueue(change));
-    //        Console.WriteLine($"Materialized {changes} changes from {changes.StorageArea}");
-    //        return cmd;
-    //    }
-
-    //    public IDisposable Subscribe(IObserver<IJsonIndexWriterCommand> observer)
-    //    {
-    //        this.observer = observer;
-    //        return null;
-    //    }
-
-    //}
-
-    //class DbIngestCommand : IJsonIndexWriterCommand
-    //{
-    //    public ChangeCount ChangesCount { get; }
-
-    //    private readonly JObject[] created;
-    //    private readonly JObject[] updated;
-    //    private readonly JObject[] deleted;
-
-    //    private int createOffset;
-    //    private int updateOffset;
-    //    private int deleteOffset;
+    public class Slot
+    {
+        private Guid Uuid { get; } = Guid.NewGuid();
 
 
-    //    public DbIngestCommand(ChangeCount changesCount)
-    //    {
-    //        ChangesCount = changesCount;
-    //        created = new JObject[changesCount.Created];
-    //        updated = new JObject[changesCount.Updated];
-    //        deleted = new JObject[changesCount.Deleted];
-    //    }
-
-    //    public DbIngestCommand Enqueue(Change change)
-    //    {
-    //        switch (change)
-    //        {
-    //            case SqlServerInsertedChange _:
-    //                created[createOffset++] = change.CreateEntity();
-    //                break;
-    //            case SqlServerEntityChange regularChange:
-    //                switch (regularChange.Type)
-    //                {
-    //                    case ChangeType.Create:
-    //                        created[createOffset++] = change.CreateEntity();
-    //                        break;
-    //                    case ChangeType.Update:
-    //                        updated[updateOffset++] = change.CreateEntity();
-    //                        break;
-    //                    case ChangeType.Delete:
-    //                        deleted[deleteOffset++] = change.CreateEntity();
-    //                        break;
-    //                }
-    //                break;
-    //            case SqlServerDeleteChange _:
-    //                deleted[deleteOffset++] = change.CreateEntity();
-    //                break;
-    //        }
-
-    //        return this;
-    //    }
-
-    //    public void Execute(IJsonIndexWriter writer)
-    //    {
-    //        try
-    //        {
-    //            writer.Create(created);
-    //            writer.Update(updated);
-    //            writer.Delete(deleted);
-    //            //writer.Commit();
-    //            //writer.Flush(true, true);
-    //        }
-    //        catch (Exception e)
-    //        {
-    //            Console.WriteLine(e);
-    //            throw;
-    //        }
-    //    }
-    //}
-
-    //internal class JsonIndexNullCommand : IJsonIndexWriterCommand
-    //{
-    //    public void Execute(IJsonIndexWriter writer)
-    //    {
-    //    }
-    //}
-
+    }
 
 
 }
