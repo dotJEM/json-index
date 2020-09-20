@@ -8,11 +8,11 @@ using DotJEM.Json.Index.Storage;
 
 namespace DotJEM.Json.Index
 {
-
     public interface ILuceneJsonIndexSearcherProvider
     {
         ILuceneJsonIndexSearcher CreateSearcher();
     }
+
     public interface ILuceneJsonIndex : ILuceneJsonIndexSearcherProvider
     {
         IEventInfoStream InfoStream { get; }
@@ -74,7 +74,7 @@ namespace DotJEM.Json.Index
 
         public IJsonIndexWriter CreateWriter()
         {
-            return new JsonIndexWriter(this, Services.Resolve<ILuceneDocumentFactory>(), WriterManager);
+            return new JsonIndexWriter(this, Services.Resolve<ILuceneDocumentFactory>(), WriterManager, null);
         }
 
         public void Close()

@@ -34,25 +34,76 @@ namespace DotJEM.Json.Index.IO
         IJsonIndexWriter SetCommitData(IDictionary<string, string> commitUserData);
     }
 
+    public interface ISlot
+    {
+        void Complete(IEnumerable<Document> docs);
+    }
+
+    public interface IInflowManager
+    {
+        IInflowScheduler Scheduler { get; }
+        ISlot Reserve(string queue = null);
+
+    }
+
+    public interface IInflowJob
+    {
+        void Execute(IInflowScheduler scheduler);
+    }
+
+    public interface IInflowScheduler
+    {
+        void Enqueue(IInflowJob job, InflowPriority priority);
+    }
+
+    public class ConvertDocuments : IInflowJob
+    {
+        private readonly ISlot slot;
+        private readonly IEnumerable<JObject> docs;
+        private readonly ILuceneDocumentFactory factory;
+
+        public ConvertDocuments(ISlot slot, IEnumerable<JObject> docs, ILuceneDocumentFactory factory)
+        {
+            this.slot = slot;
+            this.docs = docs;
+            this.factory = factory;
+        }
+
+        public void Execute(IInflowScheduler scheduler)
+        {
+            IEnumerable<Document> documents = factory
+                .Create(docs)
+                .Select(tuple => tuple.Document);
+            slot.Complete(documents);
+        }
+    }
+
+    public enum InflowPriority { Highest, High, Medium, Low, Lowest }
+
     public class JsonIndexWriter : Disposable, IJsonIndexWriter
     {
+        private readonly IInflowManager inflow;
         private readonly IIndexWriterManager manager;
         private readonly ILuceneDocumentFactory factory;
 
         public ILuceneJsonIndex Index { get; }
         public IndexWriter UnderlyingWriter => manager.Writer;
 
-        public JsonIndexWriter(ILuceneJsonIndex index, ILuceneDocumentFactory factory, IIndexWriterManager manager)
+        public JsonIndexWriter(ILuceneJsonIndex index, ILuceneDocumentFactory factory, IIndexWriterManager manager, IInflowManager inflow)
         {
             Index = index;
             this.factory = factory;
             this.manager = manager;
+            this.inflow = inflow;
         }
 
         public IJsonIndexWriter Create(JObject doc) => Create(new[] { doc });
 
         public IJsonIndexWriter Create(IEnumerable<JObject> docs)
         {
+            //inflow.Scheduler.Enqueue(new ConvertDocuments(inflow.Reserve(), docs, factory), InflowPriority.Medium);
+
+
             IEnumerable<Document> documents = factory
                 .Create(docs)
                 .Select(tuple => tuple.Document);

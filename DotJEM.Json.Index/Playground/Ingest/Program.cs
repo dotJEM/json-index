@@ -93,7 +93,7 @@ namespace Ingest
                 //int ready = sources.Count(s => s.Ready);
                 //Console.WriteLine($"{ready} Sources Ready of {sources.Length}");
                 Console.WriteLine($"Elapsed time: {elapsed.Hours}h {elapsed.Minutes}m {elapsed.Seconds}s {elapsed.Milliseconds}f");
-                JobMetrics.Print();
+                Metrics.Print();
                 ingest.CheckCapacity();
 
                 Console.WriteLine($"Index cached ram: {index.WriterManager.Writer.RamSizeInBytes()}");
@@ -126,63 +126,6 @@ namespace Ingest
         }
     }
 
-    public static class JobMetrics
-    {
-        private static Dictionary<string, Stats> statisics = new Dictionary<string, Stats>();
-
-        public static void Initiate(string name)
-        {
-            Enshure(name).Initiated++;
-        }
-
-        public static void Complete(string name)
-        {
-            Enshure(name).Completed++;
-
-        }
-
-        public static void Finalize(string name)
-        {
-            Enshure(name).Finalized++;
-        }
-
-        private static Stats Enshure(string name)
-        {
-            lock (statisics)
-            {
-                if (!statisics.TryGetValue(name, out Stats stats))
-                    statisics.Add(name, stats = new Stats(name));
-                return stats;
-            }
-        }
-
-        public static void Print()
-        {
-            Console.WriteLine("JobStatistics:");
-            foreach (Stats stats in statisics.Values)
-                Console.WriteLine($" - {stats}");
-        }
-
-        public class Stats
-        {
-            private readonly string name;
-
-            public Stats(string name)
-            {
-                this.name = name;
-            }
-
-            public int Initiated { get; set; }
-            public int Completed { get; set; }
-            public int Finalized { get; set; }
-
-            public override string ToString()
-            {
-                return $"{name}: {Initiated} Initiated, {Completed} Completed, {Finalized} Finalized...";
-            }
-        }
-    }
-
     public class StorageAreaLoad : IAsyncJob
     {
         private readonly IStorageArea area;
@@ -194,7 +137,7 @@ namespace Ingest
         {
             this.area = area;
             this.index = index;
-            JobMetrics.Initiate(nameof(StorageAreaLoad));
+            Metrics.Initiate(nameof(StorageAreaLoad));
         }
 
         public void Execute(IIngestScheduler ingestScheduler)
@@ -203,7 +146,7 @@ namespace Ingest
             if (changes.Count < 1)
                 return;
 
-            JobMetrics.Complete(nameof(StorageAreaLoad));
+            Metrics.Complete(nameof(StorageAreaLoad));
             Console.WriteLine($"[{area.Name}] Loading {changes} changes ({changes.Generation}/{area.Log.LatestGeneration})");
 
             if (changes.Count.Created > 0) ingestScheduler.Enqueue(new Materialize(IngestFlowControl.ReserveSlot(area.Name), index, ChangeType.Create, changes.Created), JobPriority.Low);
@@ -213,7 +156,7 @@ namespace Ingest
 
         ~StorageAreaLoad()
         {
-            JobMetrics.Finalize(nameof(StorageAreaLoad));
+            Metrics.Finalize(nameof(StorageAreaLoad));
         }
     }
 
@@ -232,7 +175,7 @@ namespace Ingest
             this.index = index;
             this.type = type;
             this.changes = changes.ToList();
-            JobMetrics.Initiate(nameof(Materialize));
+            Metrics.Initiate(nameof(Materialize));
         }
 
         public void Execute(IIngestScheduler ingestScheduler)
@@ -241,7 +184,7 @@ namespace Ingest
             JObject[] objects = changes
                 .Select(change => change.CreateEntity())
                 .ToArray();
-            JobMetrics.Complete(nameof(Materialize));
+            Metrics.Complete(nameof(Materialize));
             ingestScheduler.Enqueue(CreateJob(objects), JobPriority.High);
         }
 
@@ -261,13 +204,13 @@ namespace Ingest
 
         ~Materialize()
         {
-            JobMetrics.Finalize(nameof(Materialize));
+            Metrics.Finalize(nameof(Materialize));
         }
     }
 
     public abstract class WriteJob : IAsyncJob
     {
-        private static Random rand = new Random();
+        private static readonly Random rand = new Random();
 
         private readonly Slot slot;
         private readonly ILuceneJsonIndex index;
@@ -283,7 +226,7 @@ namespace Ingest
             this.objects = objects;
             this.name = this.GetType().Name;
 
-            JobMetrics.Initiate(name);
+            Metrics.Initiate(name);
         }
 
         public void Execute(IIngestScheduler ingestScheduler)
@@ -298,7 +241,7 @@ namespace Ingest
                 Console.WriteLine(e);
             }
 
-            JobMetrics.Complete(name);
+            Metrics.Complete(name);
 
             if(rand.Next(10) > 8) ingestScheduler.Enqueue(new CommitJob(slot, index), JobPriority.High );
         }
@@ -307,7 +250,7 @@ namespace Ingest
 
         ~WriteJob()
         {
-            JobMetrics.Finalize(name);
+            Metrics.Finalize(name);
         }
     }
 
@@ -322,19 +265,19 @@ namespace Ingest
         {
             this.slot = slot;
             this.index = index;
-            JobMetrics.Initiate(nameof(CommitJob));
+            Metrics.Initiate(nameof(CommitJob));
         }
 
         public void Execute(IIngestScheduler ingestScheduler)
         {
             Console.WriteLine($"Executing {GetType()} committing objects...");
             index.CreateWriter().Commit();
-            JobMetrics.Complete(nameof(CommitJob));
+            Metrics.Complete(nameof(CommitJob));
         }
 
         ~CommitJob()
         {
-            JobMetrics.Finalize(nameof(CommitJob));
+            Metrics.Finalize(nameof(CommitJob));
         }
     }
 
@@ -394,7 +337,10 @@ namespace Ingest
     {
         private Guid Uuid { get; } = Guid.NewGuid();
 
+        public void Finalize()
+        {
 
+        }
     }
 
 

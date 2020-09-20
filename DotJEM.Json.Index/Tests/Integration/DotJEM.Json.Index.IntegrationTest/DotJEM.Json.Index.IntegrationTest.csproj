@@ -42,7 +42,7 @@
       <HintPath>..\..\..\packages\J2N.2.0.0-beta-0009\lib\net45\J2N.dll</HintPath>
     </Reference>
     <Reference Include="Lucene.Net, Version=4.0.0.0, Culture=neutral, PublicKeyToken=85089178b9ac3181, processorArchitecture=MSIL">
-      <HintPath>..\..\..\packages\Lucene.Net.4.8.0-beta00011\lib\net45\Lucene.Net.dll</HintPath>
+      <HintPath>..\..\..\packages\Lucene.Net.4.8.0-beta00012\lib\net45\Lucene.Net.dll</HintPath>
     </Reference>
     <Reference Include="Lucene.Net.Analysis.Common, Version=4.0.0.0, Culture=neutral, PublicKeyToken=85089178b9ac3181, processorArchitecture=MSIL">
       <HintPath>..\..\..\packages\Lucene.Net.Analysis.Common.4.8.0-beta00011\lib\net45\Lucene.Net.Analysis.Common.dll</HintPath>
@@ -88,11 +88,11 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Analyzer Include="..\..\..\packages\Lucene.Net.4.8.0-beta00011\analyzers\dotnet\cs\Lucene.Net.CodeAnalysis.dll" />
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="j2n-icon-100x100.png" />
     <Content Include="LICENSE.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Analyzer Include="..\..\..\packages\Lucene.Net.4.8.0-beta00012\analyzers\dotnet\cs\Lucene.Net.CodeAnalysis.CSharp.dll" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
