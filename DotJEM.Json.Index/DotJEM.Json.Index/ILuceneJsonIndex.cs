@@ -72,9 +72,10 @@ namespace DotJEM.Json.Index
             return new LuceneJsonIndexSearcher(this);
         }
 
+        private JsonIndexWriter cachedWriter;
         public IJsonIndexWriter CreateWriter()
         {
-            return new JsonIndexWriter(this, Services.Resolve<ILuceneDocumentFactory>(), WriterManager);
+            return cachedWriter = cachedWriter ?? new JsonIndexWriter(this, Services.Resolve<ILuceneDocumentFactory>(), WriterManager);
         }
 
         public void Close()

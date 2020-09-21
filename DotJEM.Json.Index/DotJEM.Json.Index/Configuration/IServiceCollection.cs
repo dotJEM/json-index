@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using DotJEM.Json.Index.Documents;
 using DotJEM.Json.Index.Documents.Fields;
 using DotJEM.Json.Index.Documents.Info;
+using DotJEM.Json.Index.Inflow;
 using DotJEM.Json.Index.Serialization;
 using Lucene.Net.Analysis;
 using Lucene.Net.Analysis.Standard;
@@ -42,7 +43,8 @@ namespace DotJEM.Json.Index.Configuration
                 .Use<IFieldResolver, FieldResolver>()
                 .Use<IFieldInformationManager, DefaultFieldInformationManager>()
                 .Use<ILuceneDocumentFactory, LuceneDocumentFactory>()
-                .Use<ILuceneJsonDocumentSerializer, GZipLuceneJsonDocumentSerialier>();
+                .Use<ILuceneJsonDocumentSerializer, GZipLuceneJsonDocumentSerialier>()
+                .Use<IInflowCapacity, NullInflowCapacity>();
         }
 
         public ServiceCollection(IServiceFactory factory = null)

@@ -7,87 +7,9 @@ using DotJEM.Json.Index.Documents;
 using DotJEM.Json.Index.IO;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
-using Newtonsoft.Json.Linq;
 
 namespace DotJEM.Json.Index.Inflow
 {
-    public interface IInflowQueue
-    {
-        IReservedSlot Reserve(Action<IIndexWriterManager, IEnumerable<LuceneDocumentEntry>> write, string name = null);
-    }
-
-    public class InflowQueue : IInflowQueue
-    {
-        private readonly object padlock = new object();
-        private readonly object drainlock = new object();
-        private readonly IIndexWriterManager manager;
-        private readonly Queue<IReservedSlot> defaultQueue = new Queue<IReservedSlot>();
-        private readonly Dictionary<string, Queue<IReservedSlot>> namedQueues = new Dictionary<string, Queue<IReservedSlot>>();
-
-        private bool draining;
-
-        public InflowQueue(IIndexWriterManager manager)
-        {
-            this.manager = manager;
-        }
-
-        public IReservedSlot Reserve(Action<IIndexWriterManager, IEnumerable<LuceneDocumentEntry>> write, string name = null)
-        {
-            if (write == null) throw new ArgumentNullException(nameof(write));
-            IReservedSlot slow = new ReservedSlot(write, this);
-            lock (padlock)
-            {
-                Queue<IReservedSlot> queue = SelectQueue(name);
-                queue.Enqueue(slow);
-            }
-            return slow;
-        }
-
-        private Queue<IReservedSlot> SelectQueue(string name)
-        {
-            if (name == null) return defaultQueue;
-            if (namedQueues.TryGetValue(name, out var queue)) return queue;
-            
-            queue = new Queue<IReservedSlot>();
-            namedQueues.Add(name, queue);
-            return queue;
-        }
-
-        public void Drain()
-        {
-            if(draining)
-                return;
-
-            bool drained;
-            lock (drainlock)
-            {
-                if(draining)
-                    return;
-
-                draining = true;
-                drained = namedQueues
-                    .Values
-                    .Aggregate(Drain(defaultQueue), (current, queue) => current | Drain(queue));
-                draining = false;
-            }
-
-            //NOTE: Keep draining as long as we drained in any given loop.
-            if (drained) Drain();
-        }
-
-        private bool Drain(Queue<IReservedSlot> queue)
-        {
-            if (queue.Count < 1)
-                return false;
-
-            while (queue.Count > 0 && queue.Peek().IsReady)
-            {
-                IReservedSlot slot = queue.Dequeue();
-                slot.Complete(manager);
-            }
-            return true;
-        }
-    }
 
     public interface IReservedSlot
     {
@@ -135,6 +57,17 @@ namespace DotJEM.Json.Index.Inflow
         void Allocate(int estimatedCost);
     }
 
+    public class NullInflowCapacity : IInflowCapacity
+    {
+        public void Free(int estimatedCost)
+        {
+        }
+
+        public void Allocate(int estimatedCost)
+        {
+        }
+    }
+
     public class InflowManager : IInflowManager
     {
         private readonly IAsyncInflowJobQueue jobQueue;
@@ -146,12 +79,13 @@ namespace DotJEM.Json.Index.Inflow
         public IInflowQueue Queue { get; }
         public IInflowScheduler Scheduler { get; }
 
-        public InflowManager(IIndexWriterManager manager)
+        public InflowManager(IIndexWriterManager manager, IInflowCapacity capacity)
         {
             jobQueue = new AsyncInflowJobQueue();
-            
+            this.capacity = capacity ?? new NullInflowCapacity();
+
             Queue = new InflowQueue(manager);
-            Scheduler = new InflowScheduler(jobQueue, capacity);
+            Scheduler = new InflowScheduler(jobQueue, this.capacity);
 
             //TODO: Start on scheduler enqueue.
             Start();
@@ -204,45 +138,6 @@ namespace DotJEM.Json.Index.Inflow
             capacity.Allocate(job.EstimatedCost);
             queue.Enqueue(job, priority);
         }
-    }
-    public class ConvertDocuments : IInflowJob
-    {
-        public int EstimatedCost { get; } = 1;
-     
-        private readonly IReservedSlot slot;
-        private readonly IEnumerable<JObject> docs;
-        private readonly ILuceneDocumentFactory factory;
-
-        public ConvertDocuments(IReservedSlot slot, IEnumerable<JObject> docs, ILuceneDocumentFactory factory)
-        {
-            this.slot = slot;
-            this.docs = docs;
-            this.factory = factory;
-        }
-
-        public void Execute(IInflowScheduler scheduler)
-        {
-            List<LuceneDocumentEntry> documents = factory
-                .Create(docs)
-                .ToList();
-            scheduler.Enqueue(new WriteDocuments(slot, documents), Priority.Highest);
-        }
-    }
-
-    public class WriteDocuments : IInflowJob
-    {
-        public int EstimatedCost { get; } = 1;
-      
-        private readonly IReservedSlot slot;
-        private readonly IEnumerable<LuceneDocumentEntry> documents;
-
-        public WriteDocuments(IReservedSlot slot, IEnumerable<LuceneDocumentEntry> documents)
-        {
-            this.slot = slot;
-            this.documents = documents;
-        }
-
-        public void Execute(IInflowScheduler scheduler) => slot.Ready(documents);
     }
 
     public enum Priority { Highest, High, Medium, Low, Lowest }

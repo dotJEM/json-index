@@ -33,7 +33,7 @@ namespace DotJEM.Json.Index.Ingest
         {
             flow.CheckCapacity(() =>
             {
-                queue.Enqueue(inLoad.CreateInloadJob(), JobPriority.Medium);
+                scheduler.Enqueue(inLoad.CreateInloadJob(), JobPriority.Medium);
             });
         }
 

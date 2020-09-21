@@ -15,6 +15,9 @@ namespace DotJEM.Json.Index.IO
         ILuceneJsonIndex Index { get; }
         IInflowManager Inflow { get; }
 
+        //TODO: Get around exposing this, there should be an easier way to generate convert inflow tasks.
+        ILuceneDocumentFactory Factory { get; }
+
         IJsonIndexWriter Create(JObject doc);
         IJsonIndexWriter Create(IEnumerable<JObject> docs);
         IJsonIndexWriter Update(JObject doc);
@@ -37,7 +40,7 @@ namespace DotJEM.Json.Index.IO
     public class JsonIndexWriter : Disposable, IJsonIndexWriter
     {
         private readonly IIndexWriterManager manager;
-        private readonly ILuceneDocumentFactory factory;
+        public ILuceneDocumentFactory Factory { get; }
 
         public ILuceneJsonIndex Index { get; }
         public IInflowManager Inflow { get; }
@@ -47,9 +50,9 @@ namespace DotJEM.Json.Index.IO
         public JsonIndexWriter(ILuceneJsonIndex index, ILuceneDocumentFactory factory, IIndexWriterManager manager)
         {
             Index = index;
-            this.factory = factory;
+            this.Factory = factory;
             this.manager = manager;
-            this.Inflow = new InflowManager(manager);
+            this.Inflow = new InflowManager(manager, index.Services.Resolve<IInflowCapacity>());
         }
 
         public IJsonIndexWriter Create(JObject doc) => Create(new[] { doc });
@@ -57,7 +60,7 @@ namespace DotJEM.Json.Index.IO
         public IJsonIndexWriter Create(IEnumerable<JObject> docs)
         {
             IReservedSlot slot = Inflow.Queue.Reserve((writerManager, documents) => writerManager.Writer.AddDocuments(documents.Select(x => x.Document)));
-            Inflow.Scheduler.Enqueue(new ConvertDocuments(slot, docs, factory), Priority.Medium);
+            Inflow.Scheduler.Enqueue(new ConvertInflow(slot, docs, Factory), Priority.Medium);
             //IEnumerable<Document> documents = factory
             //    .Create(docs)
             //    .Select(tuple => tuple.Document);
@@ -73,7 +76,7 @@ namespace DotJEM.Json.Index.IO
                 foreach ((Term key, Document doc) in documents)
                     writerManager.Writer.UpdateDocument(key, doc);
             });
-            Inflow.Scheduler.Enqueue(new ConvertDocuments(slot, docs, factory), Priority.Medium);
+            Inflow.Scheduler.Enqueue(new ConvertInflow(slot, docs, Factory), Priority.Medium);
 
             //IEnumerable<LuceneDocumentEntry> documents = factory.Create(docs);
             //foreach ((Term key, Document doc) in documents)
@@ -89,7 +92,7 @@ namespace DotJEM.Json.Index.IO
                 foreach ((Term key, Document _) in documents)
                     writerManager.Writer.DeleteDocuments(key);
             });
-            Inflow.Scheduler.Enqueue(new ConvertDocuments(slot, docs, factory), Priority.Medium);
+            Inflow.Scheduler.Enqueue(new ConvertInflow(slot, docs, Factory), Priority.Medium);
             //IEnumerable<LuceneDocumentEntry> documents = factory.Create(docs);
             //foreach ((Term key, Document _) in documents)
             //    UnderlyingWriter.DeleteDocuments(key);
@@ -158,6 +161,7 @@ namespace DotJEM.Json.Index.IO
             base.Dispose(disposing);
         }
     }
+
 
     public static class IndexWriterExtensions
     {

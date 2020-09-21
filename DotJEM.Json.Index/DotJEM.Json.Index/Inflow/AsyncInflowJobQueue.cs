@@ -51,19 +51,44 @@ namespace DotJEM.Json.Index.Inflow
             {
                 queue.Enqueue(job);
                 Count++;
-                Monitor.PulseAll(padlock);
+                Monitor.Pulse(padlock);
             }
         }
         
         private bool InternalTryDequeue(out IInflowJob job)
         {
             job = null;
-            if (highest.Count > 0) job = highest.Dequeue();
-            if (high.Count > 0) job = high.Dequeue();
-            if (medium.Count > 0) job = medium.Dequeue();
-            if (low.Count > 0) job =  low.Dequeue();
-            if (lowest.Count > 0) job =  lowest.Dequeue();
-            return job != null;
+            if (highest.Count > 0)
+            {
+                job = highest.Dequeue();
+                return true;
+            }
+
+            if (high.Count > 0)
+            {
+                job = high.Dequeue();
+                return true;
+            }
+
+            if (medium.Count > 0)
+            {
+                job = medium.Dequeue();
+                return true;
+            }
+
+            if (low.Count > 0)
+            {
+                job =  low.Dequeue();
+                return true;
+            }
+
+            if (lowest.Count > 0)
+            {
+                job =  lowest.Dequeue();
+                return true;
+            }
+
+            return false;
         }
     }
 }
