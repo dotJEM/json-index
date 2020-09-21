@@ -28,4 +28,13 @@ namespace DotJEM.Json.Index.Searching
             return new Search(Index.SearcherManager, InfoStream, query);
         }
     }
+
+    public static class IndexSearcherExtensions
+    {
+        public static ILuceneJsonIndex Search(this ILuceneJsonIndex self, Query query)
+        {
+            self.CreateSearcher().Search(query);
+            return self;
+        }
+    }
 }

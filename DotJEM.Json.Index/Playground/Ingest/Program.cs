@@ -51,6 +51,7 @@ namespace Ingest
             IngestManager ingest = new IngestManager(new SimpleCountingCapacityControl(), new StorageAreaInloadSource(areas, index));
             ingest.Start();
 
+            //index.CreateWriter().Inflow.Queue.Reserve();
 
             Stopwatch timer = Stopwatch.StartNew();
 

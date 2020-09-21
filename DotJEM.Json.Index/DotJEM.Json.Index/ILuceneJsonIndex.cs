@@ -74,7 +74,7 @@ namespace DotJEM.Json.Index
 
         public IJsonIndexWriter CreateWriter()
         {
-            return new JsonIndexWriter(this, Services.Resolve<ILuceneDocumentFactory>(), WriterManager, null);
+            return new JsonIndexWriter(this, Services.Resolve<ILuceneDocumentFactory>(), WriterManager);
         }
 
         public void Close()

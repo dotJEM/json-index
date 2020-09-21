@@ -23,7 +23,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Inflow\" />
+      <Folder Include="Inflow\Jobs\" />
     </ItemGroup>
 
 </Project>
