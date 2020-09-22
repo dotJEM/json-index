@@ -1,15 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Reflection;
+﻿using System.Data;
 using System.Runtime.CompilerServices;
-using DotJEM.Json.Index.Documents;
-using DotJEM.Json.Index.Documents.Fields;
-using DotJEM.Json.Index.Documents.Info;
 using Lucene.Net.Analysis;
-using Lucene.Net.Analysis.Standard;
-using Lucene.Net.Analysis.Util;
 using Lucene.Net.Util;
 
 namespace DotJEM.Json.Index.Configuration

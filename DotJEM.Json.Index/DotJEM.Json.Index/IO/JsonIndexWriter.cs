@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using DotJEM.Json.Index.Documents;
 using DotJEM.Json.Index.Inflow;
 using DotJEM.Json.Index.Util;
@@ -60,11 +61,7 @@ namespace DotJEM.Json.Index.IO
         public IJsonIndexWriter Create(IEnumerable<JObject> docs)
         {
             IReservedSlot slot = Inflow.Queue.Reserve((writerManager, documents) => writerManager.Writer.AddDocuments(documents.Select(x => x.Document)));
-            Inflow.Scheduler.Enqueue(new ConvertInflow(slot, docs, Factory), Priority.Medium);
-            //IEnumerable<Document> documents = factory
-            //    .Create(docs)
-            //    .Select(tuple => tuple.Document);
-            //UnderlyingWriter.AddDocuments(documents);
+            Inflow.Scheduler.Enqueue(new ConvertInflow(slot, docs, Factory), Priority.High);
             return this;
         }
 
@@ -76,11 +73,7 @@ namespace DotJEM.Json.Index.IO
                 foreach ((Term key, Document doc) in documents)
                     writerManager.Writer.UpdateDocument(key, doc);
             });
-            Inflow.Scheduler.Enqueue(new ConvertInflow(slot, docs, Factory), Priority.Medium);
-
-            //IEnumerable<LuceneDocumentEntry> documents = factory.Create(docs);
-            //foreach ((Term key, Document doc) in documents)
-            //    UnderlyingWriter.UpdateDocument(key, doc);
+            Inflow.Scheduler.Enqueue(new ConvertInflow(slot, docs, Factory), Priority.High);
             return this;
         }
 
@@ -92,10 +85,7 @@ namespace DotJEM.Json.Index.IO
                 foreach ((Term key, Document _) in documents)
                     writerManager.Writer.DeleteDocuments(key);
             });
-            Inflow.Scheduler.Enqueue(new ConvertInflow(slot, docs, Factory), Priority.Medium);
-            //IEnumerable<LuceneDocumentEntry> documents = factory.Create(docs);
-            //foreach ((Term key, Document _) in documents)
-            //    UnderlyingWriter.DeleteDocuments(key);
+            Inflow.Scheduler.Enqueue(new ConvertInflow(slot, docs, Factory), Priority.High);
             return this;
         }
 
@@ -137,7 +127,14 @@ namespace DotJEM.Json.Index.IO
 
         public IJsonIndexWriter Commit()
         {
-            UnderlyingWriter.Commit();
+            AutoResetEvent wait = new AutoResetEvent(false);
+            IReservedSlot slot = Inflow.Queue.Reserve((writerManager, documents) =>
+            {
+                writerManager.Writer.Commit();
+                wait.Set();
+            });
+            Inflow.Scheduler.Enqueue(new CommonInflowJob(slot), Priority.Medium);
+            wait.WaitOne();
             return this;
         }
 
@@ -152,6 +149,7 @@ namespace DotJEM.Json.Index.IO
             UnderlyingWriter.SetCommitData(commitUserData);
             return this;
         }
+        
         protected override void Dispose(bool disposing)
         {
             if (disposing)
@@ -159,6 +157,21 @@ namespace DotJEM.Json.Index.IO
                 Commit();
             }
             base.Dispose(disposing);
+        }
+    }
+
+    public class CommonInflowJob : IInflowJob
+    {
+        private readonly IReservedSlot slot;
+        public int EstimatedCost { get; } = 1;
+
+        public CommonInflowJob(IReservedSlot slot)
+        {
+            this.slot = slot;
+        }
+        public void Execute(IInflowScheduler scheduler)
+        {
+            slot.Complete();
         }
     }
 

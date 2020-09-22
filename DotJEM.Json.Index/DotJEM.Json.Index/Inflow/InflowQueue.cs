@@ -28,7 +28,7 @@ namespace DotJEM.Json.Index.Inflow
         public IReservedSlot Reserve(Action<IIndexWriterManager, IEnumerable<LuceneDocumentEntry>> write, string name = null)
         {
             if (write == null) throw new ArgumentNullException(nameof(write));
-            IReservedSlot slow = new ReservedSlot(write, this);
+            IReservedSlot slow = new ReservedSlot(manager, write, this);
             lock (padlock)
             {
                 Queue<IReservedSlot> queue = SelectQueue(name);
@@ -81,7 +81,7 @@ namespace DotJEM.Json.Index.Inflow
             while (queue.Count > 0 && queue.Peek().IsReady)
             {
                 IReservedSlot slot = queue.Dequeue();
-                slot.Complete(manager);
+                slot.Complete();
             }
             return true;
         }

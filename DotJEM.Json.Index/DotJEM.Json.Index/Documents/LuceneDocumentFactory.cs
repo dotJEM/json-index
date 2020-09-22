@@ -1,13 +1,9 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using DotJEM.Json.Index.Configuration;
 using DotJEM.Json.Index.Documents.Builder;
 using DotJEM.Json.Index.Documents.Info;
-using Lucene.Net.Documents;
 using Newtonsoft.Json.Linq;
 
 namespace DotJEM.Json.Index.Documents

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using DotJEM.Json.Index.Documents.Builder;
-using Lucene.Net.Search;
 using Newtonsoft.Json.Linq;
 
 namespace DotJEM.Json.Index.Documents.Strategies

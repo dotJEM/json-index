@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using DotJEM.Json.Index.Documents;
 using DotJEM.Json.Index.IO;
-using Lucene.Net.Documents;
-using Lucene.Net.Index;
 
 namespace DotJEM.Json.Index.Inflow
 {
@@ -15,19 +12,22 @@ namespace DotJEM.Json.Index.Inflow
     {
         bool IsReady { get; }
         void Ready(IEnumerable<LuceneDocumentEntry> documents);
-        void Complete(IIndexWriterManager writer);
+
+        void Complete();
     }
 
     public class ReservedSlot : IReservedSlot
     {
+        private readonly IIndexWriterManager writerManager;
         private readonly Action<IIndexWriterManager, IEnumerable<LuceneDocumentEntry>> write;
         private readonly InflowQueue queue;
         private IEnumerable<LuceneDocumentEntry> documents;
 
         public bool IsReady { get; private set; }
 
-        public ReservedSlot(Action<IIndexWriterManager, IEnumerable<LuceneDocumentEntry>> write, InflowQueue queue)
+        public ReservedSlot(IIndexWriterManager writerManager, Action<IIndexWriterManager, IEnumerable<LuceneDocumentEntry>> write, InflowQueue queue)
         {
+            this.writerManager = writerManager;
             this.write = write;
             this.queue = queue;
         }
@@ -39,9 +39,9 @@ namespace DotJEM.Json.Index.Inflow
             this.queue.Drain();
         }
 
-        public void Complete(IIndexWriterManager writer)
+        public void Complete()
         {
-            write(writer, documents);
+            write(writerManager, documents);
         }
     }
 
@@ -97,6 +97,7 @@ namespace DotJEM.Json.Index.Inflow
             {
                 IInflowJob job = jobQueue.Dequeue();
                 job.Execute(Scheduler);
+                Console.WriteLine($"Executed {job.GetType().Name}...");
                 capacity.Free(job.EstimatedCost);
             }
         }

@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using DotJEM.Json.Index.Diagnostics;
 using DotJEM.Json.Index.Documents.Fields;
 using DotJEM.Json.Index.Serialization;

@@ -140,7 +140,7 @@ namespace Ingest
 
         public void Free(int estimatedCost)
         {
-            if (Interlocked.Decrement(ref this.count) < 10)
+            if (Interlocked.Decrement(ref this.count) < 20)
                 source.LoadData();
         }
 
@@ -150,7 +150,7 @@ namespace Ingest
         }
     }
 
-    public class StorageAreaInloadSource : IIngestInload
+    public class StorageAreaInloadSource 
     {
         private int i = 0;
         private readonly IStorageArea[] areas;
@@ -165,13 +165,6 @@ namespace Ingest
         public void LoadData()
         {
             index.CreateWriter().Inflow.Scheduler.Enqueue(new LoadInflowJob(index, FlipArea()), Priority.Highest);
-        }
-
-        public IAsyncJob CreateInloadJob()
-        {
-            Console.WriteLine("Creating a new Inload job");
-            IStorageArea area = FlipArea();
-            return new StorageAreaLoad(area, index);
         }
 
         private IStorageArea FlipArea()
@@ -285,226 +278,10 @@ namespace Ingest
         public int EstimatedCost { get; } = 1;
         public void Execute(IInflowScheduler scheduler)
         {
-            slot.Complete(writer);
+            slot.Ready(null);
         }
     }
 
-    public class StorageAreaLoad : IAsyncJob
-    {
-        private readonly IStorageArea area;
-        private readonly ILuceneJsonIndex index;
-
-        public long Cost { get; } = 1;
-
-        public StorageAreaLoad(IStorageArea area, ILuceneJsonIndex index)
-        {
-            this.area = area;
-            this.index = index;
-            Metrics.Initiate(nameof(StorageAreaLoad));
-        }
-
-        public void Execute(IIngestScheduler ingestScheduler)
-        {
-            IStorageChangeCollection changes = area.Log.Get(includeDeletes: false, count: 2500);
-            if (changes.Count < 1)
-                return;
-
-            Metrics.Complete(nameof(StorageAreaLoad));
-            Console.WriteLine($"[{area.Name}] Loading {changes} changes ({changes.Generation}/{area.Log.LatestGeneration})");
-
-            if (changes.Count.Created > 0) ingestScheduler.Enqueue(new Materialize(IngestFlowControl.ReserveSlot(area.Name), index, ChangeType.Create, changes.Created), JobPriority.Low);
-            if (changes.Count.Updated > 0) ingestScheduler.Enqueue(new Materialize(IngestFlowControl.ReserveSlot(area.Name), index, ChangeType.Update, changes.Updated), JobPriority.Low);
-            if (changes.Count.Deleted > 0) ingestScheduler.Enqueue(new Materialize(IngestFlowControl.ReserveSlot(area.Name), index, ChangeType.Delete, changes.Deleted), JobPriority.Low);
-        }
-
-        ~StorageAreaLoad()
-        {
-            Metrics.Finalize(nameof(StorageAreaLoad));
-        }
-    }
-
-    public class Materialize : IAsyncJob
-    {
-        private readonly Slot slot;
-        private readonly ChangeType type;
-        private readonly ILuceneJsonIndex index;
-        private readonly List<IChangeLogRow> changes;
-
-        public long Cost => changes.Count;
-
-        public Materialize(Slot slot, ILuceneJsonIndex index, ChangeType type, IEnumerable<IChangeLogRow> changes)
-        {
-            this.slot = slot;
-            this.index = index;
-            this.type = type;
-            this.changes = changes.ToList();
-            Metrics.Initiate(nameof(Materialize));
-        }
-
-        public void Execute(IIngestScheduler ingestScheduler)
-        {
-            Console.WriteLine($"Executing {GetType()} materializing {changes.Count} objects...");
-            JObject[] objects = changes
-                .Select(change => change.CreateEntity())
-                .ToArray();
-            Metrics.Complete(nameof(Materialize));
-            ingestScheduler.Enqueue(CreateJob(objects), JobPriority.High);
-        }
-
-        private IAsyncJob CreateJob(JObject[] objects)
-        {
-            switch (type)
-            {
-                case ChangeType.Create:
-                    return new CreateWriteJob(slot, index, objects);
-                case ChangeType.Update:
-                    return new UpdateWriteJob(slot, index, objects);
-                case ChangeType.Delete:
-                    return new DeleteWriteJob(slot, index, objects);
-            }
-            throw new ArgumentOutOfRangeException(nameof(type));
-        }
-
-        ~Materialize()
-        {
-            Metrics.Finalize(nameof(Materialize));
-        }
-    }
-
-    public abstract class WriteJob : IAsyncJob
-    {
-        private static readonly Random rand = new Random();
-
-        private readonly Slot slot;
-        private readonly ILuceneJsonIndex index;
-        private readonly JObject[] objects;
-        private readonly string name;
-
-        public long Cost => objects.LongLength;
-
-        protected WriteJob(Slot slot, ILuceneJsonIndex index, JObject[] objects)
-        {
-            this.slot = slot;
-            this.index = index;
-            this.objects = objects;
-            this.name = this.GetType().Name;
-
-            Metrics.Initiate(name);
-        }
-
-        public void Execute(IIngestScheduler ingestScheduler)
-        {
-            try
-            {
-                Console.WriteLine($"Executing {GetType()} writing {objects.Length} objects...");
-                Write(objects, index.CreateWriter());
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-            }
-
-            Metrics.Complete(name);
-
-            if(rand.Next(10) > 8) ingestScheduler.Enqueue(new CommitJob(slot, index), JobPriority.High );
-        }
-
-        protected abstract void Write(JObject[] objects, IJsonIndexWriter writer);
-
-        ~WriteJob()
-        {
-            Metrics.Finalize(name);
-        }
-    }
-
-    public class CommitJob : IAsyncJob
-    {
-        private readonly Slot slot;
-        private readonly ILuceneJsonIndex index;
-
-        public long Cost { get; } = 1;
-
-        public CommitJob(Slot slot, ILuceneJsonIndex index)
-        {
-            this.slot = slot;
-            this.index = index;
-            Metrics.Initiate(nameof(CommitJob));
-        }
-
-        public void Execute(IIngestScheduler ingestScheduler)
-        {
-            Console.WriteLine($"Executing {GetType()} committing objects...");
-            index.CreateWriter().Commit();
-            Metrics.Complete(nameof(CommitJob));
-        }
-
-        ~CommitJob()
-        {
-            Metrics.Finalize(nameof(CommitJob));
-        }
-    }
-
-    public class CreateWriteJob : WriteJob
-    {
-        public CreateWriteJob(Slot slot,ILuceneJsonIndex index, JObject[] objects) : base(slot,index, objects)
-        {
-        }
-
-        protected override void Write(JObject[] objects, IJsonIndexWriter writer)
-        {
-            writer.Create(objects);
-        }
-    }
-
-    public class UpdateWriteJob : WriteJob
-    {
-        public UpdateWriteJob(Slot slot,ILuceneJsonIndex index, JObject[] objects) : base(slot, index, objects)
-        {
-        }
-
-        protected override void Write(JObject[] objects, IJsonIndexWriter writer)
-        {
-            writer.Update(objects);
-        }
-    }
-
-    public class DeleteWriteJob : WriteJob
-    {
-        public DeleteWriteJob(Slot slot,ILuceneJsonIndex index, JObject[] objects) : base(slot, index, objects)
-        {
-        }
-
-        protected override void Write(JObject[] objects, IJsonIndexWriter writer)
-        {
-            writer.Delete(objects);
-        }
-    }
-
-    public class IngestFlowControl
-    {
-        private static readonly ConcurrentDictionary<string, Queue<Slot>> slots = new ConcurrentDictionary<string, Queue<Slot>>();
-
-        public static Slot ReserveSlot(string key)
-        {
-            Slot slot = new Slot();
-            slots.AddOrUpdate(key, s => new Queue<Slot>(new []{slot}), (s, queue) =>
-            {
-                queue.Enqueue(slot);
-                return queue;
-            });
-            return slot;
-        }
-    }
-
-    public class Slot
-    {
-        private Guid Uuid { get; } = Guid.NewGuid();
-
-        public void Finalize()
-        {
-
-        }
-    }
 
 
 }
