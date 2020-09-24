@@ -17,7 +17,6 @@ namespace DotJEM.Json.Index.TestUtil
         ITestIndexBuilder With(string contentType, object template);
         ITestIndexBuilder With(TestObject to);
         ITestIndexBuilder With(IEnumerable<TestObject> tos);
-
         ITestIndexBuilder With(Action<IServiceCollection> configurator);
 
         Task<ILuceneJsonIndex> Build();
@@ -110,10 +109,6 @@ namespace DotJEM.Json.Index.TestUtil
 
         public async Task<ILuceneJsonIndex> Build()
         {
-            //context.Configure(name, config =>
-            //{
-            //    config.UseMemoryStorage();
-            //});
             ILuceneIndexContext context = contextBuilder.Context;
 
             ILuceneJsonIndex index = context.Open(name);

@@ -21,15 +21,17 @@ namespace DotJEM.Json.Index.Inflow
         private readonly IIndexWriterManager writerManager;
         private readonly Action<IIndexWriterManager, IEnumerable<LuceneDocumentEntry>> write;
         private readonly InflowQueue queue;
+        private readonly int id;
         private IEnumerable<LuceneDocumentEntry> documents;
 
         public bool IsReady { get; private set; }
 
-        public ReservedSlot(IIndexWriterManager writerManager, Action<IIndexWriterManager, IEnumerable<LuceneDocumentEntry>> write, InflowQueue queue)
+        public ReservedSlot(IIndexWriterManager writerManager, Action<IIndexWriterManager, IEnumerable<LuceneDocumentEntry>> write, InflowQueue queue, int id)
         {
             this.writerManager = writerManager;
             this.write = write;
             this.queue = queue;
+            this.id = id;
         }
 
         public void Ready(IEnumerable<LuceneDocumentEntry> documents)
