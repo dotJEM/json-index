@@ -22,8 +22,8 @@ namespace DotJEM.Json.Index
     public interface ILuceneJsonIndexBuilder 
     {
         IServiceCollection Services { get; }
-        ILuceneJsonIndex Build();
         ILuceneJsonIndexBuilder AddFacility(Func<ILuceneStorageFactory> facility);
+        ILuceneJsonIndex Build();
     }
 
     public class LuceneJsonIndexBuilder : ILuceneJsonIndexBuilder
@@ -37,7 +37,7 @@ namespace DotJEM.Json.Index
         public IServiceResolver ServiceResolver => new ServiceResolver(Services);
         public ILuceneStorageFactory StorageFactory => CreateStorage();
 
-        public IJsonIndexConfiguration Configuration => new JsonIndexConfiguration();
+        public IJsonIndexConfiguration Configuration { get; } = new JsonIndexConfiguration();
 
         public LuceneJsonIndexBuilder(string name)
         : this(name, ServiceCollection.CreateDefault())

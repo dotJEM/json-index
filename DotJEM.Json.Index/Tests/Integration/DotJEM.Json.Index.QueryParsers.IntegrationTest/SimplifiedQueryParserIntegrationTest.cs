@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using DotJEM.Json.Index.Configuration;
+using DotJEM.Json.Index.Documents.Builder;
 using DotJEM.Json.Index.Results;
 using DotJEM.Json.Index.Snapshots;
 using DotJEM.Json.Index.Storage;
@@ -63,6 +65,12 @@ namespace DotJEM.Json.Index.QueryParsers.IntegrationTest
         {
             bool orderMatters = query.IndexOf("ORDER", StringComparison.OrdinalIgnoreCase) != -1;
 
+
+            IFactory<ILuceneDocumentBuilder> builderFactory = new FuncFactory<ILuceneDocumentBuilder>(() =>
+            {
+                return new LuceneDocumentBuilder();
+            });
+
             ILuceneJsonIndex index = new TestIndexBuilder()
                 .With(JsonPlaceholder.Albums.Select(data => new TestObject("album", (JObject)data)))
                 .With(JsonPlaceholder.Comments.Select(data => new TestObject("comment", (JObject)data)))
@@ -71,6 +79,8 @@ namespace DotJEM.Json.Index.QueryParsers.IntegrationTest
                 .With(JsonPlaceholder.Todos.Select(data => new TestObject("todo", (JObject)data)))
                 .With(JsonPlaceholder.Users.Select(data => new TestObject("user", (JObject)data)))
                 .With(services => services.UseSimplifiedLuceneQueryParser())
+                
+                .With(services => services.Use<IFactory<ILuceneDocumentBuilder>>(()=>builderFactory))
                 .Build().Result;
 
             IEnumerable<string> keys = index.Search(query).Execute().Result.Select(hit => (string)hit.Json.id);
