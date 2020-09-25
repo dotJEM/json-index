@@ -56,7 +56,17 @@ namespace DotJEM.Json.Index.QueryParsers.IntegrationTest
                 expected = string.Join(",", expected.Split(',').OrderBy(key => key));
             }
             string results = string.Join(",", keys);
-            Assert.That(results, Is.EqualTo(expected));
+            try
+            {
+                Assert.That(results, Is.EqualTo(expected));
+            }
+            catch (Exception e)
+            {
+                //TODO: Failing test here due to not draining the ingoing jobs every time (for some reason)...
+                // Considering the waithandle in Commit, this should happen so we are unsure as to why.
+                Console.WriteLine(e);
+                throw;
+            }
         }
 
         [TestCase("$contentType: user AND username: Bret", "1")]
