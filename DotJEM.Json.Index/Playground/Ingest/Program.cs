@@ -251,12 +251,15 @@ namespace Ingest
 
             if (rand.Next(10) > 8)
             {
-                IReservedSlot commitSlot = inflow.Queue.Reserve((manager, entries) =>
-                {
-                    manager.Writer.Flush(true, true);
-                    manager.Writer.Commit();
-                });
-                scheduler.Enqueue(new CommitInflowJob(commitSlot, index.WriterManager), Priority.Highest);
+                index.CreateWriter().Commit();
+                //IReservedSlot commitSlot = inflow.Queue.Reserve((manager, entries) =>
+                //{
+                //    manager.Writer.Flush(true, true);
+                //    manager.Writer.Commit();
+                //});
+
+
+                //scheduler.Enqueue(new CommitInflowJob(commitSlot, index.WriterManager), Priority.Highest);
             }
 
 

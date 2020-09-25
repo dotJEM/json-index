@@ -20,12 +20,12 @@ namespace DotJEM.Json.Index.IO
         //TODO: Get around exposing this, there should be an easier way to generate convert inflow tasks.
         ILuceneDocumentFactory Factory { get; }
 
-        IJsonIndexWriter Create(JObject doc);
-        IJsonIndexWriter Create(IEnumerable<JObject> docs);
-        IJsonIndexWriter Update(JObject doc);
-        IJsonIndexWriter Update(IEnumerable<JObject> docs);
-        IJsonIndexWriter Delete(JObject doc);
-        IJsonIndexWriter Delete(IEnumerable<JObject> docs);
+        IJsonIndexWriter Create(JObject doc, IReservedSlot reservedSlot = null);
+        IJsonIndexWriter Create(IEnumerable<JObject> docs, IReservedSlot reservedSlot = null);
+        IJsonIndexWriter Update(JObject doc, IReservedSlot reservedSlot = null);
+        IJsonIndexWriter Update(IEnumerable<JObject> docs, IReservedSlot reservedSlot = null);
+        IJsonIndexWriter Delete(JObject doc, IReservedSlot reservedSlot = null);
+        IJsonIndexWriter Delete(IEnumerable<JObject> docs, IReservedSlot reservedSlot = null);
 
         IJsonIndexWriter ForceMerge(int maxSegments);
         IJsonIndexWriter ForceMerge(int maxSegments, bool wait);
@@ -57,9 +57,9 @@ namespace DotJEM.Json.Index.IO
             this.Inflow = new InflowManager(manager, index.Services.Resolve<IInflowCapacity>());
         }
 
-        public IJsonIndexWriter Create(JObject doc) => Create(new[] { doc });
+        public IJsonIndexWriter Create(JObject doc, IReservedSlot reservedSlot = null) => Create(new[] { doc }, reservedSlot);
         private int counter = 0;
-        public IJsonIndexWriter Create(IEnumerable<JObject> docs)
+        public IJsonIndexWriter Create(IEnumerable<JObject> docs, IReservedSlot reservedSlot = null)
         {
             //List<LuceneDocumentEntry> documents = Factory
             //    .Create(docs)
@@ -79,8 +79,8 @@ namespace DotJEM.Json.Index.IO
             return this;
         }
 
-        public IJsonIndexWriter Update(JObject doc) => Update(new[] { doc });
-        public IJsonIndexWriter Update(IEnumerable<JObject> docs)
+        public IJsonIndexWriter Update(JObject doc, IReservedSlot reservedSlot = null) => Update(new[] { doc }, reservedSlot);
+        public IJsonIndexWriter Update(IEnumerable<JObject> docs, IReservedSlot reservedSlot = null)
         {
             //List<LuceneDocumentEntry> documents = Factory
             //    .Create(docs)
@@ -103,8 +103,8 @@ namespace DotJEM.Json.Index.IO
             return this;
         }
 
-        public IJsonIndexWriter Delete(JObject doc) => Delete(new[] { doc });
-        public IJsonIndexWriter Delete(IEnumerable<JObject> docs)
+        public IJsonIndexWriter Delete(JObject doc, IReservedSlot reservedSlot = null) => Delete(new[] { doc }, reservedSlot);
+        public IJsonIndexWriter Delete(IEnumerable<JObject> docs, IReservedSlot reservedSlot = null)
         {
             //List<LuceneDocumentEntry> documents = Factory
             //    .Create(docs)
@@ -122,6 +122,7 @@ namespace DotJEM.Json.Index.IO
                     writerManager.Writer.DeleteDocuments(key);
                 wait.Set();
             }, id: nr);
+
             Inflow.Scheduler.Enqueue(new ConvertInflow(slot, docs, Factory), Priority.High);
             wait.WaitOne();
             return this;
