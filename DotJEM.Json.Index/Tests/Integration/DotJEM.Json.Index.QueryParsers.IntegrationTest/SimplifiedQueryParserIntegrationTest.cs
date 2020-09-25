@@ -78,6 +78,7 @@ namespace DotJEM.Json.Index.QueryParsers.IntegrationTest
 
             IFactory<ILuceneDocumentBuilder> builderFactory = new FuncFactory<ILuceneDocumentBuilder>(() =>
             {
+                // Replace with custom class
                 return new LuceneDocumentBuilder();
             });
 
@@ -89,8 +90,7 @@ namespace DotJEM.Json.Index.QueryParsers.IntegrationTest
                 .With(JsonPlaceholder.Todos.Select(data => new TestObject("todo", (JObject)data)))
                 .With(JsonPlaceholder.Users.Select(data => new TestObject("user", (JObject)data)))
                 .With(services => services.UseSimplifiedLuceneQueryParser())
-                
-                .With(services => services.Use<IFactory<ILuceneDocumentBuilder>>(()=>builderFactory))
+                .With(services => services.Use(()=>builderFactory))
                 .Build().Result;
 
             IEnumerable<string> keys = index.Search(query).Execute().Result.Select(hit => (string)hit.Json.id);
