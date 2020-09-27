@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using DotJEM.Json.Index.Documents;
 using DotJEM.Json.Index.IO;
+using J2N.Text;
 
 namespace DotJEM.Json.Index.Inflow
 {
@@ -12,38 +14,44 @@ namespace DotJEM.Json.Index.Inflow
     {
         bool IsReady { get; }
         void Ready(IEnumerable<LuceneDocumentEntry> documents);
-
         void Complete();
+        void OnComplete(Action<IEnumerable<LuceneDocumentEntry>> handler);
     }
 
     public class ReservedSlot : IReservedSlot
     {
-        private readonly IIndexWriterManager writerManager;
-        private readonly Action<IIndexWriterManager, IEnumerable<LuceneDocumentEntry>> write;
-        private readonly InflowQueue queue;
-        private readonly int id;
+        private readonly Action onReady;
+        private readonly string caller;
         private IEnumerable<LuceneDocumentEntry> documents;
-
+        private readonly List<Action<IEnumerable<LuceneDocumentEntry>>> receivers = new List<Action<IEnumerable<LuceneDocumentEntry>>>();
         public bool IsReady { get; private set; }
 
-        public ReservedSlot(IIndexWriterManager writerManager, Action<IIndexWriterManager, IEnumerable<LuceneDocumentEntry>> write, InflowQueue queue, int id)
+        public ReservedSlot(Action onReady, string caller)
         {
-            this.writerManager = writerManager;
-            this.write = write;
-            this.queue = queue;
-            this.id = id;
+            this.onReady = onReady;
+            this.caller = caller;
         }
+
 
         public void Ready(IEnumerable<LuceneDocumentEntry> documents)
         {
             this.documents = documents;
             this.IsReady = true;
-            this.queue.Drain();
+            onReady();
         }
 
         public void Complete()
         {
-            write(writerManager, documents);
+            foreach (Action<IEnumerable<LuceneDocumentEntry>> receiver in receivers)
+                receiver(documents);
+
+            receivers.Clear();
+            documents = null;
+        }
+
+        public void OnComplete(Action<IEnumerable<LuceneDocumentEntry>> handler)
+        {
+            receivers.Add(handler);
         }
     }
 
@@ -72,21 +80,28 @@ namespace DotJEM.Json.Index.Inflow
 
     public class InflowManager : IInflowManager
     {
+        public static InflowManager Instance { get; set; }
+
         private readonly IAsyncInflowJobQueue jobQueue;
         private readonly IInflowCapacity capacity;
 
         private bool active;
         private Thread[] workers;
+        public static bool pause = false;
 
         public IInflowQueue Queue { get; }
         public IInflowScheduler Scheduler { get; }
 
-        public InflowManager(IIndexWriterManager manager, IInflowCapacity capacity)
+        public InflowManager(IInflowCapacity capacity)
         {
+            if(Instance != null) throw new InvalidOperationException("Inflow manager already created...");
+
+            Instance = this;
+
             jobQueue = new AsyncInflowJobQueue();
             this.capacity = capacity ?? new NullInflowCapacity();
 
-            Queue = new InflowQueue(manager);
+            Queue = new InflowQueue();
             Scheduler = new InflowScheduler(jobQueue, this.capacity);
 
             //TODO: Start on scheduler enqueue.
@@ -97,9 +112,14 @@ namespace DotJEM.Json.Index.Inflow
         {
             while (active)
             {
+                if (pause)
+                {
+                    Thread.Sleep(5000);
+                    continue;
+                }
                 IInflowJob job = jobQueue.Dequeue();
                 job.Execute(Scheduler);
-                Console.WriteLine($"Executed {job.GetType().Name}...");
+                //Console.WriteLine($"Executed {job.GetType().Name}...");
                 capacity.Free(job.EstimatedCost);
             }
         }
@@ -107,11 +127,37 @@ namespace DotJEM.Json.Index.Inflow
         public void Start()
         {
             active = true;
-            workers = Enumerable.Repeat(0, Environment.ProcessorCount).Select(_ => new Thread(ConsumeLoop)).ToArray();
+            workers = Enumerable.Repeat(0, Environment.ProcessorCount * 2).Select(_ => new Thread(ConsumeLoop)).ToArray();
             foreach (Thread worker in workers)
                 worker.Start();
         }
 
+        public override string ToString()
+        {
+            StringBuilder builder = new StringBuilder();
+
+            builder.AppendLine("Job Queue:");
+            builder.AppendLine("==============================================");
+            builder.AppendLine(jobQueue.ToString());
+            builder.AppendLine();
+            builder.AppendLine();
+
+
+            builder.AppendLine("Capacity:");
+            builder.AppendLine("==============================================");
+            builder.AppendLine(capacity.ToString());
+            builder.AppendLine();
+            builder.AppendLine();
+
+
+            builder.AppendLine("Inflow Queue:");
+            builder.AppendLine("==============================================");
+            builder.AppendLine(Queue.ToString());
+            builder.AppendLine();
+            builder.AppendLine();
+
+            return builder.ToString();
+        }
     }
 
     public interface IInflowJob
@@ -138,6 +184,7 @@ namespace DotJEM.Json.Index.Inflow
 
         public void Enqueue(IInflowJob job, Priority priority)
         {
+            Console.WriteLine($"Scheduling inflow job: {job.GetType()}, {priority}: count {queue.Count}, capacity: {capacity}");
             capacity.Allocate(job.EstimatedCost);
             queue.Enqueue(job, priority);
         }

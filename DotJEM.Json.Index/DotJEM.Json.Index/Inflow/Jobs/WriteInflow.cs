@@ -16,6 +16,9 @@ namespace DotJEM.Json.Index.Inflow
             this.documents = documents;
         }
 
-        public void Execute(IInflowScheduler scheduler) => slot.Ready(documents);
+        public void Execute(IInflowScheduler scheduler)
+        {
+            slot.Ready(documents);
+        }
     }
 }

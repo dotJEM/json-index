@@ -7,14 +7,15 @@ namespace DotJEM.Json.Index.Inflow
 {
     public class ConvertInflow : IInflowJob
     {
-        public int EstimatedCost { get; } = 1;
+        public int EstimatedCost { get; }
      
         private readonly IReservedSlot slot;
         private readonly IEnumerable<JObject> docs;
         private readonly ILuceneDocumentFactory factory;
 
-        public ConvertInflow(IReservedSlot slot, IEnumerable<JObject> docs, ILuceneDocumentFactory factory)
+        public ConvertInflow(IReservedSlot slot, JObject[] docs, ILuceneDocumentFactory factory)
         {
+            this.EstimatedCost = docs.Length;
             this.slot = slot;
             this.docs = docs;
             this.factory = factory;

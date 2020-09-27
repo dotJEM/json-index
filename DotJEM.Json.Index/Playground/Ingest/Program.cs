@@ -61,11 +61,6 @@ namespace Ingest
             cap.Initialize(10);
 
 
-            //IngestManager ingest = new IngestManager(new SimpleCountingCapacityControl(), new StorageAreaInloadSource(areas, index));
-            //ingest.Start();
-
-            //index.CreateWriter().Inflow.Scheduler.Enqueue(new DbInloadingInflowCapacity(areas,index), Priority.Highest);
-
             Stopwatch timer = Stopwatch.StartNew();
 
             while (!IsExit(Console.ReadLine()))
@@ -82,6 +77,35 @@ namespace Ingest
                 if (string.IsNullOrEmpty(str))
                     return false;
 
+                if (str == "p")
+                {
+                    cap.Pause();
+                    return false;
+                }
+
+                if (str == "r")
+                {
+                    cap.Resume();
+                    return false;
+                }
+
+                if (str == "c")
+                {
+                    Console.WriteLine("Forcing Garbage Collection...");
+                    GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
+                    GC.Collect();
+                    return false;
+                }
+
+                if (str == "f")
+                {
+                    InflowManager.pause = true;
+                    Console.WriteLine("Forcing Flush...");
+                    index.WriterManager.Writer.Flush(true, true);
+                    index.WriterManager.Writer.Commit();
+                    InflowManager.pause = false;
+                    return false;
+                }
 
                 try
                 {
@@ -94,27 +118,15 @@ namespace Ingest
                     Console.WriteLine(e);
                 }
 
-                GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
-                GC.Collect();
                 return false;
             }
 
             void CheckSources(object sender, EventArgs eventArgs)
             {
-                IngestManager.pause = true;
-
                 TimeSpan elapsed = timer.Elapsed;
-                //int ready = sources.Count(s => s.Ready);
-                //Console.WriteLine($"{ready} Sources Ready of {sources.Length}");
                 Console.WriteLine($"Elapsed time: {elapsed.Hours}h {elapsed.Minutes}m {elapsed.Seconds}s {elapsed.Milliseconds}f");
-                Metrics.Print();
-                //ingest.CheckCapacity();
-
                 Console.WriteLine($"Index cached ram: {index.WriterManager.Writer.RamSizeInBytes()}");
-                index.WriterManager.Writer.Flush(true, true);
-                index.WriterManager.Writer.Commit();
-
-                IngestManager.pause = false;
+                Console.WriteLine(InflowManager.Instance.ToString());
             }
         }
     }
@@ -122,12 +134,15 @@ namespace Ingest
 
     public class DbInloadingInflowCapacity : IInflowCapacity
     {
+        private readonly ILuceneJsonIndex index;
         private int count;
 
-        private StorageAreaInloadSource source;
+        private readonly StorageAreaInloadSource source;
+        private bool pause;
 
         public DbInloadingInflowCapacity(IStorageArea[] areas, ILuceneJsonIndex index)
         {
+            this.index = index;
             this.source = new StorageAreaInloadSource(areas, index);
         }
 
@@ -141,12 +156,43 @@ namespace Ingest
         public void Free(int estimatedCost)
         {
             if (Interlocked.Decrement(ref this.count) < 20)
+            {
+                CheckLoadData();
+            }
+        }
+
+        private void CheckLoadData()
+        {
+            if(pause) return;
+            
+            if (count < 20 && index.CreateWriter().Inflow.Queue.Count < 50)
                 source.LoadData();
+            else if (count < 2)
+                ThreadPool.RegisterWaitForSingleObject(new AutoResetEvent(false), (state, signaled) => CheckLoadData(), null, 5000, true);
         }
 
         public void Allocate(int estimatedCost)
         {
             Interlocked.Increment(ref this.count);
+        }
+
+        public override string ToString()
+        {
+            return count.ToString();
+        }
+
+        public void Pause()
+        {
+            this.pause = true;
+        }
+
+        public void Resume()
+        {
+            this.pause = false;
+            if (count < 1)
+            {
+                Initialize(10);
+            }
         }
     }
 
@@ -192,98 +238,69 @@ namespace Ingest
 
         public void Execute(IInflowScheduler scheduler)
         {
-            IStorageChangeCollection changes = area.Log.Get(includeDeletes: false, count: 5000);
+            IStorageChangeCollection changes = area.Log.Get(includeDeletes: false, count: 10000);
             if (changes.Count < 1)
                 return;
 
-
-
-            if (changes.Count.Created > 0)
-            {
-                IReservedSlot createdSlot = inflow.Queue.Reserve((manager, entries) =>
-                {
-                    manager.Writer.AddDocuments(entries.Select(e => e.Document));
-                }, area.Name);
-                scheduler.Enqueue(new DeserializeInflowJob(createdSlot,index, changes.Created), Priority.High);
-            }
-            if (changes.Count.Updated > 0) 
-            {
-                IReservedSlot createdSlot = inflow.Queue.Reserve((manager, entries) =>
-                {
-                    foreach (LuceneDocumentEntry entry in entries)
-                        manager.Writer.UpdateDocument(entry.Key, entry.Document);
-                }, area.Name);
-                scheduler.Enqueue(new DeserializeInflowJob(createdSlot,index,  changes.Created), Priority.Medium);
-            }
-            if (changes.Count.Deleted > 0) 
-            {
-                IReservedSlot createdSlot = inflow.Queue.Reserve((manager, entries) =>
-                {
-                    manager.Writer.DeleteDocuments(entries.Select(e => e.Key).ToArray());
-                }, area.Name);
-                scheduler.Enqueue(new DeserializeInflowJob(createdSlot,index,  changes.Created), Priority.Low);
-            }
+            if (changes.Count.Created > 0) scheduler.Enqueue(new CreateDeserializeInflowJob(inflow.Queue.Reserve(area.Name), index, changes.Created), Priority.High);
+            if (changes.Count.Updated > 0) scheduler.Enqueue(new UpdateDeserializeInflowJob(inflow.Queue.Reserve(area.Name), index, changes.Created), Priority.High);
+            if (changes.Count.Deleted > 0) scheduler.Enqueue(new DeleteDeserializeInflowJob(inflow.Queue.Reserve(area.Name), index, changes.Created), Priority.High);
         }
     }
 
-    public class DeserializeInflowJob : IInflowJob
+    public abstract class DeserializeInflowJob : IInflowJob
     {
-        private readonly IReservedSlot slot;
+        protected IReservedSlot Slot { get; }
+        
         private readonly IEnumerable<IChangeLogRow> changes;
-        private readonly IInflowManager inflow;
         private readonly ILuceneJsonIndex index;
 
-        public DeserializeInflowJob(IReservedSlot slot, ILuceneJsonIndex index, IEnumerable<IChangeLogRow> changes)
+        public int EstimatedCost { get; } = 1;
+
+        protected DeserializeInflowJob(IReservedSlot slot, ILuceneJsonIndex index, IEnumerable<IChangeLogRow> changes)
         {
-            this.slot = slot;
+            this.Slot = slot;
             this.changes = changes;
             this.index = index;
-            this.inflow = index.CreateWriter().Inflow;
         }
 
-        public int EstimatedCost { get; }
         public void Execute(IInflowScheduler scheduler)
         {
             JObject[] objects = changes
                 .Select(change => change.CreateEntity())
                 .ToArray();
-            scheduler.Enqueue(new ConvertInflow(slot, objects, index.CreateWriter().Factory), Priority.Medium);
 
+            Write(index.CreateWriter(), objects);
             if (rand.Next(10) > 8)
             {
                 index.CreateWriter().Commit();
-                //IReservedSlot commitSlot = inflow.Queue.Reserve((manager, entries) =>
-                //{
-                //    manager.Writer.Flush(true, true);
-                //    manager.Writer.Commit();
-                //});
-
-
-                //scheduler.Enqueue(new CommitInflowJob(commitSlot, index.WriterManager), Priority.Highest);
             }
-
-
         }
+
+        protected abstract void Write(IJsonIndexWriter writer, JObject[] objects);
+
         private static readonly Random rand = new Random();
     }
 
-    public class CommitInflowJob : IInflowJob
+    public class CreateDeserializeInflowJob : DeserializeInflowJob
     {
-        private readonly IReservedSlot slot;
-        private readonly IIndexWriterManager writer;
-
-        public CommitInflowJob(IReservedSlot slot, IIndexWriterManager writer)
-        {
-            this.slot = slot;
-            this.writer = writer;
-        }
-
-        public int EstimatedCost { get; } = 1;
-        public void Execute(IInflowScheduler scheduler)
-        {
-            slot.Ready(null);
-        }
+        public CreateDeserializeInflowJob(IReservedSlot slot, ILuceneJsonIndex index, IEnumerable<IChangeLogRow> changes) : base(slot, index, changes) { }
+        protected override void Write(IJsonIndexWriter writer, JObject[] objects) => writer.Create(objects, Slot);
     }
+
+    public class UpdateDeserializeInflowJob : DeserializeInflowJob
+    {
+        public UpdateDeserializeInflowJob(IReservedSlot slot, ILuceneJsonIndex index, IEnumerable<IChangeLogRow> changes) : base(slot, index, changes) { }
+        protected override void Write(IJsonIndexWriter writer, JObject[] objects) => writer.Update(objects, Slot);
+    }
+
+    public class DeleteDeserializeInflowJob : DeserializeInflowJob
+    {
+        public DeleteDeserializeInflowJob(IReservedSlot slot, ILuceneJsonIndex index, IEnumerable<IChangeLogRow> changes) : base(slot, index, changes) { }
+        protected override void Write(IJsonIndexWriter writer, JObject[] objects) => writer.Delete(objects, Slot);
+    }
+
+
 
 
 
