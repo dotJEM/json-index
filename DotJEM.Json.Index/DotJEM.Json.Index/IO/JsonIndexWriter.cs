@@ -81,33 +81,19 @@ namespace DotJEM.Json.Index.IO
         }
 
         public IJsonIndexWriter Create(JObject doc, IReservedSlot reservedSlot = null) => Create(new[] { doc }, reservedSlot);
-        private int counter = 0;
         public IJsonIndexWriter Create(IEnumerable<JObject> docs, IReservedSlot reservedSlot = null)
         {
-            //List<LuceneDocumentEntry> documents = Factory
-            //    .Create(docs)
-            //    .ToList();
-            //UnderlyingWriter.AddDocuments(documents.Select(d => d.Document));
+            reservedSlot ??= Inflow.Queue.Reserve();
             foreach (JObject[] objects in docs.Partition(250))
             {
                 //TODO: We need to split the slot here...
-                IReservedSlot slot = reservedSlot ?? Inflow.Queue.Reserve();
-                slot.OnComplete(documents =>
-                {
+                IReservedSlot slot = Inflow.Queue.Split(reservedSlot);;
+                slot.OnComplete(documents => {
                     UnderlyingWriter.AddDocuments(documents.Select(x => x.Document));
                 });
                 Inflow.Scheduler.Enqueue(new ConvertInflow(slot, objects, Factory), Priority.High);
             }
-
-            //AutoResetEvent wait = new AutoResetEvent(false);
-            //IReservedSlot slot = Inflow.Queue.Reserve((writerManager, documents) =>
-            //{
-            //    //Debug.WriteLine($"Completed Create: {nr}");
-            //    //Console.WriteLine($"Completed Create: {nr}");
-            //    writerManager.Writer.AddDocuments(documents.Select(x => x.Document));
-            //    //wait.Set();
-            //}, id:nr);
-            //wait.WaitOne();
+            reservedSlot.Ready(null);
             return this;
         }
 
@@ -116,50 +102,29 @@ namespace DotJEM.Json.Index.IO
         //public IJsonIndexWriter Update(IEnumerable<JObject> docs) => Update(docs, Inflow.Queue.Reserve());
         public IJsonIndexWriter Update(IEnumerable<JObject> docs, IReservedSlot reservedSlot = null)
         {
-            //List<LuceneDocumentEntry> documents = Factory
-            //    .Create(docs)
-            //    .ToList();
-            //foreach (LuceneDocumentEntry entry in documents)
-            //    UnderlyingWriter.UpdateDocument(entry.Key, entry.Document);
-
-            //int nr = counter++;
-            //AutoResetEvent wait = new AutoResetEvent(false);
+            reservedSlot ??= Inflow.Queue.Reserve();
             foreach (JObject[] objects in docs.Partition(250))
             {
                 //TODO: We need to split the slot here...
-                IReservedSlot slot = reservedSlot ?? Inflow.Queue.Reserve();
-                slot.OnComplete(documents =>
-                {
+                IReservedSlot slot = Inflow.Queue.Split(reservedSlot);;
+                slot.OnComplete(documents => {
                     foreach ((Term key, Document doc) in documents)
                         UnderlyingWriter.UpdateDocument(key, doc);
                 });
                 Inflow.Scheduler.Enqueue(new ConvertInflow(slot, objects, Factory), Priority.High);
             }
-
-            //IReservedSlot slot = Inflow.Queue.Reserve((writerManager, documents) =>
-            //{
-            //    //Debug.WriteLine($"Completed Update: {nr}");
-            //    //Console.WriteLine($"Completed Update: {nr}");
-            //    foreach ((Term key, Document doc) in documents)
-            //        writerManager.Writer.UpdateDocument(key, doc);
-            //    //wait.Set();
-            //}, id: nr);
-            //wait.WaitOne();
+            reservedSlot.Ready(null);
             return this;
         }
 
         public IJsonIndexWriter Delete(JObject doc, IReservedSlot reservedSlot = null) => Delete(new[] { doc }, reservedSlot);
         public IJsonIndexWriter Delete(IEnumerable<JObject> docs, IReservedSlot reservedSlot = null)
         {
-            //List<LuceneDocumentEntry> documents = Factory
-            //    .Create(docs)
-            //    .ToList();
-            //foreach (LuceneDocumentEntry entry in documents)
-            //    UnderlyingWriter.DeleteDocuments(entry.Key);
+            reservedSlot ??= Inflow.Queue.Reserve();
             foreach (JObject[] objects in docs.Partition(250))
             {
                 //TODO: We need to split the slot here...
-                IReservedSlot slot = reservedSlot ?? Inflow.Queue.Reserve();
+                IReservedSlot slot = Inflow.Queue.Split(reservedSlot);;
                 slot.OnComplete(documents =>
                 {
                     foreach ((Term key, Document _) in documents)
@@ -167,18 +132,7 @@ namespace DotJEM.Json.Index.IO
                 });
                 Inflow.Scheduler.Enqueue(new ConvertInflow(slot, objects, Factory), Priority.High);
             }
-
-            //AutoResetEvent wait = new AutoResetEvent(false);
-            //IReservedSlot slot = Inflow.Queue.Reserve((writerManager, documents) =>
-            //{
-            //    //Debug.WriteLine($"Completed Delete: {nr}");
-            //    //Console.WriteLine($"Completed Delete: {nr}");
-            //    foreach ((Term key, Document _) in documents)
-            //        writerManager.Writer.DeleteDocuments(key);
-            //    //wait.Set();
-            //}, id: nr);
-
-            //wait.WaitOne();
+            reservedSlot.Ready(null);
             return this;
         }
 
@@ -217,19 +171,6 @@ namespace DotJEM.Json.Index.IO
             IReservedSlot slot = Inflow.Queue.Reserve();
             slot.OnComplete(documents => UnderlyingWriter.Flush(triggerMerge, applyDeletes));
             Inflow.Scheduler.Enqueue(new CommonInflowJob(slot), Priority.High);
-
-
-            //AutoResetEvent wait = new AutoResetEvent(false);
-            //IReservedSlot slot = Inflow.Queue.Reserve((writerManager, documents) =>
-            //{
-            //    //Debug.WriteLine($"Completed Flush: {nr}");
-            //    //Console.WriteLine($"Completed Flush: {nr}");
-            //    writerManager.Writer.Flush(triggerMerge, applyDeletes);
-            //    //wait.Set();
-            //}, id: nr);
-            //wait.WaitOne();
-
-            //UnderlyingWriter.Flush(triggerMerge,applyDeletes);
             return this;
         }
 
@@ -244,18 +185,6 @@ namespace DotJEM.Json.Index.IO
             });
             Inflow.Scheduler.Enqueue(new CommonInflowJob(slot), Priority.Highest);
             wait.WaitOne();
-
-            //IReservedSlot slot = Inflow.Queue.Reserve((writerManager, documents) =>
-            //{
-            //    //Debug.WriteLine($"Completed Commit: {nr}");
-            //    //Console.WriteLine($"Completed Commit: {nr}");
-            //    writerManager.Writer.Commit();
-            //    wait.Set();
-            //}, id: nr);
-            //Inflow.Scheduler.Enqueue(new CommonInflowJob(slot), Priority.Medium);
-            //wait.WaitOne();
-
-            //UnderlyingWriter.Commit();
             return this;
         }
 

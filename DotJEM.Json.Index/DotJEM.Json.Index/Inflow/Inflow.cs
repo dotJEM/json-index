@@ -25,6 +25,7 @@ namespace DotJEM.Json.Index.Inflow
         private IEnumerable<LuceneDocumentEntry> documents;
         private readonly List<Action<IEnumerable<LuceneDocumentEntry>>> receivers = new List<Action<IEnumerable<LuceneDocumentEntry>>>();
         public bool IsReady { get; private set; }
+        public int Index { get; set; }
 
         public ReservedSlot(Action onReady, string caller)
         {
@@ -52,6 +53,11 @@ namespace DotJEM.Json.Index.Inflow
         public void OnComplete(Action<IEnumerable<LuceneDocumentEntry>> handler)
         {
             receivers.Add(handler);
+        }
+
+        public override string ToString()
+        {
+            return $"IsReady={IsReady}  caller={caller}";
         }
     }
 
