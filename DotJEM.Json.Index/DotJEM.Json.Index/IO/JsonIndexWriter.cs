@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using DotJEM.Json.Index.Documents;
 using DotJEM.Json.Index.Inflow;
+using DotJEM.Json.Index.Inflow.Jobs;
 using DotJEM.Json.Index.Util;
 using Lucene.Net.Documents;
 using Lucene.Net.Index;
@@ -16,9 +17,6 @@ namespace DotJEM.Json.Index.IO
     {
         ILuceneJsonIndex Index { get; }
         IInflowManager Inflow { get; }
-
-        //TODO: Get around exposing this, there should be an easier way to generate convert inflow tasks.
-        ILuceneDocumentFactory Factory { get; }
 
         IJsonIndexWriter Create(JObject doc, IReservedSlot reservedSlot = null);
         IJsonIndexWriter Create(IEnumerable<JObject> docs, IReservedSlot reservedSlot = null);
@@ -65,7 +63,7 @@ namespace DotJEM.Json.Index.IO
     public class JsonIndexWriter : Disposable, IJsonIndexWriter
     {
         private readonly IIndexWriterManager manager;
-        public ILuceneDocumentFactory Factory { get; }
+        private readonly ILuceneDocumentFactory factory;
 
         public ILuceneJsonIndex Index { get; }
         public IInflowManager Inflow { get; }
@@ -75,7 +73,7 @@ namespace DotJEM.Json.Index.IO
         public JsonIndexWriter(ILuceneJsonIndex index, ILuceneDocumentFactory factory, IIndexWriterManager manager)
         {
             Index = index;
-            this.Factory = factory;
+            this.factory = factory;
             this.manager = manager;
             this.Inflow = new InflowManager(index.Services.Resolve<IInflowCapacity>());
         }
@@ -91,7 +89,7 @@ namespace DotJEM.Json.Index.IO
                 slot.OnComplete(documents => {
                     UnderlyingWriter.AddDocuments(documents.Select(x => x.Document));
                 });
-                Inflow.Scheduler.Enqueue(new ConvertInflow(slot, objects, Factory), Priority.High);
+                Inflow.Scheduler.Enqueue(new ConvertInflow(slot, objects, factory), Priority.High);
             }
             reservedSlot.Ready(null);
             return this;
@@ -111,7 +109,7 @@ namespace DotJEM.Json.Index.IO
                     foreach ((Term key, Document doc) in documents)
                         UnderlyingWriter.UpdateDocument(key, doc);
                 });
-                Inflow.Scheduler.Enqueue(new ConvertInflow(slot, objects, Factory), Priority.High);
+                Inflow.Scheduler.Enqueue(new ConvertInflow(slot, objects, factory), Priority.High);
             }
             reservedSlot.Ready(null);
             return this;
@@ -130,7 +128,7 @@ namespace DotJEM.Json.Index.IO
                     foreach ((Term key, Document _) in documents)
                         UnderlyingWriter.DeleteDocuments(key);
                 });
-                Inflow.Scheduler.Enqueue(new ConvertInflow(slot, objects, Factory), Priority.High);
+                Inflow.Scheduler.Enqueue(new ConvertInflow(slot, objects, factory), Priority.High);
             }
             reservedSlot.Ready(null);
             return this;
@@ -170,7 +168,7 @@ namespace DotJEM.Json.Index.IO
         {
             IReservedSlot slot = Inflow.Queue.Reserve();
             slot.OnComplete(documents => UnderlyingWriter.Flush(triggerMerge, applyDeletes));
-            Inflow.Scheduler.Enqueue(new CommonInflowJob(slot), Priority.High);
+            Inflow.Scheduler.Enqueue(new NoopInflowJob(slot), Priority.High);
             return this;
         }
 
@@ -183,7 +181,7 @@ namespace DotJEM.Json.Index.IO
                 UnderlyingWriter.Commit();
                 wait.Set();
             });
-            Inflow.Scheduler.Enqueue(new CommonInflowJob(slot), Priority.Highest);
+            Inflow.Scheduler.Enqueue(new NoopInflowJob(slot), Priority.Highest);
             wait.WaitOne();
             return this;
         }
@@ -207,74 +205,6 @@ namespace DotJEM.Json.Index.IO
                 Commit();
             }
             base.Dispose(disposing);
-        }
-    }
-
-    public class CommonInflowJob : IInflowJob
-    {
-        private readonly IReservedSlot slot;
-        public int EstimatedCost { get; } = 1;
-
-        public CommonInflowJob(IReservedSlot slot)
-        {
-            this.slot = slot;
-        }
-
-        public void Execute(IInflowScheduler scheduler)
-        {
-            slot.Ready(null);
-        }
-    }
-
-
-    public static class IndexWriterExtensions
-    {
-        public static ILuceneJsonIndex Create(this ILuceneJsonIndex self, JObject doc)
-        {
-            self.CreateWriter().Create(doc);
-            return self;
-        }
-
-        public static ILuceneJsonIndex Create(this ILuceneJsonIndex self, IEnumerable<JObject> docs)
-        {
-            self.CreateWriter().Create(docs);
-            return self;
-        }
-
-        public static ILuceneJsonIndex Update(this ILuceneJsonIndex self, JObject doc)
-        {
-            self.CreateWriter().Update(doc);
-            return self;
-        }
-
-        public static ILuceneJsonIndex Update(this ILuceneJsonIndex self, IEnumerable<JObject> docs)
-        {
-            self.CreateWriter().Update(docs);
-            return self;
-        }
-        
-        public static ILuceneJsonIndex Delete(this ILuceneJsonIndex self, JObject doc)
-        {
-            self.CreateWriter().Delete(doc);
-            return self;
-        }
-
-        public static ILuceneJsonIndex Delete(this ILuceneJsonIndex self, IEnumerable<JObject> docs)
-        {
-            self.CreateWriter().Delete(docs);
-            return self;
-        }
-        
-        public static ILuceneJsonIndex Flush(this ILuceneJsonIndex self, bool triggerMerge, bool applyDeletes)
-        {
-            self.CreateWriter().Flush(triggerMerge, applyDeletes);
-            return self;
-        }
-
-        public static ILuceneJsonIndex Commit(this ILuceneJsonIndex self)
-        {
-            self.CreateWriter().Commit();
-            return self;
         }
     }
 }

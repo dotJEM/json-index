@@ -99,11 +99,9 @@ namespace Ingest
 
                 if (str == "f")
                 {
-                    InflowManager.pause = true;
                     Console.WriteLine("Forcing Flush...");
                     index.WriterManager.Writer.Flush(true, true);
                     index.WriterManager.Writer.Commit();
-                    InflowManager.pause = false;
                     return false;
                 }
 
@@ -137,13 +135,13 @@ namespace Ingest
         private readonly ILuceneJsonIndex index;
         private int count;
 
-        private readonly StorageAreaInloadSource source;
+        private readonly VollaVlolla source;
         private bool pause;
 
         public DbInloadingInflowCapacity(IStorageArea[] areas, ILuceneJsonIndex index)
         {
             this.index = index;
-            this.source = new StorageAreaInloadSource(areas, index);
+            this.source = new VollaVlolla(areas, index);
         }
 
         public DbInloadingInflowCapacity Initialize(int count)
@@ -195,14 +193,13 @@ namespace Ingest
             }
         }
     }
-
-    public class StorageAreaInloadSource 
+    public class VollaVlolla
     {
         private int i = 0;
         private readonly IStorageArea[] areas;
         private readonly ILuceneJsonIndex index;
 
-        public StorageAreaInloadSource(IStorageArea[] areas, ILuceneJsonIndex index)
+        public VollaVlolla(IStorageArea[] areas, ILuceneJsonIndex index)
         {
             this.areas = areas;
             this.index = index;
@@ -218,6 +215,47 @@ namespace Ingest
             IStorageArea area = areas[i++];
             i %= areas.Length;
             return area;
+        }
+    }
+
+    public interface IStorageAreaDataSource
+    {
+        IStorageChangeCollection Next();
+    }
+
+
+    public class CompositeStorageAreaDataSource : IStorageAreaDataSource
+    {
+        private int i = 0;
+        private IStorageAreaDataSource[] sources;
+
+        public CompositeStorageAreaDataSource(IStorageAreaDataSource[] sources)
+        {
+            this.sources = sources;
+        }
+
+        public IStorageChangeCollection Next()
+        {
+            IStorageAreaDataSource source = sources[i++];
+            i %= sources.Length;
+            return source.Next();
+        }
+    }
+
+    public class StorageAreaDataSource : IStorageAreaDataSource
+    {
+        private IStorageAreaLog log;
+        private readonly long startGeneration;
+
+        public StorageAreaDataSource(IStorageArea area)
+        {
+            this.log = area.Log;
+            this.startGeneration = log.LatestGeneration;
+        }
+
+        public IStorageChangeCollection Next()
+        {
+            return log.Get(log.CurrentGeneration >= startGeneration, 10000);
         }
     }
 
@@ -242,9 +280,9 @@ namespace Ingest
             if (changes.Count < 1)
                 return;
 
-            if (changes.Count.Created > 0) scheduler.Enqueue(new CreateDeserializeInflowJob(inflow.Queue.Reserve(area.Name), index, changes.Created), Priority.High);
-            if (changes.Count.Updated > 0) scheduler.Enqueue(new UpdateDeserializeInflowJob(inflow.Queue.Reserve(area.Name), index, changes.Created), Priority.High);
-            if (changes.Count.Deleted > 0) scheduler.Enqueue(new DeleteDeserializeInflowJob(inflow.Queue.Reserve(area.Name), index, changes.Created), Priority.High);
+            if (changes.Count.Created > 0) scheduler.Enqueue(new CreateDeserializeInflowJob(inflow.Queue.Reserve(area.Name), index, changes.Created, changes.Count.Created), Priority.High);
+            if (changes.Count.Updated > 0) scheduler.Enqueue(new UpdateDeserializeInflowJob(inflow.Queue.Reserve(area.Name), index, changes.Updated, changes.Count.Updated), Priority.High);
+            if (changes.Count.Deleted > 0) scheduler.Enqueue(new DeleteDeserializeInflowJob(inflow.Queue.Reserve(area.Name), index, changes.Deleted, changes.Count.Deleted), Priority.High);
         }
     }
 
@@ -255,10 +293,12 @@ namespace Ingest
         private readonly IEnumerable<IChangeLogRow> changes;
         private readonly ILuceneJsonIndex index;
 
-        public int EstimatedCost { get; } = 1;
+        public int EstimatedCost { get; }
 
-        protected DeserializeInflowJob(IReservedSlot slot, ILuceneJsonIndex index, IEnumerable<IChangeLogRow> changes)
+        protected DeserializeInflowJob(IReservedSlot slot, ILuceneJsonIndex index, IEnumerable<IChangeLogRow> changes, int cost)
         {
+            EstimatedCost = cost;
+
             this.Slot = slot;
             this.changes = changes;
             this.index = index;
@@ -284,19 +324,19 @@ namespace Ingest
 
     public class CreateDeserializeInflowJob : DeserializeInflowJob
     {
-        public CreateDeserializeInflowJob(IReservedSlot slot, ILuceneJsonIndex index, IEnumerable<IChangeLogRow> changes) : base(slot, index, changes) { }
+        public CreateDeserializeInflowJob(IReservedSlot slot, ILuceneJsonIndex index, IEnumerable<IChangeLogRow> changes, int cost) : base(slot, index, changes, cost) { }
         protected override void Write(IJsonIndexWriter writer, JObject[] objects) => writer.Create(objects, Slot);
     }
 
     public class UpdateDeserializeInflowJob : DeserializeInflowJob
     {
-        public UpdateDeserializeInflowJob(IReservedSlot slot, ILuceneJsonIndex index, IEnumerable<IChangeLogRow> changes) : base(slot, index, changes) { }
+        public UpdateDeserializeInflowJob(IReservedSlot slot, ILuceneJsonIndex index, IEnumerable<IChangeLogRow> changes, int cost) : base(slot, index, changes, cost) { }
         protected override void Write(IJsonIndexWriter writer, JObject[] objects) => writer.Update(objects, Slot);
     }
 
     public class DeleteDeserializeInflowJob : DeserializeInflowJob
     {
-        public DeleteDeserializeInflowJob(IReservedSlot slot, ILuceneJsonIndex index, IEnumerable<IChangeLogRow> changes) : base(slot, index, changes) { }
+        public DeleteDeserializeInflowJob(IReservedSlot slot, ILuceneJsonIndex index, IEnumerable<IChangeLogRow> changes, int cost) : base(slot, index, changes, cost) { }
         protected override void Write(IJsonIndexWriter writer, JObject[] objects) => writer.Delete(objects, Slot);
     }
 

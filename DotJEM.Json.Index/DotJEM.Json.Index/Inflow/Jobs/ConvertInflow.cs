@@ -3,7 +3,7 @@ using System.Linq;
 using DotJEM.Json.Index.Documents;
 using Newtonsoft.Json.Linq;
 
-namespace DotJEM.Json.Index.Inflow
+namespace DotJEM.Json.Index.Inflow.Jobs
 {
     public class ConvertInflow : IInflowJob
     {
@@ -16,6 +16,7 @@ namespace DotJEM.Json.Index.Inflow
         public ConvertInflow(IReservedSlot slot, JObject[] docs, ILuceneDocumentFactory factory)
         {
             this.EstimatedCost = docs.Length;
+
             this.slot = slot;
             this.docs = docs;
             this.factory = factory;

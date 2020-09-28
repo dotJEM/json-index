@@ -59,7 +59,6 @@ namespace DotJEM.Json.Index.Inflow
                 return index;
             }
         }
-
         private IReservedSlot Dequeue()
         {
             if(size == 0) throw new InvalidOperationException("Queue was empty.");
@@ -73,13 +72,11 @@ namespace DotJEM.Json.Index.Inflow
                 return removed;
             }
         }
-
         private IReservedSlot Peek()
         {
             if(size == 0) throw new InvalidOperationException("Queue was empty.");
             return array[head];
         }
-
         private void SetCapacity(int capacity)
         {
             lock (readlock)
@@ -89,11 +86,10 @@ namespace DotJEM.Json.Index.Inflow
                 tail = (size == capacity) ? 0 : size;
             }
         }
-
         private IReservedSlot[] CloneArray() => CloneArray(size);
         private IReservedSlot[] CloneArray(int newSize)
         {
-            IReservedSlot[] newarray = new IReservedSlot[newSize];
+            ReservedSlot[] newarray = new ReservedSlot[newSize];
             if (size == 0)
                 return newarray;
 
@@ -187,11 +183,7 @@ namespace DotJEM.Json.Index.Inflow
             StringBuilder builder = new StringBuilder();
             builder.AppendLine($"Waiting slots in queue: {Count}");
             foreach (IReservedSlot slot in CloneArray())
-            {
                 builder.AppendLine($"  - {slot}");
-            }
-
-
             return builder.ToString();
         }
     }
