@@ -110,7 +110,7 @@ namespace DotJEM.Json.Index.Inflow
         public IReservedSlot Split(IReservedSlot slot, [CallerMemberName] string caller = null)
         {
             
-            int start = ((ReservedSlot) slot).Index + 1;
+            int start = (((ReservedSlot) slot).Index + 1) % array.Length;
             IReservedSlot insert = new ReservedSlot(Pulse, caller) { Index = start};
             IReservedSlot move = insert;
             lock (writelock)
