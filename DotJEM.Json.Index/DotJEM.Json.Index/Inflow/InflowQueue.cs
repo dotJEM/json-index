@@ -153,9 +153,19 @@ namespace DotJEM.Json.Index.Inflow
                     Queue<IReservedSlot> ready;
                     lock (padlock)
                     {
-                        while (size == 0 || !Peek().IsReady) Monitor.Wait(padlock);
-                        Console.WriteLine($"Draining inflow Queue of {Count} objects...");
-                        ready = GetReadySlots();
+                        try
+                        {
+                            while (size == 0 || !Peek().IsReady) Monitor.Wait(padlock);
+                            Console.WriteLine($"Draining inflow Queue of {Count} objects...");
+                            ready = GetReadySlots();
+
+                        }
+                        catch (Exception e)
+                        {
+                            // TODO: A nullreference exception was seen here, but why?
+                            Console.WriteLine(e);
+                            throw;
+                        }
                     }
 
                     // Note: We use a Queue and Dequing here so that each object can be collected right after complete is called.
