@@ -53,7 +53,7 @@ namespace DotJEM.Json.Index.Ingest
             IIngestDataSourceState state = new IngestDataSourceState();
             source.SaveState(state);
 
-            IIndexSnapshotTarget target = new IngestIndexZipSnapshotTarget("", JObject.FromObject(state));
+            ISnapshotTarget target = new IngestZipSnapshotTarget("", JObject.FromObject(state));
             return index.Snapshot(target);
         }
 

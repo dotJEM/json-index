@@ -6,6 +6,7 @@ using DotJEM.Json.Index.Configuration;
 using DotJEM.Json.Index.Documents.Builder;
 using DotJEM.Json.Index.Results;
 using DotJEM.Json.Index.Snapshots;
+using DotJEM.Json.Index.Snapshots.Zip;
 using DotJEM.Json.Index.Storage;
 using DotJEM.Json.Index.TestData;
 using DotJEM.Json.Index.TestUtil;
@@ -149,10 +150,10 @@ namespace DotJEM.Json.Index.QueryParsers.IntegrationTest
                     .Build().Result;
 
                 string directory = dir.CreateSubdirectory("backups");
-                index.Snapshot(new IndexZipSnapshotTarget(directory));
+                index.Snapshot(new ZipSnapshotTarget(directory));
                 Assert.That(index.Search("name:*").Execute().Result.TotalHits, Is.GreaterThan(0));
 
-                index.Restore(new IndexZipSnapshotSource(directory));
+                index.Restore(new ZipSnapshotSource(directory));
                 Assert.That(index.Search("name:*").Execute().Result.TotalHits, Is.GreaterThan(0));
 
                 index.Close();

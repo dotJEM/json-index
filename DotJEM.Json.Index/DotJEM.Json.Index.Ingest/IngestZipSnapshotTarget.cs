@@ -13,7 +13,7 @@ using Directory = Lucene.Net.Store.Directory;
 
 namespace DotJEM.Json.Index.Ingest
 {
-    public class IngestIndexZipSnapshotTarget : IIndexSnapshotTarget
+    public class IngestZipSnapshotTarget : ISnapshotTarget
     {
         private readonly string path;
         private readonly JToken properties;
@@ -21,20 +21,20 @@ namespace DotJEM.Json.Index.Ingest
 
         public IReadOnlyCollection<ISnapshot> Snapshots => snapShots.AsReadOnly(); 
 
-        public IngestIndexZipSnapshotTarget(string path, JToken properties)
+        public IngestZipSnapshotTarget(string path, JToken properties)
         {
             this.path = path;
             this.properties = properties;
         }
 
-        public virtual IIndexSnapshotWriter Open(long generation)
+        public virtual ISnapshotWriter Open(long generation)
         {
             string snapshotPath = Path.Combine(path, $"{generation:x8}.zip");
             snapShots.Add(new SingleFileSnapshot(snapshotPath));
             return new Writer(snapshotPath, properties);
         }
 
-        private class Writer : Disposable, IIndexSnapshotWriter
+        private class Writer : Disposable, ISnapshotWriter
         {
             private readonly ZipArchive archive;
 
@@ -93,7 +93,7 @@ namespace DotJEM.Json.Index.Ingest
             this.generation = generation;
         }
 
-        public IIndexSnapshotReader Open()
+        public ISnapshotReader Open()
         {
             Reader reader = ResolveReader();
             this.RecentProperties = reader.Properties;
@@ -110,7 +110,7 @@ namespace DotJEM.Json.Index.Ingest
             return new Reader(file);
         }
 
-        public class Reader : Disposable, IIndexSnapshotReader
+        public class Reader : Disposable, ISnapshotReader
         {
             private readonly ZipArchive archive;
             public long Generation { get; }
