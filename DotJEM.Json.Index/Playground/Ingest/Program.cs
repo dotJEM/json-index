@@ -247,7 +247,7 @@ namespace Ingest
             JObject[] objects = changes
                 .Select(change => change.CreateEntity())
                 .ToArray();
-            scheduler.Enqueue(new ConvertInflow(slot, objects, index.CreateWriter().Factory), Priority.Medium);
+            //scheduler.Enqueue(new ConvertInflow(slot, objects, index.CreateWriter().Factory), Priority.Medium);
 
             if (rand.Next(10) > 8)
             {

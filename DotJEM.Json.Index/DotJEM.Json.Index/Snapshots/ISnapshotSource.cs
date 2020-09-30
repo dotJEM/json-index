@@ -2,7 +2,7 @@
 
 namespace DotJEM.Json.Index.Snapshots
 {
-    public interface IIndexSnapshotSource
+    public interface ISnapshotSource
     {
         IReadOnlyCollection<ISnapshot> Snapshots { get; }
         ISnapshotReader Open();

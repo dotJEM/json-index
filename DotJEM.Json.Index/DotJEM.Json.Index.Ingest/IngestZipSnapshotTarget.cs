@@ -5,6 +5,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using DotJEM.Json.Index.Snapshots;
+using DotJEM.Json.Index.Snapshots.Zip;
 using DotJEM.Json.Index.Util;
 using Lucene.Net.Store;
 using Newtonsoft.Json;
@@ -17,7 +18,7 @@ namespace DotJEM.Json.Index.Ingest
     {
         private readonly string path;
         private readonly JToken properties;
-        private readonly List<SingleFileSnapshot> snapShots = new List<SingleFileSnapshot>();
+        private readonly List<ZipFileSnapshot> snapShots = new List<ZipFileSnapshot>();
 
         public IReadOnlyCollection<ISnapshot> Snapshots => snapShots.AsReadOnly(); 
 
@@ -30,7 +31,7 @@ namespace DotJEM.Json.Index.Ingest
         public virtual ISnapshotWriter Open(long generation)
         {
             string snapshotPath = Path.Combine(path, $"{generation:x8}.zip");
-            snapShots.Add(new SingleFileSnapshot(snapshotPath));
+            snapShots.Add(new ZipFileSnapshot(snapshotPath));
             return new Writer(snapshotPath, properties);
         }
 
@@ -81,7 +82,7 @@ namespace DotJEM.Json.Index.Ingest
         }
     }
 
-    public class IngestIndexZipSnapshotSource : IIndexSnapshotSource
+    public class IngestIndexZipSnapshotSource : ISnapshotSource
     {
         private readonly string path;
         private readonly long? generation;
@@ -92,6 +93,8 @@ namespace DotJEM.Json.Index.Ingest
             this.path = path;
             this.generation = generation;
         }
+
+        public IReadOnlyCollection<ISnapshot> Snapshots { get; }
 
         public ISnapshotReader Open()
         {

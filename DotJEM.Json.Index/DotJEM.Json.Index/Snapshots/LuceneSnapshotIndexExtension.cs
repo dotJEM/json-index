@@ -8,7 +8,7 @@
             return handler.Snapshot(self, target);
         }
 
-        public static ISnapshot Restore(this ILuceneJsonIndex self, IIndexSnapshotSource source)
+        public static ISnapshot Restore(this ILuceneJsonIndex self, ISnapshotSource source)
         {
             IIndexSnapshotHandler handler = self.Services.Resolve<IIndexSnapshotHandler>() ?? new IndexSnapshotHandler();
             return handler.Restore(self, source);

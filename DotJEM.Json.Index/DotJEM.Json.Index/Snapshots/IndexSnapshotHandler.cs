@@ -11,7 +11,7 @@ namespace DotJEM.Json.Index.Snapshots
     public interface IIndexSnapshotHandler
     {
         ISnapshot Snapshot(ILuceneJsonIndex index, ISnapshotTarget target);
-        ISnapshot Restore(ILuceneJsonIndex index, IIndexSnapshotSource source);
+        ISnapshot Restore(ILuceneJsonIndex index, ISnapshotSource source);
     }
 
     public class IndexSnapshotHandler : IIndexSnapshotHandler
@@ -51,7 +51,7 @@ namespace DotJEM.Json.Index.Snapshots
             return target.Snapshots.Last();
         }
 
-        public ISnapshot Restore(ILuceneJsonIndex index, IIndexSnapshotSource source)
+        public ISnapshot Restore(ILuceneJsonIndex index, ISnapshotSource source)
         {
             
             index.Storage.Delete();

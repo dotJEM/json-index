@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace DotJEM.Json.Index.Snapshots.Zip
 {
-    public class ZipSnapshotSource : IIndexSnapshotSource
+    public class ZipSnapshotSource : ISnapshotSource
     {
         private readonly string path;
         private readonly long? generation;

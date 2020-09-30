@@ -18,7 +18,6 @@ namespace DotJEM.Json.Index.IO
         IInflowManager Inflow { get; }
 
         //TODO: Get around exposing this, there should be an easier way to generate convert inflow tasks.
-        ILuceneDocumentFactory Factory { get; }
 
         IJsonIndexWriter Create(JObject doc, IReservedSlot reservedSlot = null);
         IJsonIndexWriter Create(IEnumerable<JObject> docs, IReservedSlot reservedSlot = null);
@@ -42,7 +41,7 @@ namespace DotJEM.Json.Index.IO
     public class JsonIndexWriter : Disposable, IJsonIndexWriter
     {
         private readonly IIndexWriterManager manager;
-        public ILuceneDocumentFactory Factory { get; }
+        private readonly ILuceneDocumentFactory factory;
 
         public ILuceneJsonIndex Index { get; }
         public IInflowManager Inflow { get; }
@@ -52,13 +51,12 @@ namespace DotJEM.Json.Index.IO
         public JsonIndexWriter(ILuceneJsonIndex index, ILuceneDocumentFactory factory, IIndexWriterManager manager)
         {
             Index = index;
-            this.Factory = factory;
+            this.factory = factory;
             this.manager = manager;
             this.Inflow = new InflowManager(manager, index.Services.Resolve<IInflowCapacity>());
         }
 
         public IJsonIndexWriter Create(JObject doc, IReservedSlot reservedSlot = null) => Create(new[] { doc }, reservedSlot);
-        private int counter = 0;
         public IJsonIndexWriter Create(IEnumerable<JObject> docs, IReservedSlot reservedSlot = null)
         {
             AutoResetEvent wait = new AutoResetEvent(false);
@@ -67,7 +65,7 @@ namespace DotJEM.Json.Index.IO
                 writerManager.Writer.AddDocuments(documents.Select(x => x.Document));
                 wait.Set();
             });
-            Inflow.Scheduler.Enqueue(new ConvertInflow(slot, docs, Factory), Priority.High);
+            Inflow.Scheduler.Enqueue(new ConvertInflow(slot, docs, factory), Priority.High);
             wait.WaitOne();
             return this;
         }
@@ -82,7 +80,7 @@ namespace DotJEM.Json.Index.IO
                     writerManager.Writer.UpdateDocument(key, doc);
                 wait.Set();
             });
-            Inflow.Scheduler.Enqueue(new ConvertInflow(slot, docs, Factory), Priority.High);
+            Inflow.Scheduler.Enqueue(new ConvertInflow(slot, docs, factory), Priority.High);
             wait.WaitOne();
             return this;
         }
@@ -98,7 +96,7 @@ namespace DotJEM.Json.Index.IO
                 wait.Set();
             });
 
-            Inflow.Scheduler.Enqueue(new ConvertInflow(slot, docs, Factory), Priority.High);
+            Inflow.Scheduler.Enqueue(new ConvertInflow(slot, docs, factory), Priority.High);
             wait.WaitOne();
             return this;
         }
@@ -135,13 +133,12 @@ namespace DotJEM.Json.Index.IO
 
         public IJsonIndexWriter Flush(bool triggerMerge, bool applyDeletes)
         {
-            int nr = counter++;
             AutoResetEvent wait = new AutoResetEvent(false);
             IReservedSlot slot = Inflow.Queue.Reserve((writerManager, documents) =>
             {
                 writerManager.Writer.Flush(triggerMerge, applyDeletes);
                 wait.Set();
-            }, id: nr);
+            });
             Inflow.Scheduler.Enqueue(new CommonInflowJob(slot), Priority.Medium);
             wait.WaitOne();
             return this;
@@ -149,7 +146,6 @@ namespace DotJEM.Json.Index.IO
 
         public IJsonIndexWriter Commit()
         {
-            int nr = counter++;
             AutoResetEvent wait = new AutoResetEvent(false);
             IReservedSlot slot = Inflow.Queue.Reserve((writerManager, documents) =>
             {
