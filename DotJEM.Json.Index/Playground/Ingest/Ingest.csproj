@@ -40,17 +40,17 @@
     <Reference Include="DotJEM.Json.Storage, Version=0.4.15.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\packages\DotJEM.Json.Storage.0.4.15\lib\net471\DotJEM.Json.Storage.dll</HintPath>
     </Reference>
-    <Reference Include="DotJEM.Json.Visitor, Version=0.1.21.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\DotJEM.Json.Visitor.0.1.21\lib\netstandard1.3\DotJEM.Json.Visitor.dll</HintPath>
+    <Reference Include="DotJEM.Json.Visitor, Version=0.1.25.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\DotJEM.Json.Visitor.0.1.25\lib\netstandard1.3\DotJEM.Json.Visitor.dll</HintPath>
     </Reference>
     <Reference Include="J2N, Version=2.0.0.0, Culture=neutral, PublicKeyToken=f39447d697a969af, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\J2N.2.0.0-beta-0009\lib\net45\J2N.dll</HintPath>
+      <HintPath>..\..\packages\J2N.2.0.0-beta-0010\lib\net45\J2N.dll</HintPath>
     </Reference>
     <Reference Include="Lucene.Net, Version=4.0.0.0, Culture=neutral, PublicKeyToken=85089178b9ac3181, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Lucene.Net.4.8.0-beta00012\lib\net45\Lucene.Net.dll</HintPath>
     </Reference>
     <Reference Include="Lucene.Net.Analysis.Common, Version=4.0.0.0, Culture=neutral, PublicKeyToken=85089178b9ac3181, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Lucene.Net.Analysis.Common.4.8.0-beta00011\lib\net45\Lucene.Net.Analysis.Common.dll</HintPath>
+      <HintPath>..\..\packages\Lucene.Net.Analysis.Common.4.8.0-beta00012\lib\net45\Lucene.Net.Analysis.Common.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Extensions.Configuration.Abstractions, Version=1.1.2.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Microsoft.Extensions.Configuration.Abstractions.1.1.2\lib\netstandard1.0\Microsoft.Extensions.Configuration.Abstractions.dll</HintPath>
@@ -229,10 +229,6 @@
       <Project>{2987D5EB-2353-42F3-AE2E-B166B5093EEF}</Project>
       <Name>DotJEM.Json.Index</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="j2n-icon-100x100.png" />
-    <Content Include="LICENSE.txt" />
   </ItemGroup>
   <ItemGroup>
     <Analyzer Include="..\..\packages\Lucene.Net.4.8.0-beta00012\analyzers\dotnet\cs\Lucene.Net.CodeAnalysis.CSharp.dll" />
