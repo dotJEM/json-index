@@ -15,9 +15,6 @@ namespace DotJEM.Json.Index.IO
 {
     public interface IJsonIndexWriter : IDisposable
     {
-        ILuceneJsonIndex Index { get; }
-        IInflowManager Inflow { get; }
-
         IJsonIndexWriter Create(JObject doc, IReservedSlot reservedSlot = null);
         IJsonIndexWriter Create(IEnumerable<JObject> docs, IReservedSlot reservedSlot = null);
         IJsonIndexWriter Update(JObject doc, IReservedSlot reservedSlot = null);
@@ -36,31 +33,9 @@ namespace DotJEM.Json.Index.IO
         IJsonIndexWriter SetCommitData(IDictionary<string, string> commitUserData);
     }
 
-    public static class EnumerablePartitionExtensions
-    {
-        public static IEnumerable<T[]> Partition<T>(this IEnumerable<T> self, int size)
-        {
-            int i = 0;
-            T[] partition = new T[size];
-            foreach (T item in self)
-            {
-                if (i == size)
-                {
-                    yield return partition;
-                    partition = new T[size];
-                    i = 0;
-                }
-                partition[i++] = item;
-            }
+    
 
-            if (i <= 0) yield break;
-            
-            Array.Resize(ref partition, i);
-            yield return partition;
-        }
-    }
-
-    public class JsonIndexWriter : Disposable, IJsonIndexWriter
+    public class AsyncJsonIndexWriter : Disposable, IJsonIndexWriter
     {
         private readonly IIndexWriterManager manager;
         private readonly ILuceneDocumentFactory factory;
@@ -70,7 +45,7 @@ namespace DotJEM.Json.Index.IO
 
         public IndexWriter UnderlyingWriter => manager.Writer;
 
-        public JsonIndexWriter(ILuceneJsonIndex index, ILuceneDocumentFactory factory, IIndexWriterManager manager)
+        public AsyncJsonIndexWriter(ILuceneJsonIndex index, ILuceneDocumentFactory factory, IIndexWriterManager manager)
         {
             Index = index;
             this.factory = factory;

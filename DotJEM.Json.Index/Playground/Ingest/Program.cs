@@ -48,6 +48,7 @@ namespace Ingest
             DbInloadingInflowCapacity cap  = null;
             LuceneJsonIndexBuilder builder = new LuceneJsonIndexBuilder("main");
             builder.UseSimpleFileStorage(path);
+            builder.Services.Use<IJsonIndexWriterProvider, AsyncJsonIndexWriterProvider>();
             builder.Services.Use<ILuceneQueryParser, SimplifiedLuceneQueryParser>();
             builder.Services.Use<IInflowCapacity>(
                 resolver =>
@@ -163,7 +164,9 @@ namespace Ingest
         {
             if(pause) return;
             
-            if (count < 20 && index.CreateWriter().Inflow.Queue.Count < 50)
+            
+
+            if (count < 20 && (index.CreateWriter() as AsyncJsonIndexWriter).Inflow.Queue.Count < 50)
                 source.LoadData();
             else if (count < 2)
                 ThreadPool.RegisterWaitForSingleObject(new AutoResetEvent(false), (state, signaled) => CheckLoadData(), null, 5000, true);
@@ -207,7 +210,7 @@ namespace Ingest
 
         public void LoadData()
         {
-            index.CreateWriter().Inflow.Scheduler.Enqueue(new LoadInflowJob(index, FlipArea()), Priority.Highest);
+            (index.CreateWriter() as AsyncJsonIndexWriter).Inflow.Scheduler.Enqueue(new LoadInflowJob(index, FlipArea()), Priority.Highest);
         }
 
         private IStorageArea FlipArea()
@@ -269,7 +272,7 @@ namespace Ingest
         {
             this.index = index;
             this.area = area;
-            this.inflow = index.CreateWriter().Inflow;
+            this.inflow = (index.CreateWriter() as AsyncJsonIndexWriter).Inflow;
         }
 
         public int EstimatedCost { get; } = 1;

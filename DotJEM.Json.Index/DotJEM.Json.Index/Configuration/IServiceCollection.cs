@@ -4,6 +4,7 @@ using DotJEM.Json.Index.Documents;
 using DotJEM.Json.Index.Documents.Fields;
 using DotJEM.Json.Index.Documents.Info;
 using DotJEM.Json.Index.Inflow;
+using DotJEM.Json.Index.IO;
 using DotJEM.Json.Index.Serialization;
 using Lucene.Net.Analysis;
 using Lucene.Net.Analysis.Standard;
@@ -44,6 +45,7 @@ namespace DotJEM.Json.Index.Configuration
                 .Use<IFieldInformationManager, DefaultFieldInformationManager>()
                 .Use<ILuceneDocumentFactory, LuceneDocumentFactory>()
                 .Use<ILuceneJsonDocumentSerializer, GZipLuceneJsonDocumentSerialier>()
+                .Use<IJsonIndexWriterProvider, SyncJsonIndexWriterProvider>()
                 .Use<IInflowCapacity, NullInflowCapacity>();
         }
 
