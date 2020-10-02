@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading;
 
 namespace DotJEM.Json.Index.Inflow
@@ -7,9 +8,11 @@ namespace DotJEM.Json.Index.Inflow
 
     public interface IAsyncInflowJobQueue
     {
+        int Count { get; }
         bool IsEmpty { get; }
         void Enqueue(IInflowJob job, Priority priority);
         IInflowJob Dequeue();
+        string ToString();
     }
 
     public class AsyncInflowJobQueue : IAsyncInflowJobQueue
@@ -89,6 +92,21 @@ namespace DotJEM.Json.Index.Inflow
             }
 
             return false;
+        }
+
+        public override string ToString()
+        {
+            lock (padlock)
+            {
+                StringBuilder builder = new StringBuilder();
+                builder.AppendLine($"Jobs in queue: {Count}");
+                builder.AppendLine($"  - Highest: {highest.Count}");
+                builder.AppendLine($"  - High   : {high.Count}");
+                builder.AppendLine($"  - Medium : {medium.Count}");
+                builder.AppendLine($"  - Low    : {low.Count}");
+                builder.AppendLine($"  - Lowest : {lowest.Count}");
+                return builder.ToString();
+            }
         }
     }
 }

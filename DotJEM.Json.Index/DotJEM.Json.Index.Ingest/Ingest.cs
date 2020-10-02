@@ -17,7 +17,7 @@ namespace DotJEM.Json.Index.Ingest
 
         private readonly Thread[] workers;
 
-        public static bool pause = false;
+         public static bool pause = false;
 
         public IngestManager(ICapacityControl flow, IIngestInload inLoad)
         {

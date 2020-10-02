@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using DotJEM.Json.Index.Documents;
 
-namespace DotJEM.Json.Index.Inflow
+namespace DotJEM.Json.Index.Inflow.Jobs
 {
     public class WriteInflow : IInflowJob
     {
@@ -16,6 +16,9 @@ namespace DotJEM.Json.Index.Inflow
             this.documents = documents;
         }
 
-        public void Execute(IInflowScheduler scheduler) => slot.Ready(documents);
+        public void Execute(IInflowScheduler scheduler)
+        {
+            slot.Ready(documents);
+        }
     }
 }
