@@ -5,6 +5,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using DotJEM.Json.Index.Snapshots;
+using DotJEM.Json.Index.Snapshots.Zip;
 using DotJEM.Json.Index.Util;
 using Lucene.Net.Store;
 using Newtonsoft.Json;
@@ -13,28 +14,28 @@ using Directory = Lucene.Net.Store.Directory;
 
 namespace DotJEM.Json.Index.Ingest
 {
-    public class IngestIndexZipSnapshotTarget : IIndexSnapshotTarget
+    public class IngestZipSnapshotTarget : ISnapshotTarget
     {
         private readonly string path;
         private readonly JToken properties;
-        private readonly List<SingleFileSnapshot> snapShots = new List<SingleFileSnapshot>();
+        private readonly List<ZipFileSnapshot> snapShots = new List<ZipFileSnapshot>();
 
         public IReadOnlyCollection<ISnapshot> Snapshots => snapShots.AsReadOnly(); 
 
-        public IngestIndexZipSnapshotTarget(string path, JToken properties)
+        public IngestZipSnapshotTarget(string path, JToken properties)
         {
             this.path = path;
             this.properties = properties;
         }
 
-        public virtual IIndexSnapshotWriter Open(long generation)
+        public virtual ISnapshotWriter Open(long generation)
         {
             string snapshotPath = Path.Combine(path, $"{generation:x8}.zip");
-            snapShots.Add(new SingleFileSnapshot(snapshotPath));
+            snapShots.Add(new ZipFileSnapshot(snapshotPath));
             return new Writer(snapshotPath, properties);
         }
 
-        private class Writer : Disposable, IIndexSnapshotWriter
+        private class Writer : Disposable, ISnapshotWriter
         {
             private readonly ZipArchive archive;
 
@@ -81,7 +82,7 @@ namespace DotJEM.Json.Index.Ingest
         }
     }
 
-    public class IngestIndexZipSnapshotSource : IIndexSnapshotSource
+    public class IngestIndexZipSnapshotSource : ISnapshotSource
     {
         private readonly string path;
         private readonly long? generation;
@@ -93,7 +94,9 @@ namespace DotJEM.Json.Index.Ingest
             this.generation = generation;
         }
 
-        public IIndexSnapshotReader Open()
+        public IReadOnlyCollection<ISnapshot> Snapshots { get; }
+
+        public ISnapshotReader Open()
         {
             Reader reader = ResolveReader();
             this.RecentProperties = reader.Properties;
@@ -110,7 +113,7 @@ namespace DotJEM.Json.Index.Ingest
             return new Reader(file);
         }
 
-        public class Reader : Disposable, IIndexSnapshotReader
+        public class Reader : Disposable, ISnapshotReader
         {
             private readonly ZipArchive archive;
             public long Generation { get; }
