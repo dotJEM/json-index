@@ -1,99 +1,200 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Text;
+using System.Threading;
 using DotJEM.Json.Index.Documents;
 using DotJEM.Json.Index.IO;
+using J2N.Text;
 
 namespace DotJEM.Json.Index.Inflow
 {
     public interface IInflowQueue
     {
-        IReservedSlot Reserve(Action<IIndexWriterManager, IEnumerable<LuceneDocumentEntry>> write, string name = null, int id = -1);
+        int Count { get; }
+        IReservedSlot Reserve(string name = null, [CallerMemberName]string caller = null);
+        IReservedSlot Split(IReservedSlot slot, [CallerMemberName] string caller = null);
     }
+
     public class InflowQueue : IInflowQueue
     {
+        private const int SHRINK_THRESHOLD = 32;
+        private const double GROW_FACTOR = 2;
+        private const int CAPACITY = 32;
+
         private readonly object padlock = new object();
-        private readonly object drainlock = new object();
-        private readonly IIndexWriterManager manager;
-        private readonly Queue<IReservedSlot> defaultQueue = new Queue<IReservedSlot>();
-        public readonly Queue<IReservedSlot> copy = new Queue<IReservedSlot>();
-        private readonly Dictionary<string, Queue<IReservedSlot>> namedQueues = new Dictionary<string, Queue<IReservedSlot>>();
+        private readonly object readlock = new object();
+        private readonly object writelock = new object();
 
-        private bool draining;
+        //private readonly Queue<IReservedSlot> queue = new Queue<IReservedSlot>();
+        private IReservedSlot[] array;
+        private int head = 0;
+        private int tail = 0;
+        private int size = 0;
 
-        public InflowQueue(IIndexWriterManager manager)
+        private readonly Thread thread;
+
+        public int Count => size;
+
+        public InflowQueue()
         {
-            this.manager = manager;
+            array = new IReservedSlot[CAPACITY];
+
+            thread = new Thread(Drain);
+            thread.Start();
         }
 
-        public IReservedSlot Reserve(Action<IIndexWriterManager, IEnumerable<LuceneDocumentEntry>> write, string name = null, int id = -1)
+        private int Enqueue(IReservedSlot slot)
         {
-            if (write == null) throw new ArgumentNullException(nameof(write));
-            IReservedSlot slot = new ReservedSlot(manager, write, this, id);
-            lock (padlock)
+            lock (writelock)
             {
-                Console.WriteLine($"InflowID: {id}");
-                Queue<IReservedSlot> queue = SelectQueue(name);
-                queue.Enqueue(slot);
-                copy.Enqueue(slot);
+                if (size == array.Length) SetCapacity((int)(array.Length * GROW_FACTOR));
+
+                int index = tail;
+                array[tail] = slot;
+                tail = (tail + 1) % array.Length;
+                size++;
+                return index;
             }
+        }
+        private IReservedSlot Dequeue()
+        {
+            if(size == 0) throw new InvalidOperationException("Queue was empty.");
+
+            lock (readlock)
+            {
+                IReservedSlot removed = array[head];
+                array[head] = null;
+                head = (head + 1) % array.Length;
+                size--;
+                return removed;
+            }
+        }
+        private IReservedSlot Peek()
+        {
+            if(size == 0) throw new InvalidOperationException("Queue was empty.");
+            return array[head];
+        }
+        private void SetCapacity(int capacity)
+        {
+            lock (readlock)
+            {
+                array = CloneArray(capacity);
+                head = 0;
+                tail = (size == capacity) ? 0 : size;
+            }
+        }
+        private IReservedSlot[] CloneArray() => CloneArray(size);
+        private IReservedSlot[] CloneArray(int newSize)
+        {
+            ReservedSlot[] newarray = new ReservedSlot[newSize];
+            if (size == 0)
+                return newarray;
+
+            if (head < tail) {
+                Array.Copy(array, head, newarray, 0, size);
+            } else {
+                Array.Copy(array, head, newarray, 0, array.Length - head);
+                Array.Copy(array, 0, newarray, array.Length - head, tail);
+            }
+
+            return newarray;
+        }
+
+        public IReservedSlot Split(IReservedSlot slot, [CallerMemberName] string caller = null)
+        {
+            
+            int start = (((ReservedSlot) slot).Index + 1) % array.Length;
+            IReservedSlot insert = new ReservedSlot(Pulse, caller) { Index = start};
+            IReservedSlot move = insert;
+            lock (writelock)
+            {
+                if (size == array.Length) SetCapacity((int)(array.Length * GROW_FACTOR));
+
+                tail = (tail + 1) % array.Length;
+                lock (readlock)
+                {
+                    while (start != tail)
+                    {
+                        IReservedSlot forward = array[start];
+                        array[start] = move;
+                        move = forward;
+                        start = (start + 1) % array.Length;
+                    }
+                }
+                size++;
+            }
+            return insert;
+        }
+
+        public IReservedSlot Reserve(string name = null, [CallerMemberName] string caller = null)
+        {
+            ReservedSlot slot = new ReservedSlot(Pulse, caller);
+            slot.Index = Enqueue(slot);
             return slot;
         }
 
-        private Queue<IReservedSlot> SelectQueue(string name)
+        private void Pulse()
         {
-            return defaultQueue;
-            // Multi Queues may cause trouble, we have to rethink that and until then go back to a single Queue.
-            // While the idea was that the order between the named Queues would not matter as the source different, when we try to commit we need to consider what this should entail. 
-            // And if there is a chance that unexpected behavioir would occur. Like a commit happening before a completed task even though we anticipated it to happen after.
-
-            //if (name == null) return defaultQueue;
-            //if (namedQueues.TryGetValue(name, out var queue)) return queue;
-            
-            //queue = new Queue<IReservedSlot>();
-            //namedQueues.Add(name, queue);
-            //return queue;
+            lock (padlock)
+            {
+                Monitor.PulseAll(padlock);
+            }
         }
 
-        public void Drain()
+        public void Drain(object obj)
         {
-            if (draining) 
-                return;
-
             while (true)
             {
-                bool drained;
-                lock (drainlock)
+                try
                 {
-                    if (draining) return;
-
-                    draining = true;
+                    Queue<IReservedSlot> ready;
                     lock (padlock)
                     {
-                        drained = Drain(defaultQueue);
-                        //drained = namedQueues.Values.Aggregate(Drain(defaultQueue), (current, queue) => current | Drain(queue));
+                        try
+                        {
+                            while (size == 0 || !Peek().IsReady) Monitor.Wait(padlock);
+                            Console.WriteLine($"Draining inflow Queue of {Count} objects...");
+                            ready = GetReadySlots();
+
+                        }
+                        catch (Exception e)
+                        {
+                            // TODO: A nullreference exception was seen here, but why?
+                            Console.WriteLine(e);
+                            throw;
+                        }
                     }
-                    draining = false;
+
+                    // Note: We use a Queue and Dequing here so that each object can be collected right after complete is called.
+                    while (ready.Count > 0)
+                        ready.Dequeue().Complete();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
                 }
 
-                //NOTE: Keep draining as long as we drained in any given loop.
-                if (drained)
-                    continue;
-                break;
             }
         }
 
-        private bool Drain(Queue<IReservedSlot> queue)
+        private Queue<IReservedSlot> GetReadySlots()
         {
-            if (queue.Count < 1)
-                return false;
+            Queue<IReservedSlot> ready = new Queue<IReservedSlot>();
+            while (Count > 0 && Peek().IsReady)
+                ready.Enqueue(Dequeue());
+            return ready;
+        }
 
-            while (queue.Count > 0 && queue.Peek().IsReady)
-            {
-                IReservedSlot slot = queue.Dequeue();
-                slot.Complete();
-            }
-            return true;
+        public override string ToString()
+        {
+            StringBuilder builder = new StringBuilder();
+            builder.AppendLine($"Waiting slots in queue: {Count}");
+            foreach (IReservedSlot slot in CloneArray())
+                builder.AppendLine($"  - {slot}");
+            return builder.ToString();
         }
     }
 }
