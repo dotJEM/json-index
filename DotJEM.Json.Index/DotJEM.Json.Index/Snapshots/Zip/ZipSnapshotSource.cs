@@ -31,7 +31,6 @@ namespace DotJEM.Json.Index.Snapshots.Zip
             return new ZipSnapshotReader(latest);
         }
 
-
         private IEnumerable<ZipFileSnapshot> InternalGetSnapshots()
         {
             return Directory.GetFiles(path, "*.zip")

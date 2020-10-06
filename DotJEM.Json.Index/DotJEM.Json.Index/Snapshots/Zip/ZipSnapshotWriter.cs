@@ -10,9 +10,12 @@ namespace DotJEM.Json.Index.Snapshots.Zip
     {
         private readonly ZipArchive archive;
 
+        public ISnapshot Snapshot { get; }
+
         public ZipSnapshotWriter(string path)
         {
             this.archive = ZipFile.Open(path, ZipArchiveMode.Create);
+            this.Snapshot = new ZipFileSnapshot(path);
         }
 
         public void WriteFile(string fileName, Directory dir)
@@ -29,10 +32,7 @@ namespace DotJEM.Json.Index.Snapshots.Zip
 
         protected override void Dispose(bool disposing)
         {
-            if (disposing)
-            {
-                archive?.Dispose();
-            }
+            if (disposing) archive?.Dispose();
             base.Dispose(disposing);
         }
     }

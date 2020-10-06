@@ -38,6 +38,7 @@ namespace DotJEM.Json.Index.Ingest
         private class Writer : Disposable, ISnapshotWriter
         {
             private readonly ZipArchive archive;
+            public ISnapshot Snapshot { get; }
 
             public Writer(string path, JToken properties)
             {
@@ -118,6 +119,7 @@ namespace DotJEM.Json.Index.Ingest
             private readonly ZipArchive archive;
             public long Generation { get; }
             public JToken Properties { get; }
+            public ISnapshot Snapshot { get; }
 
             public Reader(string path)
             {
@@ -160,6 +162,7 @@ namespace DotJEM.Json.Index.Ingest
                 }
                 base.Dispose(disposing);
             }
+
         }
     }
 }

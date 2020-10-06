@@ -5,6 +5,6 @@ namespace DotJEM.Json.Index.Snapshots
 {
     public interface ISnapshotReader : IDisposable, IEnumerable<ILuceneFile>
     {
-        long Generation { get; }
+        ISnapshot Snapshot { get; }
     }
 }

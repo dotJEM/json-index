@@ -39,6 +39,7 @@ namespace DotJEM.Json.Index.Snapshots
                         snapshotWriter.WriteFile(fileName, dir);
                 }
                 snapshotWriter.WriteSegmentsFile(segmentsFile, dir);
+                return snapshotWriter.Snapshot;
             }
             finally
             {
@@ -47,57 +48,53 @@ namespace DotJEM.Json.Index.Snapshots
                     sdp.Release(commit);
                 }
             }
-
-            return target.Snapshots.Last();
         }
 
         public ISnapshot Restore(ILuceneJsonIndex index, ISnapshotSource source)
         {
-            
             index.Storage.Delete();
             Directory dir = index.Storage.Directory;
-            using (ISnapshotReader reader = source.Open())
+            using ISnapshotReader reader = source.Open();
+
+            ILuceneFile sementsFile = null;
+            List<string> files = new List<string>();
+            foreach (ILuceneFile file in reader)
             {
-                ILuceneFile sementsFile = null;
-                List<string> files = new List<string>();
-                foreach (ILuceneFile file in reader)
+                if (Regex.IsMatch(file.Name, "^" + IndexFileNames.SEGMENTS + "_.*$"))
                 {
-                    if (Regex.IsMatch(file.Name, "^" + IndexFileNames.SEGMENTS + "_.*$"))
-                    {
-                        sementsFile = file;
-                        continue;
-                    }
-                    IndexOutput output = dir.CreateOutput(file.Name, IOContext.DEFAULT);
-                    output.WriteBytes(file.Bytes, 0, file.Length);
-                    output.Flush();
-                    output.Dispose();
-
-                    files.Add(file.Name);
+                    sementsFile = file;
+                    continue;
                 }
-                dir.Sync(files);
+                IndexOutput output = dir.CreateOutput(file.Name, IOContext.DEFAULT);
+                output.WriteBytes(file.Bytes, 0, file.Length);
+                output.Flush();
+                output.Dispose();
 
-                if (sementsFile == null)
-                    throw new ArgumentException();
+                files.Add(file.Name);
+            }
+            dir.Sync(files);
 
-                IndexOutput segOutput = dir.CreateOutput(sementsFile.Name, IOContext.DEFAULT);
-                segOutput.WriteBytes(sementsFile.Bytes, 0, sementsFile.Length);
-                segOutput.Flush();
-                segOutput.Dispose();
+            if (sementsFile == null)
+                throw new ArgumentException();
 
-                dir.Sync(new [] { sementsFile.Name });
+            IndexOutput segOutput = dir.CreateOutput(sementsFile.Name, IOContext.DEFAULT);
+            segOutput.WriteBytes(sementsFile.Bytes, 0, sementsFile.Length);
+            segOutput.Flush();
+            segOutput.Dispose();
 
-                SegmentInfos.WriteSegmentsGen(dir, reader.Generation);
+            dir.Sync(new [] { sementsFile.Name });
 
-                //NOTE: (jmd 2020-09-30) Not quite sure what this does at this time, but the Lucene Replicator does it so better keep it for now.
-                IndexCommit last = DirectoryReader.ListCommits(dir).Last();
-                if (last != null)
-                {
-                    ISet<string> commitFiles = new HashSet<string>(last.FileNames);
-                    commitFiles.Add(IndexFileNames.SEGMENTS_GEN);
-                }
+            SegmentInfos.WriteSegmentsGen(dir, reader.Snapshot.Generation);
+
+            //NOTE: (jmd 2020-09-30) Not quite sure what this does at this time, but the Lucene Replicator does it so better keep it for now.
+            IndexCommit last = DirectoryReader.ListCommits(dir).Last();
+            if (last != null)
+            {
+                ISet<string> commitFiles = new HashSet<string>(last.FileNames);
+                commitFiles.Add(IndexFileNames.SEGMENTS_GEN);
             }
             index.WriterManager.Close();
-            return null;
+            return reader.Snapshot;
         }
     }
 }
