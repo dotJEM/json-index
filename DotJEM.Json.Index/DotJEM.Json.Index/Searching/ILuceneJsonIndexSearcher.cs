@@ -10,7 +10,7 @@ namespace DotJEM.Json.Index.Searching
     {
         ILuceneJsonIndex Index { get; }
         IEventInfoStream InfoStream { get; }
-        Search Search(Query query);
+        ISearch Search(Query query);
     }
 
     public class LuceneJsonIndexSearcher : Disposable, ILuceneJsonIndexSearcher
@@ -23,7 +23,7 @@ namespace DotJEM.Json.Index.Searching
             Index = index;
         }
 
-        public Search Search(Query query)
+        public ISearch Search(Query query)
         {
             return new Search(Index.SearcherManager, InfoStream, query);
         }
@@ -31,10 +31,9 @@ namespace DotJEM.Json.Index.Searching
 
     public static class IndexSearcherExtensions
     {
-        public static ILuceneJsonIndex Search(this ILuceneJsonIndex self, Query query)
+        public static ISearch Search(this ILuceneJsonIndex self, Query query)
         {
-            self.CreateSearcher().Search(query);
-            return self;
+            return self.CreateSearcher().Search(query);
         }
     }
 }

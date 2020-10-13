@@ -19,14 +19,14 @@ namespace DotJEM.Json.Index.QueryParsers
             return self;
         }
 
-        public static Search Search(this ILuceneJsonIndexSearcher self, string query)
+        public static ISearch Search(this ILuceneJsonIndexSearcher self, string query)
         {
             ILuceneQueryParser parser = self.Index.ResolveParser();
             LuceneQueryInfo queryInfo = parser.Parse(query);
             return self.Search(queryInfo.Query).OrderBy(queryInfo.Sort);
         }
 
-        public static Search Search(this ILuceneJsonIndex self, string query)
+        public static ISearch Search(this ILuceneJsonIndex self, string query)
         {
             ILuceneQueryParser parser = self.ResolveParser();
             LuceneQueryInfo queryInfo = parser.Parse(query);

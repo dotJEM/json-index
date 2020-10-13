@@ -21,7 +21,7 @@ namespace DotJEM.Json.Index.Contexts.Searching
             this.indicies = indicies.ToArray();
         }
 
-        public Search Search(Query query)
+        public ISearch Search(Query query)
         {
             return new Search(new MultiIndexJsonSearcherManager(indicies, null), InfoStream, query);
         }
