@@ -6,7 +6,7 @@ namespace DotJEM.Json.Index.QueryParsers.Contexts
 {
     public static class ContextIndexSearcherExtensions
     {
-        public static Search Search(this ILuceneIndexContext self, string query)
+        public static ISearch Search(this ILuceneIndexContext self, string query)
         {
             ILuceneQueryParser parser = self.ResolveParser();
             LuceneQueryInfo queryInfo = parser.Parse(query);
