@@ -38,7 +38,26 @@ namespace DotJEM.Json.Index.Results
 
     }
 
-    public sealed class Search : IEnumerable<ISearchResult>
+    public interface ISearch
+    {
+        IEventInfoStream EventInfoStream { get; }
+        Guid CorrelationId { get; }
+        Task<int> Count { get; }
+        Search Take(int newTake);
+        Search Skip(int newSkip);
+        Search Query(Query newQuery);
+        Search OrderBy(Sort newSort);
+        Search Filter(Filter newFilter);
+        Search WithoutDocScores();
+        Search WithoutMaxScores();
+        Search WithoutScores();
+        Search WithDocScores();
+        Search WithMaxScores();
+        Search WithScores();
+        Task<SearchResults> Execute();
+    }
+
+    public sealed class Search : ISearch
     {
         private readonly IIndexSearcherManager manager;
 
@@ -48,10 +67,10 @@ namespace DotJEM.Json.Index.Results
         private readonly bool doDocScores;
         private readonly bool doMaxScores;
         private readonly Sort sort;
+
         public IEventInfoStream EventInfoStream { get; }
 
         public Guid CorrelationId { get; } = Guid.NewGuid();
-
         public Search Take(int newTake) => new Search(manager, EventInfoStream, query, skip, newTake, sort, filter, doDocScores, doMaxScores);
         public Search Skip(int newSkip) => new Search(manager, EventInfoStream, query, newSkip, take, sort, filter, doDocScores, doMaxScores);
         public Search Query(Query newQuery) => new Search(manager, EventInfoStream, newQuery, skip, take, sort, filter, doDocScores, doMaxScores);
@@ -80,13 +99,12 @@ namespace DotJEM.Json.Index.Results
         }
 
         public Task<int> Count => Execute(query, 0, 1, null, filter, false, false).ContinueWith(t => t.Result.TotalHits);
-        public Task<SearchResults> Results => Execute(query, skip, take, sort, filter, doDocScores, doMaxScores);
         public Task<SearchResults> Execute() => Execute(query, skip, take, sort, filter, doDocScores, doMaxScores);
 
         private async Task<SearchResults> Execute(Query query, int skip, int take, Sort sort, Filter filter, bool doDocScores, bool doMaxScores)
         {
             await Task.Yield();
-            using (IInfoStreamCorrelationScope scope = EventInfoStream.Scope(GetType(), CorrelationId))
+            using (IInfoStreamCorrelationScope scope = EventInfoStream.Scope(typeof(Search), CorrelationId))
             {
                 scope.Debug($"Execute Search for query: {query}", new object[] { query, skip, take, sort, filter, doDocScores, doMaxScores });
 
@@ -130,13 +148,6 @@ namespace DotJEM.Json.Index.Results
                 }
             }
         }
-
-        public IEnumerator<ISearchResult> GetEnumerator()
-        {
-            return Results.ConfigureAwait(false).GetAwaiter().GetResult().GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
     public class SearchResults : IEnumerable<ISearchResult>
@@ -152,32 +163,6 @@ namespace DotJEM.Json.Index.Results
         
         public IEnumerator<ISearchResult> GetEnumerator() => Hits.AsEnumerable().GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-
-        public static implicit operator SearchResults(Search search) => search.Results.Result;
-    }
-
-    public class PagingCollector : TopDocsCollector<ScoreDoc>
-    {
-        public PagingCollector(PriorityQueue<ScoreDoc> pq) : base(pq)
-        {
-        }
-
-        public override void SetScorer(Scorer scorer)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override void Collect(int doc)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override void SetNextReader(AtomicReaderContext context)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override bool AcceptsDocsOutOfOrder => false;
     }
 
 }

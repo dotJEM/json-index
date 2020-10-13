@@ -33,7 +33,7 @@ namespace DotJEM.Json.Index.Contexts.Test
             {
                 Query q = NumericRangeQuery.NewInt64Range("id", 0, 2, false, false);
                 //q = new MatchAllDocsQuery();
-                SearchResults result = searcher.Search(q).Results.Result;
+                SearchResults result = searcher.Search(q).Execute().Result;
 
                 Assert.That(result, 
                     Has.Exactly(1).Matches<ISearchResult>(hit => hit.Entity["$contentType"].Value<string>() == "album")
