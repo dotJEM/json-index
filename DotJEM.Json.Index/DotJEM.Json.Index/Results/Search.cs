@@ -43,17 +43,17 @@ namespace DotJEM.Json.Index.Results
         IEventInfoStream EventInfoStream { get; }
         Guid CorrelationId { get; }
         Task<int> Count { get; }
-        Search Take(int newTake);
-        Search Skip(int newSkip);
-        Search Query(Query newQuery);
-        Search OrderBy(Sort newSort);
-        Search Filter(Filter newFilter);
-        Search WithoutDocScores();
-        Search WithoutMaxScores();
-        Search WithoutScores();
-        Search WithDocScores();
-        Search WithMaxScores();
-        Search WithScores();
+        ISearch Take(int newTake);
+        ISearch Skip(int newSkip);
+        ISearch Query(Query newQuery);
+        ISearch OrderBy(Sort newSort);
+        ISearch Filter(Filter newFilter);
+        ISearch WithoutDocScores();
+        ISearch WithoutMaxScores();
+        ISearch WithoutScores();
+        ISearch WithDocScores();
+        ISearch WithMaxScores();
+        ISearch WithScores();
         Task<SearchResults> Execute();
     }
 
@@ -71,19 +71,19 @@ namespace DotJEM.Json.Index.Results
         public IEventInfoStream EventInfoStream { get; }
 
         public Guid CorrelationId { get; } = Guid.NewGuid();
-        public Search Take(int newTake) => new Search(manager, EventInfoStream, query, skip, newTake, sort, filter, doDocScores, doMaxScores);
-        public Search Skip(int newSkip) => new Search(manager, EventInfoStream, query, newSkip, take, sort, filter, doDocScores, doMaxScores);
-        public Search Query(Query newQuery) => new Search(manager, EventInfoStream, newQuery, skip, take, sort, filter, doDocScores, doMaxScores);
-        public Search OrderBy(Sort newSort) => new Search(manager, EventInfoStream, query, skip, take, newSort, filter, doDocScores, doMaxScores);
-        public Search Filter(Filter newFilter) => new Search(manager, EventInfoStream, query, skip, take, sort, newFilter, doDocScores, doMaxScores);
+        public ISearch Take(int newTake) => new Search(manager, EventInfoStream, query, skip, newTake, sort, filter, doDocScores, doMaxScores);
+        public ISearch Skip(int newSkip) => new Search(manager, EventInfoStream, query, newSkip, take, sort, filter, doDocScores, doMaxScores);
+        public ISearch Query(Query newQuery) => new Search(manager, EventInfoStream, newQuery, skip, take, sort, filter, doDocScores, doMaxScores);
+        public ISearch OrderBy(Sort newSort) => new Search(manager, EventInfoStream, query, skip, take, newSort, filter, doDocScores, doMaxScores);
+        public ISearch Filter(Filter newFilter) => new Search(manager, EventInfoStream, query, skip, take, sort, newFilter, doDocScores, doMaxScores);
 
-        public Search WithoutDocScores() => new Search(manager, EventInfoStream, query, skip, take, sort, filter, false, doMaxScores);
-        public Search WithoutMaxScores() => new Search(manager, EventInfoStream, query, skip, take, sort, filter, doDocScores, false);
-        public Search WithoutScores() => new Search(manager, EventInfoStream, query, skip, take, sort, filter, false, false);
+        public ISearch WithoutDocScores() => new Search(manager, EventInfoStream, query, skip, take, sort, filter, false, doMaxScores);
+        public ISearch WithoutMaxScores() => new Search(manager, EventInfoStream, query, skip, take, sort, filter, doDocScores, false);
+        public ISearch WithoutScores() => new Search(manager, EventInfoStream, query, skip, take, sort, filter, false, false);
 
-        public Search WithDocScores() => new Search(manager, EventInfoStream, query, skip, take, sort, filter, true, doMaxScores);
-        public Search WithMaxScores() => new Search(manager, EventInfoStream, query, skip, take, sort, filter, doDocScores, true);
-        public Search WithScores() => new Search(manager, EventInfoStream, query, skip, take, sort, filter, true, true);
+        public ISearch WithDocScores() => new Search(manager, EventInfoStream, query, skip, take, sort, filter, true, doMaxScores);
+        public ISearch WithMaxScores() => new Search(manager, EventInfoStream, query, skip, take, sort, filter, doDocScores, true);
+        public ISearch WithScores() => new Search(manager, EventInfoStream, query, skip, take, sort, filter, true, true);
 
         public Search(IIndexSearcherManager manager, IEventInfoStream eventInfo, Query query = null, int skip = 0, int take = 25, Sort sort = null, Filter filter = null, bool doDocScores = true, bool doMaxScores = true)
         {
