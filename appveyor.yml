@@ -44,7 +44,7 @@ on_success:
 deploy:
   provider: NuGet
   api_key:
-    secure: KEHWtW02rf5aCAlwchP0Siow5EA24hwtm09uvsR58bMWirJ8uXl1SidBnNCfJ3cw
+    secure: oy2oifzczlya5unbtzjqagntqquy4nluvawgjnyxkmvamu
   skip_symbols: false
   on:
     branch: master 
