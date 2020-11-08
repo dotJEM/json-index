@@ -28,7 +28,6 @@ before_build:
 
 build:
   publish_nuget: true
-  publish_nuget_symbols: true
 
 after_build:
   dir
@@ -44,7 +43,6 @@ on_success:
 deploy:
   provider: NuGet
   api_key:
-    secure: oy2oifzczlya5unbtzjqagntqquy4nluvawgjnyxkmvamu
-  skip_symbols: false
+    secure: oy2og2ruvsi5iwcqm5jadm4otv43ru2ezbibbc5xepjbpe
   on:
     branch: master 
