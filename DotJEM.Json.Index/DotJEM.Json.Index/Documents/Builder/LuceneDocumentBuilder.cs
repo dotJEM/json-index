@@ -48,21 +48,9 @@ namespace DotJEM.Json.Index.Documents.Builder
 
         protected override void VisitString(JValue json, IPathContext context)
         {
-            IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.String);
-            //
-            string str = json.ToString(CultureInfo.InvariantCulture);
-            //TODO: This is problematic as PhraseQueries will fail if just a single field is indexed with StringField...
-            //      So we need to figure out a better way.
-            //      Ideally, if we have our own analyzer which doesn't split GUID's and other things, e.g. is far more simple.
-            //      Then we can just use TextField always.
-            if (str.Contains(" "))
-            {
-                strategy = strategy ?? new TextFieldStrategy(); 
-            }
-            else
-            {
-                strategy = strategy ?? new StringFieldStrategy(); 
-            }
+            //TODO: Certain fields should probably work as Identity. So there is cases where this is not good enough.
+            IFieldStrategy strategy = strategies.Resolve(context.Path, JTokenType.String)
+                                      ?? new TextFieldStrategy();
             Add(strategy.CreateFields(json, context));
             base.VisitString(json, context);
         }
