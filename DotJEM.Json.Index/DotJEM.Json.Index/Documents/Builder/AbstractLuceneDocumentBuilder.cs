@@ -59,8 +59,7 @@ namespace DotJEM.Json.Index.Documents.Builder
             this.documentSerializer = documentSerializer ?? new GZipLuceneJsonDocumentSerialier();
         }
 
-
-        public ILuceneDocument Build(JObject json)
+        public virtual ILuceneDocument Build(JObject json)
         {
             document = new LuceneDocument(resolver.ContentType(json));
             PathContext context = new PathContext(this);
