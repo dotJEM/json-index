@@ -97,8 +97,10 @@ namespace DotJEM.Json.Index.Searching
                 yield break;
 
             Stopwatch timer = Stopwatch.StartNew();
-            using (searcher = new IndexSearcher(index.Storage.OpenReader()))
+            //using (searcher = index.Storage.OpenSearcher())
+            using (ReferenceContext<IndexSearcher> context = index.Storage.OpenSearcher())
             {
+                IndexSearcher searcher = context.Reference;
                 Query query = searcher.Rewrite(Query);
                 TopDocs hits = sorting == null
                     ? searcher.Search(query, filtering, take + skip)
@@ -107,8 +109,13 @@ namespace DotJEM.Json.Index.Searching
 
                 SearchTime = timer.Elapsed;
 
+
                 foreach (ScoreDoc hit in hits.ScoreDocs.Skip(skip))
-                    yield return new Hit(hit.Doc, hit.Score, ResolveJObject);
+                {
+                    //TODO: This was lazy before.
+                    JObject json = index.Configuration.Serializer.Deserialize(index.Configuration.RawField, searcher.Doc(hit.Doc));
+                    yield return new Hit(hit.Doc, hit.Score, _ => json);
+                }
             }
             TotalTime = timer.Elapsed;
         }

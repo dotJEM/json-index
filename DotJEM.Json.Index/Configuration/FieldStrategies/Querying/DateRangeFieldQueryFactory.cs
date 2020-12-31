@@ -43,33 +43,33 @@ namespace DotJEM.Json.Index.Configuration.FieldStrategies.Querying
             return DateTime.Parse(value, CultureInfo.InvariantCulture);
         }
 
-        public Query Create(string field, CallContext call, string part1, string part2, bool inclusive)
+        public Query Create(string field, CallContext call, string part1, string part2, bool startInclusive, bool endInclusive)
         {
             DateTime now = DateTime.Now;
             DateTime? lower = ParseOptionalDateTime(part1, now);
             DateTime? upper = ParseOptionalDateTime(part2, now);
 
-            Query absoluteRange = NumericRangeQuery.NewLongRange(field + ".@ticks", lower?.Ticks, upper?.Ticks, inclusive, inclusive);
+            Query absoluteRange = NumericRangeQuery.NewInt64Range(field + ".@ticks", lower?.Ticks, upper?.Ticks, startInclusive, endInclusive);
             BooleanQuery decomp = new BooleanQuery();
 
             if (lower == null || upper == null)
             {
                 //Note: If either is null, it's an open range and therefor it only makes sense to append year to the query.
                 return decomp
-                    .Append(NumericRangeQuery.NewIntRange(field + ".@year", lower?.Year, upper?.Year, true, true))
+                    .Append(NumericRangeQuery.NewInt32Range(field + ".@year", lower?.Year, upper?.Year, true, true))
                     .Append(absoluteRange);
             }
 
-            decomp = decomp.Append(NumericRangeQuery.NewIntRange(field + ".@year", lower?.Year, upper?.Year, true, true));
+            decomp = decomp.Append(NumericRangeQuery.NewInt32Range(field + ".@year", lower?.Year, upper?.Year, true, true));
             if (lower.Value.Year != upper.Value.Year)
                 return decomp.Append(absoluteRange);
 
-            decomp = decomp.Append(NumericRangeQuery.NewIntRange(field + ".@month", lower?.Month, upper?.Month, true, true));
+            decomp = decomp.Append(NumericRangeQuery.NewInt32Range(field + ".@month", lower?.Month, upper?.Month, true, true));
             if (lower.Value.Month != upper.Value.Month)
                 return decomp.Append(absoluteRange);
 
             return decomp
-                .Append(NumericRangeQuery.NewIntRange(field + ".@day", lower?.Day, upper?.Day, true, true))
+                .Append(NumericRangeQuery.NewInt32Range(field + ".@day", lower?.Day, upper?.Day, true, true))
                 .Append(absoluteRange);
         }
     }

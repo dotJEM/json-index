@@ -6,6 +6,7 @@ using DotJEM.Json.Index.Configuration;
 using DotJEM.Json.Index.Schema;
 using DotJEM.Json.Index.Visitors;
 using Lucene.Net.Documents;
+using Lucene.Net.Index;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Schema;
@@ -77,14 +78,14 @@ namespace DotJEM.Json.Index
 
     public class DefaultJsonDocumentSerializer : IJsonDocumentSerializer
     {
-        public IFieldable Serialize(string rawfield, JObject value)
+        public IIndexableField Serialize(string rawfield, JObject value)
         {
-            return new Field(rawfield, value.ToString(Formatting.None), Field.Store.YES, Field.Index.NO);
+            return new StoredField(rawfield, value.ToString(Formatting.None));
         }
 
         public JObject Deserialize(string rawfield, Document document)
         {
-            return JObject.Parse(document.GetField(rawfield).StringValue);
+            return JObject.Parse(document.GetField(rawfield).GetStringValue());
         }
     }
 }

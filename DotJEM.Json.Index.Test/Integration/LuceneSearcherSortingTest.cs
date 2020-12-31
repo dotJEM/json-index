@@ -85,27 +85,28 @@ namespace DotJEM.Json.Index.Test.Integration
         {
             dynamic[] result = index
                 .Search("type: date")
-                .Sort(new Sort(new SortField("order", new FakeFieldComparerSource())))
+                .Sort(new Sort(new SortField("order", SortFieldType.INT64/**, new FakeFieldComparerSource()**/)))
                 .Documents.ToArray();
             Assert.That(result, Has.Length.EqualTo(9));
         }
 
-        public class FakeFieldComparerSource : FieldComparatorSource
+        public class FakeFieldComparerSource : FieldComparerSource
         {
-            public override FieldComparator NewComparator(string fieldname, int numHits, int sortPos, bool reversed)
+ 
+            public override FieldComparer NewComparer(string fieldname, int numHits, int sortPos, bool reversed)
             {
                 return new FakeFieldComparator(fieldname, numHits);
             }
-        //                case 6:
-        //  return (FieldComparator) new FieldComparator.LongComparator(numHits, this.field, this.parser);
-        //case 7:
-        //  return (FieldComparator) new FieldComparator.DoubleComparator(numHits, this.field, this.parser);
-        //case 8:
-        //  return (FieldComparator) new FieldComparator.ShortComparator(numHits, this.field, this.parser);
-        //case 9:
-        //  return this.comparatorSource.NewComparator(this.field, numHits, sortPos, this.reverse);
+            //                case 6:
+            //  return (FieldComparator) new FieldComparator.LongComparator(numHits, this.field, this.parser);
+            //case 7:
+            //  return (FieldComparator) new FieldComparator.DoubleComparator(numHits, this.field, this.parser);
+            //case 8:
+            //  return (FieldComparator) new FieldComparator.ShortComparator(numHits, this.field, this.parser);
+            //case 9:
+            //  return this.comparatorSource.NewComparator(this.field, numHits, sortPos, this.reverse);
 
-            public class FakeFieldComparator : FieldComparator
+            public class FakeFieldComparator : FieldComparer
             {
                 private readonly string field;
                 private readonly long[] values;
@@ -116,6 +117,11 @@ namespace DotJEM.Json.Index.Test.Integration
                 {
                     this.field = field;
                     this.values = new long[hits];
+                }
+
+                public override int CompareValues(object first, object second)
+                {
+                    throw new NotImplementedException();
                 }
 
                 public override int Compare(int slot1, int slot2)
@@ -131,6 +137,11 @@ namespace DotJEM.Json.Index.Test.Integration
                     bottom = slot;
                 }
 
+                public override void SetTopValue(object value)
+                {
+                    throw new NotImplementedException();
+                }
+
                 public override int CompareBottom(int doc)
                 {
                     Debug.WriteLine("CompareBottom( " + doc + " )");
@@ -138,15 +149,25 @@ namespace DotJEM.Json.Index.Test.Integration
                     return bottom.CompareTo(num);
                 }
 
+                public override int CompareTop(int doc)
+                {
+                    throw new NotImplementedException();
+                }
+
                 public override void Copy(int slot, int doc)
                 {
                     values[slot] = currentReaderValues[doc];
                 }
 
-                public override void SetNextReader(IndexReader reader, int docBase)
+                public override FieldComparer SetNextReader(AtomicReaderContext context)
                 {
-                    currentReaderValues = FieldCache_Fields.DEFAULT.GetLongs(reader, field);
+                    throw new NotImplementedException();
                 }
+
+                //public override void SetNextReader(IndexReader reader, int docBase)
+                //{
+                //    currentReaderValues = FieldCache_Fields.DEFAULT.GetLongs(reader, field);
+                //}
 
                 public override IComparable this[int slot] { get { return values[slot]; } }
             }

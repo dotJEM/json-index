@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using DotJEM.Json.Index.Searching;
 using DotJEM.Json.Index.Test.Data;
+using Lucene.Net.Search;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 
@@ -36,6 +37,9 @@ namespace DotJEM.Json.Index.Test.Integration
         [TestCase("[50 TO *]", 500)]
         public void Search_Range_ReturnsPercent(string range, int count)
         {
+            var temp = index.Search(NumericRangeQuery.NewInt32Range("arr.@count", 1, null, 10, true, true));
+            temp.Any();
+            
             ISearchResult result = index.Search($"arr.@count: {range}");
             result.Any();
             Assert.That(result.TotalCount, Is.EqualTo(count));

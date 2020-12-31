@@ -1,5 +1,6 @@
 using DotJEM.Json.Index.Configuration;
 using Lucene.Net.Documents;
+using Lucene.Net.Index;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -10,7 +11,7 @@ namespace DotJEM.Json.Index.Visitors
         Document Document { get; }
         Document Build(JObject json);
 
-        void AddField(IFieldable field);
+        void AddField(IIndexableField field);
     }
 
     public abstract class AbstractDocumentBuilder : AbstractJTokenVisitor<IDocumentBuilderContext>, IDocumentBuilder
@@ -28,7 +29,7 @@ namespace DotJEM.Json.Index.Visitors
             configuration = index.Configuration;
         }
 
-        public void AddField(IFieldable field) => Document.Add(field);
+        public void AddField(IIndexableField field) => Document.Add(field);
 
         public Document Build(JObject json)
         {

@@ -7,6 +7,7 @@ using DotJEM.Json.Index.Configuration.FieldStrategies;
 using DotJEM.Json.Index.Configuration.FieldStrategies.Querying;
 using DotJEM.Json.Index.Schema;
 using Lucene.Net.QueryParsers;
+using Lucene.Net.QueryParsers.Classic;
 using Lucene.Net.Search;
 
 namespace DotJEM.Json.Index.Searching
@@ -70,13 +71,13 @@ namespace DotJEM.Json.Index.Searching
             if (fieldName != null)
             {
                 var query = PrepareBuilderFor(fieldName)
-                    .BuildFieldQuery(new CallContext(() => base.GetFieldQuery(fieldName, queryText)), queryText, slop)
+                    .BuildFieldQuery(new CallContext(() => base.GetFieldQuery(fieldName, queryText, false)), queryText, slop)
                     .ApplySlop(slop);
                 return query;
             }
 
             IList<BooleanClause> clauses = fields
-                .Select(field => base.GetFieldQuery(field, queryText))
+                .Select(field => base.GetFieldQuery(field, queryText, false))
                 .Where(field => field != null)
                 .Select(query => query.ApplySlop(slop))
                 .Select(query => new BooleanClause(query, Occur.SHOULD))
@@ -85,10 +86,29 @@ namespace DotJEM.Json.Index.Searching
             return clauses.Any() ? GetBooleanQuery(clauses, true) : null;
         }
 
-        protected override Query GetFieldQuery(string field, string queryText)
+        protected override Query GetFieldQuery(string fieldName, string queryText, bool quoted)
         {
-            return GetFieldQuery(field, queryText, 0);
+            if (fieldName != null)
+            {
+                var query = PrepareBuilderFor(fieldName)
+                    .BuildFieldQuery(new CallContext(() => base.GetFieldQuery(fieldName, queryText, false)), queryText, quoted);
+                return query;
+            }
+
+            IList<BooleanClause> clauses = fields
+                .Select(field => base.GetFieldQuery(field, queryText, quoted))
+                .Where(field => field != null)
+                .Select(query => new BooleanClause(query, Occur.SHOULD))
+                .ToList();
+
+            return clauses.Any() ? GetBooleanQuery(clauses, true) : null;
         }
+        
+        
+        //protected override Query GetFieldQuery(string field, string queryText)
+        //{
+        //    return GetFieldQuery(field, queryText, 0);
+        //}
 
         protected override Query GetFuzzyQuery(string field, string termStr, float minSimilarity)
         {
@@ -132,7 +152,7 @@ namespace DotJEM.Json.Index.Searching
                 .ToList(), true);
         }
 
-        protected override Query GetRangeQuery(string field, string part1, string part2, bool inclusive)
+        protected override Query GetRangeQuery(string field, string part1, string part2, bool startInclusive, bool endInclusive)
         {
             part1 = (part1 == "*" ? "null" : part1);
             part2 = (part2 == "*" ? "null" : part2);
@@ -140,11 +160,11 @@ namespace DotJEM.Json.Index.Searching
             if (field != null)
             {
                 var query = PrepareBuilderFor(field)
-                    .BuildRangeQuery(new CallContext(() => base.GetRangeQuery(field, part1, part2, inclusive)), part1, part2, inclusive);
+                    .BuildRangeQuery(new CallContext(() => base.GetRangeQuery(field, part1, part2, startInclusive, endInclusive)), part1, part2, startInclusive, endInclusive);
                 return query;
             }
             return GetBooleanQuery(fields
-                .Select(t => new BooleanClause(GetRangeQuery(t, part1, part2, inclusive), Occur.SHOULD))
+                .Select(t => new BooleanClause(GetRangeQuery(t, part1, part2, startInclusive, endInclusive), Occur.SHOULD))
                 .ToList(), true);
         }
 

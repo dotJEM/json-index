@@ -1,21 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
-using DotJEM.Json.Index.Analyzation;
 using DotJEM.Json.Index.Configuration;
 using DotJEM.Json.Index.Schema;
 using DotJEM.Json.Index.Searching;
 using Lucene.Net.Analysis;
 using Lucene.Net.Analysis.Standard;
+using Lucene.Net.Analysis.Util;
 using Lucene.Net.Search;
+using Lucene.Net.Util;
 using Newtonsoft.Json.Linq;
-using Version = Lucene.Net.Util.Version;
 
 namespace DotJEM.Json.Index
 {
     //TODO: -> IIndexContext to align to IStorageContext, then allow for multiple indexes.
     public interface IStorageIndex
     {
-        Version Version { get; }
+        LuceneVersion Version { get; }
         Analyzer Analyzer { get; }
 
         ISchemaCollection Schemas { get; }
@@ -46,7 +46,7 @@ namespace DotJEM.Json.Index
 
     public class LuceneStorageIndex : IStorageIndex
     {
-        public Version Version { get; }
+        public LuceneVersion Version { get; }
         public Analyzer Analyzer { get; }
 
         public ISchemaCollection Schemas { get; }
@@ -74,14 +74,14 @@ namespace DotJEM.Json.Index
         public LuceneStorageIndex(IIndexConfiguration configuration = null, IIndexStorage storage= null, IServiceFactory factory = null, Analyzer analyzer = null)
         {
             //TODO: Version should come from outside
-            Version = Version.LUCENE_30;
+            Version = LuceneVersion.LUCENE_30;
 
             Factory = factory ?? new DefaultServiceFactory();
             Schemas = Factory.CreateSchemaCollection(this);
             writer = new Lazy<ILuceneWriter>(() => new LuceneWriter(this, Factory.CreateDocumentFactory(this)));
             searcher = new Lazy<ILuceneSearcher>(() => Factory.CreateSearcher(this));
 
-            Analyzer = analyzer ?? new DotJemAnalyzer(Version.LUCENE_30, configuration);
+            Analyzer = analyzer ?? new StandardAnalyzer(LuceneVersion.LUCENE_48, CharArraySet.EMPTY_SET);
             Storage = storage ?? new LuceneMemmoryIndexStorage();
             Configuration = configuration ?? new IndexConfiguration();
         }

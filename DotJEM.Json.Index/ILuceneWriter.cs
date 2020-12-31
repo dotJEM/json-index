@@ -9,7 +9,7 @@ using Lucene.Net.Documents;
 using Lucene.Net.Index;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Version = Lucene.Net.Util.Version;
+
 
 namespace DotJEM.Json.Index
 {
@@ -52,13 +52,13 @@ namespace DotJEM.Json.Index
 
         public LuceneWriteContext(IndexWriter writer, IDocumentFactory factory, LuceneStorageIndex index, double buffersize)
         {
-            this.buffersize = writer.GetRAMBufferSizeMB();
+            //this.buffersize = writer.();
 
             this.writer = writer;
             this.factory = factory;
             this.index = index;
 
-            writer.SetRAMBufferSizeMB(buffersize);
+            //writer.SetRAMBufferSizeMB(buffersize);
         }
 
 
@@ -126,7 +126,7 @@ namespace DotJEM.Json.Index
         public void Dispose()
         {
             writer.Commit();
-            writer.SetRAMBufferSizeMB(buffersize);
+         //   writer.SetRAMBufferSizeMB(buffersize);
         }
 
         private Term CreateIdentityTerm(JObject entity)
@@ -280,7 +280,8 @@ namespace DotJEM.Json.Index
 
         public void Optimize()
         {
-            index.Storage.GetWriter(index.Analyzer).Optimize();
+            //index.Storage.GetWriter(index.Analyzer).ForceMergeDeletes(true);
+            //index.Storage.GetWriter(index.Analyzer).ForceMerge(32);
         }
 
         private Term CreateIdentityTerm(JObject entity)

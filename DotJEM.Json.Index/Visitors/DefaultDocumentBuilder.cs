@@ -15,7 +15,7 @@ namespace DotJEM.Json.Index.Visitors
 
         protected override void VisitArray(JArray json, IDocumentBuilderContext context)
         {
-            AddField(new NumericField(context.Path + ".@count", Field.Store.NO, true).SetIntValue(json.Count));
+            AddField(new Int32Field(context.Path + ".@count", json.Count, Field.Store.NO));
             base.VisitArray(json, context);
         }
 
@@ -25,7 +25,7 @@ namespace DotJEM.Json.Index.Visitors
             if (context.Strategy.Visit(AddField, json, value, context))
                 return;
 
-            AddField(new NumericField(context.Path, Field.Store.NO, true).SetLongValue(value));
+            AddField(new Int64Field(context.Path, value, Field.Store.NO));
             base.VisitInteger(json, context);
         }
 
@@ -35,7 +35,7 @@ namespace DotJEM.Json.Index.Visitors
             if (context.Strategy.Visit(AddField, json, value, context))
                 return;
 
-            AddField(new NumericField(context.Path, Field.Store.NO, true).SetDoubleValue(value));
+            AddField(new DoubleField(context.Path, value, Field.Store.NO));
             base.VisitFloat(json, context);
         }
 
@@ -45,8 +45,8 @@ namespace DotJEM.Json.Index.Visitors
             if (context.Strategy.Visit(AddField, json, str, context))
                 return;
  
-            AddField(new Field(context.Path, str, Field.Store.NO, Field.Index.ANALYZED));
-            AddField(new Field(context.Path, str, Field.Store.NO, Field.Index.NOT_ANALYZED));
+            AddField(new TextField(context.Path, str, Field.Store.NO));
+            AddField(new StringField(context.Path, str, Field.Store.NO));
             base.VisitString(json, context);
         }
 
@@ -57,8 +57,8 @@ namespace DotJEM.Json.Index.Visitors
                 return;
 
             string str = json.ToString(CultureInfo.InvariantCulture);
-            AddField(new Field(context.Path, str, Field.Store.NO, Field.Index.NOT_ANALYZED));
-            AddField(new Field(context.Path, str, Field.Store.NO, Field.Index.ANALYZED));
+            AddField(new TextField(context.Path, str, Field.Store.NO));
+            AddField(new StringField(context.Path, str, Field.Store.NO));
             base.VisitBoolean(json, context);
         }
 
@@ -67,8 +67,7 @@ namespace DotJEM.Json.Index.Visitors
             if (context.Strategy.VisitNull(AddField, json, context))
                 return;
 
-            AddField(new Field(context.Path, "$$NULL$$", Field.Store.NO, Field.Index.NOT_ANALYZED));
-            //AddField(new Field(context.Path, "$$NULL$$", Field.Store.NO, Field.Index.ANALYZED));
+            AddField(new StringField(context.Path, "$$NULL$$", Field.Store.NO));
             base.VisitNull(json, context);
         }
 
@@ -77,8 +76,7 @@ namespace DotJEM.Json.Index.Visitors
             if (context.Strategy.VisitUndefined(AddField, json, context))
                 return;
 
-            AddField(new Field(context.Path, "$$UNDEFINED$$", Field.Store.NO, Field.Index.NOT_ANALYZED));
-            //AddField(new Field(context.Path, "$$UNDEFINED$$", Field.Store.NO, Field.Index.ANALYZED));
+            AddField(new StringField(context.Path, "$$UNDEFINED$$", Field.Store.NO));
             base.VisitUndefined(json, context);
         }
 
@@ -89,19 +87,22 @@ namespace DotJEM.Json.Index.Visitors
                 return;
 
             //Note: For sorting.
-            AddField(new Field(context.Path, value.ToString("s"), Field.Store.NO, Field.Index.NOT_ANALYZED_NO_NORMS));
-            AddField(new NumericField(context.Path + ".@ticks", Field.Store.NO, true).SetLongValue(value.Ticks));
+            AddField(new StringField(context.Path, value.ToString("s"), Field.Store.NO));
+            AddField(new Int64Field(context.Path + ".@ticks", value.Ticks, Field.Store.NO));
+
+
             //TODO: It is likely that we can switch to a better format such as lucene it self uses, this is very short and should therefore probably
             //      perform even better.
             //
             //   Examples: 
             //      2014-09-10T11:00 => 0hzwfs800
             //      2014-09-10T13:00 => 0hzxzie7z
-            AddField(new NumericField(context.Path + ".@year", Field.Store.NO, true).SetIntValue(value.Year));
-            AddField(new NumericField(context.Path + ".@month", Field.Store.NO, true).SetIntValue(value.Month));
-            AddField(new NumericField(context.Path + ".@day", Field.Store.NO, true).SetIntValue(value.Day));
-            AddField(new NumericField(context.Path + ".@hour", Field.Store.NO, true).SetIntValue(value.Hour));
-            AddField(new NumericField(context.Path + ".@minute", Field.Store.NO, true).SetIntValue(value.Minute));
+            AddField(new Int32Field(context.Path + ".@year", value.Year, Field.Store.NO));
+            AddField(new Int32Field(context.Path + ".@month", value.Month, Field.Store.NO));
+            AddField(new Int32Field(context.Path + ".@day", value.Day, Field.Store.NO));
+            AddField(new Int32Field(context.Path + ".@hour", value.Hour, Field.Store.NO));
+            AddField(new Int32Field(context.Path + ".@minute", value.Minute, Field.Store.NO));
+
             base.VisitDate(json, context);
         }
 
@@ -112,8 +113,8 @@ namespace DotJEM.Json.Index.Visitors
                 return;
 
             string str = json.ToString(CultureInfo.InvariantCulture);
-            AddField(new Field(context.Path, str, Field.Store.NO, Field.Index.NOT_ANALYZED));
-            AddField(new Field(context.Path, str, Field.Store.NO, Field.Index.ANALYZED));
+            AddField(new TextField(context.Path, str, Field.Store.NO));
+            AddField(new StringField(context.Path, str, Field.Store.NO));
             base.VisitGuid(json, context);
         }
 
@@ -124,8 +125,8 @@ namespace DotJEM.Json.Index.Visitors
                 return;
 
             string str = json.ToString(CultureInfo.InvariantCulture);
-            AddField(new Field(context.Path, str, Field.Store.NO, Field.Index.NOT_ANALYZED));
-            AddField(new Field(context.Path, str, Field.Store.NO, Field.Index.ANALYZED));
+            AddField(new TextField(context.Path, str, Field.Store.NO));
+            AddField(new StringField(context.Path, str, Field.Store.NO));
             base.VisitGuid(json, context);
         }
 
@@ -136,12 +137,13 @@ namespace DotJEM.Json.Index.Visitors
                 return;
 
             //Note: For sorting.
-            AddField(new Field(context.Path, value.ToString("g"), Field.Store.NO, Field.Index.NOT_ANALYZED_NO_NORMS));
-            AddField(new NumericField(context.Path + ".@ticks", Field.Store.NO, true).SetLongValue(value.Ticks));
+            AddField(new StringField(context.Path, value.ToString("g"), Field.Store.NO));
+            AddField(new Int64Field(context.Path + ".@ticks", value.Ticks, Field.Store.NO));
 
-            AddField(new NumericField(context.Path + ".@days", Field.Store.NO, true).SetIntValue(value.Days));
-            AddField(new NumericField(context.Path + ".@hours", Field.Store.NO, true).SetIntValue(value.Hours));
-            AddField(new NumericField(context.Path + ".@minutes", Field.Store.NO, true).SetIntValue(value.Minutes));
+            AddField(new Int32Field(context.Path + ".@days", value.Days, Field.Store.NO));
+            AddField(new Int32Field(context.Path + ".@hours", value.Hours, Field.Store.NO));
+            AddField(new Int32Field(context.Path + ".@minutes", value.Minutes, Field.Store.NO));
+
             base.VisitDate(json, context);
         }
     }

@@ -1,18 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using DotJEM.Json.Index.Configuration;
 using DotJEM.Json.Index.Configuration.FieldStrategies;
 using DotJEM.Json.Index.Schema;
-using DotJEM.Json.Index.Searching;
-using Lucene.Net.Analysis.Standard;
-using Lucene.Net.QueryParsers;
-using Lucene.Net.Search;
+using Lucene.Net.QueryParsers.Classic;
 using Moq;
 using Moq.AutoMock;
 using NUnit.Framework;
 using MultiFieldQueryParser = DotJEM.Json.Index.Searching.MultiFieldQueryParser;
-using Version = Lucene.Net.Util.Version;
 
 namespace DotJEM.Json.Index.Test.Unit
 {

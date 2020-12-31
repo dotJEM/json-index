@@ -3,7 +3,7 @@ version: 0.0.{build}
 configuration: Release
 
 init:
-- ps: Update-AppveyorBuild -Version "0.0.$env:appveyor_build_number+sha.$($env:appveyor_repo_commit.substring(0,7))"
+- ps: Update-AppveyorBuild -Version "$env:appveyor_build_version+sha.$($env:appveyor_repo_commit.substring(0,7))"
 
 nuget:
   disable_publish_on_pr: true
@@ -44,5 +44,12 @@ deploy:
   provider: NuGet
   api_key:
     secure: ahs8uNUo4+SV91Fury7y5vlrMNkyxo7d0U+cqRMQIFtAXkqL4ZCW4BAtvaYcWaoh
-  on:
-    branch: master 
+
+ 
+for:    
+-
+  branches:
+    only:
+      - QuickUpdateTo4.8
+  
+  version: 0.2.{build}-Beta.001

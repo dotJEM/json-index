@@ -5,6 +5,7 @@ using System.Linq;
 using DotJEM.Json.Index.Configuration.FieldStrategies;
 using DotJEM.Json.Index.Configuration.IdentityStrategies;
 using Lucene.Net.Documents;
+using Lucene.Net.Index;
 using Newtonsoft.Json.Linq;
 
 namespace DotJEM.Json.Index.Configuration
@@ -43,7 +44,7 @@ namespace DotJEM.Json.Index.Configuration
 
     public interface IJsonDocumentSerializer
     {
-        IFieldable Serialize(string rawfield, JObject value);
+        IIndexableField Serialize(string rawfield, JObject value);
         JObject Deserialize(string rawfield, Document document);
     }
 
