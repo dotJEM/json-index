@@ -53,3 +53,10 @@ for:
       - QuickUpdateTo4.8
   
   version: 0.2.{build}-Beta.001
+  
+  assembly_info:
+    patch: true
+    file: AssemblyInfo.*
+    assembly_version: '0.2.{build}'
+    assembly_file_version: '0.2.{build}'
+    assembly_informational_version: '{version}'
