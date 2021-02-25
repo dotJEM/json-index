@@ -52,7 +52,7 @@ for:
     only:
       - QuickUpdateTo4.8
   
-  version: 0.2.{build}-Beta.001
+  version: 0.2.{build}-Beta.{build}
   
   assembly_info:
     patch: true
