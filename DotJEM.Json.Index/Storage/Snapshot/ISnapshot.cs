@@ -1,18 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using DotJEM.Json.Index.Storage;
 using Lucene.Net.Store;
 
-namespace DotJEM.Json.Index;
+namespace DotJEM.Json.Index.Storage.Snapshot;
 
 public interface ISnapshot
 {
+    long Generation { get; }
     ILuceneFile SegmentsFile { get; }
     IEnumerable<ILuceneFile> Files { get; }
 
     void WriteFile(IndexInputStream stream);
     void WriteSegmentsFile(IndexInputStream stream);
+    void WriteGeneration(long generation);
 }
 
 public interface ILuceneFile
