@@ -25,8 +25,8 @@ namespace DotJEM.Json.Index
         void Close();
         void Flush();
         bool Purge();
-        bool Snapshot(ISnapshot snapshot);
-        bool Restore(ISnapshot snapshot);
+        bool Snapshot(ISnapshotTarget snapshot);
+        bool Restore(ISnapshotSource snapshot);
     }
 
     public abstract class AbstractLuceneIndexStorage : IIndexStorage
@@ -99,26 +99,26 @@ namespace DotJEM.Json.Index
             return true;
         }
 
-        public bool Snapshot(ISnapshot snapshot)
+        public bool Snapshot(ISnapshotTarget snapshotTarget)
         {
             if (writer == null)
                 return false;
 
-            if (snapshot == null) throw new ArgumentNullException(nameof(snapshot));
+            if (snapshotTarget == null) throw new ArgumentNullException(nameof(snapshotTarget));
             lock (padlock)
             {
                 IndexCommit commit = deletePolicy.Snapshot();
                 try
                 {
-                    snapshot.WriteGeneration( commit.Generation);
+                    ISnapshotWriter writer = snapshotTarget.Open(commit.Generation);
                     foreach (string file in commit.FileNames.Where(file => !file.Equals(commit.SegmentsFileName, StringComparison.Ordinal)))
                     {
                         using IndexInputStream source = new (file, Directory.OpenInput(file));
-                        snapshot.WriteFile(source);
+                        writer.WriteFile(source);
                     }
 
                     using IndexInputStream segmentsSource = new (commit.SegmentsFileName, Directory.OpenInput(commit.SegmentsFileName));
-                    snapshot.WriteSegmentsFile(segmentsSource);
+                    writer.WriteSegmentsFile(segmentsSource);
                 }
                 finally
                 {
@@ -128,7 +128,7 @@ namespace DotJEM.Json.Index
             return true;
         }
 
-        public bool Restore(ISnapshot snapshot)
+        public bool Restore(ISnapshotSource snapshotSource)
         {
             lock (padlock)
             {
@@ -136,6 +136,7 @@ namespace DotJEM.Json.Index
                 foreach (string file in Directory.ListAll())
                     Directory.DeleteFile(file);
 
+                ISnapshot snapshot = snapshotSource.Open();
                 foreach (ILuceneFile file in snapshot.Files)
                 {
                     using Stream source = file.Open();

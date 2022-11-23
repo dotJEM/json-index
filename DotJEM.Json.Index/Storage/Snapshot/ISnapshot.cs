@@ -5,15 +5,29 @@ using Lucene.Net.Store;
 
 namespace DotJEM.Json.Index.Storage.Snapshot;
 
+
+public interface ISnapshotTarget
+{
+    ISnapshotWriter Open(long generation);
+}
+
+public interface ISnapshotWriter
+{
+    void WriteFile(IndexInputStream stream);
+    void WriteSegmentsFile(IndexInputStream stream);
+}
+
+public interface ISnapshotSource
+{
+    ISnapshot Open();
+}
+
+
 public interface ISnapshot
 {
     long Generation { get; }
     ILuceneFile SegmentsFile { get; }
     IEnumerable<ILuceneFile> Files { get; }
-
-    void WriteFile(IndexInputStream stream);
-    void WriteSegmentsFile(IndexInputStream stream);
-    void WriteGeneration(long generation);
 }
 
 public interface ILuceneFile
