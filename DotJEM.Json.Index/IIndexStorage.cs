@@ -101,30 +101,52 @@ namespace DotJEM.Json.Index
                 return false;
 
             if (snapshot == null) throw new ArgumentNullException(nameof(snapshot));
-
             lock (padlock)
             {
                 IndexCommit commit = deletePolicy.Snapshot();
                 try
                 {
-                    foreach (string file in commit.FileNames)
+                    foreach (string file in commit.FileNames.Where(file => file.Equals(commit.SegmentsFileName, StringComparison.Ordinal)))
                     {
                         using IndexInputStream source = new (file, Directory.OpenInput(file));
                         snapshot.WriteFile(source);
                     }
+
+                    using IndexInputStream segmentsSource = new (commit.SegmentsFileName, Directory.OpenInput(commit.SegmentsFileName));
+                    snapshot.WriteSegmentsFile(segmentsSource);
                 }
                 finally
                 {
                     deletePolicy.Release();
                 }
             }
-
             return true;
         }
 
         public bool Restore(ISnapshot snapshot)
         {
-            throw new NotImplementedException();
+            lock (padlock)
+            {
+                Close();
+                foreach (string file in Directory.ListAll())
+                    Directory.DeleteFile(file);
+
+                foreach (ILuceneFile file in snapshot.Files)
+                {
+                    using Stream source = file.Open();
+                    using IndexOutputStream target =new (file.Name, Directory.CreateOutput(file.Name));
+                    source.CopyTo(target);
+                    target.Flush();
+                }
+
+                using Stream segmentsSource = snapshot.SegmentsFile.Open();
+                using IndexOutputStream segmentsTarget =new (snapshot.SegmentsFile.Name, Directory.CreateOutput(snapshot.SegmentsFile.Name));
+                segmentsSource.CopyTo(segmentsTarget);
+                segmentsTarget.Flush();
+
+                Directory.Sync(snapshot.SegmentsFile.Name);
+            }
+            return true;
         }
 
         public void Flush()
@@ -136,10 +158,6 @@ namespace DotJEM.Json.Index
         }
     }
 
-    public interface ISnapshot
-    {
-        void WriteFile(IndexInputStream input);
-    }
 
     public class LuceneMemmoryIndexStorage : AbstractLuceneIndexStorage
     {
@@ -176,75 +194,4 @@ namespace DotJEM.Json.Index
         }
     }
 
-    public class IndexInputStream : Stream
-    {
-        public string FileName { get; }
-        public IndexInput IndexInput { get; }
-
-        public IndexInputStream(string fileName, IndexInput indexInput)
-        {
-            FileName = fileName;
-            IndexInput = indexInput;
-        }
-
-        public override void Flush()
-        {
-            throw new InvalidOperationException("Cannot flush a readonly stream.");
-        }
-
-        public override long Seek(long offset, SeekOrigin origin)
-        {
-            switch (origin)
-            {
-                case SeekOrigin.Begin:
-                    Position = offset;
-                    break;
-                case SeekOrigin.Current:
-                    Position += offset;
-                    break;
-                case SeekOrigin.End:
-                    Position = Length - offset;
-                    break;
-            }
-            return Position;
-        }
-
-        public override void SetLength(long value)
-        {
-            throw new InvalidOperationException("Cannot change length of a readonly stream.");
-        }
-
-        public override int Read(byte[] buffer, int offset, int count)
-        {
-            int remaining = (int)(IndexInput.Length() - IndexInput.FilePointer);
-            int readCount = Math.Min(remaining, count);
-            IndexInput.ReadBytes(buffer, offset, readCount);
-            return readCount;
-        }
-
-        public override void Write(byte[] buffer, int offset, int count)
-        {
-            throw new InvalidCastException("Cannot write to a readonly stream.");
-        }
-
-        public override bool CanRead => true;
-        public override bool CanSeek => true;
-        public override bool CanWrite => false;
-        public override long Length => IndexInput.Length();
-
-        public override long Position
-        {
-            get => IndexInput.FilePointer;
-            set => IndexInput.Seek(value);
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                IndexInput.Dispose();
-            }
-            base.Dispose(disposing);
-        }
-    }
 }
