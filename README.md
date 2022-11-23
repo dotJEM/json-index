@@ -1,5 +1,6 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/y64ia7mb9e3uxks3/branch/master?svg=true)](https://ci.appveyor.com/project/jeme/json-index/branch/master)
 [![Black Duck Security Risk](https://copilot.blackducksoftware.com/github/repos/dotJEM/json-index/branches/master/badge-risk.svg)](https://copilot.blackducksoftware.com/github/repos/dotJEM/json-index/branches/master)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FdotJEM%2Fjson-index.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FdotJEM%2Fjson-index?ref=badge_shield)
 
 dotJEM JSON Index
 =================
@@ -63,3 +64,7 @@ What is next?
 So far this framework has proved to simplify allot of things for us, but parts of it are still viewed as a prototype from our perspective, the core works well and we use that in production but there are allot of unfinished edges.
 
 The plan going forward is to move up to Lucene 4.8 and with the allot of changes will happen, I am looking into making the framework more mudular in terms of packages and give patterns than provide better means to extend it with own query parser logic, document creation etc...
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FdotJEM%2Fjson-index.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FdotJEM%2Fjson-index?ref=badge_large)
