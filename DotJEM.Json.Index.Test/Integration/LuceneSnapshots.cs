@@ -76,8 +76,7 @@ namespace DotJEM.Json.Index.Test.Integration
         {
             this.Generation = generation;
         }
-
-
+        
         public class File : ILuceneFile
         {
 

@@ -1,4 +1,5 @@
 version: 0.0.{build}
+image: Visual Studio 2022
 
 configuration: Release
 
@@ -45,4 +46,4 @@ deploy:
   api_key:
     secure: xjk5tz3Tcq/JnadrTWPZ2YOjggaN9yV7ulLn0+v7bqvukNNeO/TPCzamWxZOmax6
   on:
-    branch: master 
+    branch: master
