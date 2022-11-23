@@ -10,6 +10,10 @@ using Lucene.Net.Index;
 using Lucene.Net.Store;
 using Lucene.Net.Util;
 using Directory = Lucene.Net.Store.Directory;
+using System.Collections.Generic;
+using DotJEM.Json.Index.Storage.Snapshot;
+using static Lucene.Net.Documents.Field;
+using ILuceneFile = DotJEM.Json.Index.Storage.Snapshot.ILuceneFile;
 
 namespace DotJEM.Json.Index
 {
@@ -106,7 +110,8 @@ namespace DotJEM.Json.Index
                 IndexCommit commit = deletePolicy.Snapshot();
                 try
                 {
-                    foreach (string file in commit.FileNames.Where(file => file.Equals(commit.SegmentsFileName, StringComparison.Ordinal)))
+                    snapshot.WriteGeneration( commit.Generation);
+                    foreach (string file in commit.FileNames.Where(file => !file.Equals(commit.SegmentsFileName, StringComparison.Ordinal)))
                     {
                         using IndexInputStream source = new (file, Directory.OpenInput(file));
                         snapshot.WriteFile(source);

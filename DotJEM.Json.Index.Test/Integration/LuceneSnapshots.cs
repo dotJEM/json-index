@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using DotJEM.Json.Index.Storage.Snapshot;
 
 namespace DotJEM.Json.Index.Test.Integration
 {
@@ -50,6 +51,7 @@ namespace DotJEM.Json.Index.Test.Integration
     {
         private readonly List<File> files = new List<File>();
 
+        public long Generation { get; set; }
         public ILuceneFile SegmentsFile { get; private set;  }
         public IEnumerable<ILuceneFile> Files => files;
 
@@ -69,6 +71,12 @@ namespace DotJEM.Json.Index.Test.Integration
 
             SegmentsFile = file;
         }
+
+        public void WriteGeneration(long generation)
+        {
+            this.Generation = generation;
+        }
+
 
         public class File : ILuceneFile
         {
