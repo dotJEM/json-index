@@ -42,7 +42,8 @@ namespace DotJEM.Json.Index
             //TODO: The storage should define the analyzer, not the writer.
             lock (padlock)
             {
-                return writer ?? (writer = new IndexWriter(Directory, this.analyzer = analyzer, !Exists, IndexWriter.MaxFieldLength.UNLIMITED));
+                var policy = new SnapshotDeletionPolicy(new KeepOnlyLastCommitDeletionPolicy());
+                return writer ?? (writer = new IndexWriter(Directory, this.analyzer = analyzer, !Exists, policy, IndexWriter.MaxFieldLength.UNLIMITED));
             }
         }
 
