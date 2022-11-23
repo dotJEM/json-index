@@ -39,25 +39,39 @@ namespace DotJEM.Json.Index.Test.Integration
                 await writer.Write(JObject.FromObject(new { Id = new Guid("00000000-0000-0000-0000-000000000009"), Type = "Flower", Name = "Aster", Meaning = "Patience", Number = 15, Area = "Foo" }));
             }
 
-            ISnapshot snapshot = new TestSnapshot();
-            index.Storage.Snapshot(snapshot);
-            index.Storage.Restore(snapshot);
+            FakeSnapshotTarget target = new FakeSnapshotTarget();
+            index.Storage.Snapshot(target);
+
+            ISnapshotSource source = target.LastCreatedWriter.GetSource();
+            index.Storage.Restore(source);
 
             Assert.That(index.Search("*").Count(), Is.EqualTo(9));
         }
     }
 
-    public class TestSnapshot : ISnapshot
+    public class FakeSnapshotTarget : ISnapshotTarget
     {
-        private readonly List<File> files = new List<File>();
+        public FakeSnapshotWriter LastCreatedWriter { get; private set; }
+        public ISnapshotWriter Open(long generation)
+        {
+            return LastCreatedWriter= new FakeSnapshotWriter(generation);
+        }
+    }
 
-        public long Generation { get; set; }
-        public ILuceneFile SegmentsFile { get; private set;  }
-        public IEnumerable<ILuceneFile> Files => files;
+    public class FakeSnapshotWriter : ISnapshotWriter
+    {
+        private long generation;
+        private ILuceneFile segmentsFile;
+        private List<ILuceneFile> files = new List<ILuceneFile>();
+
+        public FakeSnapshotWriter(long generation)
+        {
+            this.generation = generation;
+        }
 
         public void WriteFile(IndexInputStream stream)
         {
-            File file = new File(stream.FileName);
+            FakeFile file = new FakeFile(stream.FileName);
             stream.CopyTo(file.Stream);
             file.Stream.Flush();
             files.Add(file);
@@ -65,25 +79,19 @@ namespace DotJEM.Json.Index.Test.Integration
 
         public void WriteSegmentsFile(IndexInputStream stream)
         {
-            File file = new File(stream.FileName);
+            FakeFile file = new FakeFile(stream.FileName);
             stream.CopyTo(file.Stream);
             file.Stream.Flush();
-
-            SegmentsFile = file;
+            segmentsFile = file;
         }
 
-        public void WriteGeneration(long generation)
-        {
-            this.Generation = generation;
-        }
-        
-        public class File : ILuceneFile
+        public class FakeFile : ILuceneFile
         {
 
             public string Name { get; }
             public MemoryStream Stream { get; } = new MemoryStream();
-            
-            public File(string name)
+
+            public FakeFile(string name)
             {
                 Name = name;
             }
@@ -93,6 +101,40 @@ namespace DotJEM.Json.Index.Test.Integration
                 return Stream;
             }
 
+        }
+
+        public ISnapshotSource GetSource()
+        {
+            return new FakeSnapshotSource(new FakeSnapshot(generation, segmentsFile, files));
+        }
+    }
+
+    public class FakeSnapshotSource : ISnapshotSource
+    {
+        private readonly FakeSnapshot snapshot;
+
+        public FakeSnapshotSource(FakeSnapshot snapshot)
+        {
+            this.snapshot = snapshot;
+        }
+
+        public ISnapshot Open()
+        {
+            return snapshot;
+        }
+    }
+
+    public class FakeSnapshot : ISnapshot
+    {
+        public long Generation { get; }
+        public ILuceneFile SegmentsFile { get; }
+        public IEnumerable<ILuceneFile> Files { get; }
+
+        public FakeSnapshot(long generation, ILuceneFile segmentsFile, IEnumerable<ILuceneFile> files)
+        {
+            Generation = generation;
+            SegmentsFile = segmentsFile;
+            Files = files;
         }
     }
 
