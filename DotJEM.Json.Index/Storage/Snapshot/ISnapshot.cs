@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using Lucene.Net.Index;
 using Lucene.Net.Store;
 
 namespace DotJEM.Json.Index.Storage.Snapshot;
@@ -8,10 +9,10 @@ namespace DotJEM.Json.Index.Storage.Snapshot;
 
 public interface ISnapshotTarget
 {
-    ISnapshotWriter Open(long generation);
+    ISnapshotWriter Open(IndexCommit commit);
 }
 
-public interface ISnapshotWriter
+public interface ISnapshotWriter : IDisposable
 {
     void WriteFile(IndexInputStream stream);
     void WriteSegmentsFile(IndexInputStream stream);
@@ -23,7 +24,7 @@ public interface ISnapshotSource
 }
 
 
-public interface ISnapshot
+public interface ISnapshot : IDisposable
 {
     long Generation { get; }
     ILuceneFile SegmentsFile { get; }

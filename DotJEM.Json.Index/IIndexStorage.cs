@@ -110,7 +110,7 @@ namespace DotJEM.Json.Index
                 IndexCommit commit = deletePolicy.Snapshot();
                 try
                 {
-                    ISnapshotWriter writer = snapshotTarget.Open(commit.Generation);
+                    using ISnapshotWriter writer = snapshotTarget.Open(commit);
                     foreach (string file in commit.FileNames.Where(file => !file.Equals(commit.SegmentsFileName, StringComparison.Ordinal)))
                     {
                         using IndexInputStream source = new (file, Directory.OpenInput(file));
@@ -136,7 +136,7 @@ namespace DotJEM.Json.Index
                 foreach (string file in Directory.ListAll())
                     Directory.DeleteFile(file);
 
-                ISnapshot snapshot = snapshotSource.Open();
+                using ISnapshot snapshot = snapshotSource.Open();
                 foreach (ILuceneFile file in snapshot.Files)
                 {
                     using Stream source = file.Open();
