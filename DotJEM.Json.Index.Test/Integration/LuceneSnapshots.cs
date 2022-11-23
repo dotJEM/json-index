@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using DotJEM.Json.Index.Storage.Snapshot;
+using Lucene.Net.Index;
 
 namespace DotJEM.Json.Index.Test.Integration
 {
@@ -52,17 +53,17 @@ namespace DotJEM.Json.Index.Test.Integration
     public class FakeSnapshotTarget : ISnapshotTarget
     {
         public FakeSnapshotWriter LastCreatedWriter { get; private set; }
-        public ISnapshotWriter Open(long generation)
+        public ISnapshotWriter Open(IndexCommit commit)
         {
-            return LastCreatedWriter= new FakeSnapshotWriter(generation);
+            return LastCreatedWriter= new FakeSnapshotWriter(commit.Generation);
         }
     }
 
     public class FakeSnapshotWriter : ISnapshotWriter
     {
-        private long generation;
+        private readonly long generation;
         private ILuceneFile segmentsFile;
-        private List<ILuceneFile> files = new List<ILuceneFile>();
+        private readonly List<ILuceneFile> files = new List<ILuceneFile>();
 
         public FakeSnapshotWriter(long generation)
         {
@@ -107,6 +108,10 @@ namespace DotJEM.Json.Index.Test.Integration
         {
             return new FakeSnapshotSource(new FakeSnapshot(generation, segmentsFile, files));
         }
+
+        public void Dispose()
+        {
+        }
     }
 
     public class FakeSnapshotSource : ISnapshotSource
@@ -135,6 +140,10 @@ namespace DotJEM.Json.Index.Test.Integration
             Generation = generation;
             SegmentsFile = segmentsFile;
             Files = files;
+        }
+
+        public void Dispose()
+        {
         }
     }
 
