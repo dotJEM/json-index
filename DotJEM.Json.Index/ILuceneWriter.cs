@@ -24,6 +24,9 @@ namespace DotJEM.Json.Index
         void Delete(JObject entity);
         void DeleteAll(IEnumerable<JObject> entities);
         void Optimize();
+
+        void Commit();
+        void Flush(bool triggerMerge = false, bool flushDocStores = false, bool flushDeletes = false);
         ILuceneWriteContext WriteContext(int buffersize = 512);
     }
 
@@ -117,8 +120,7 @@ namespace DotJEM.Json.Index
 
         public async Task DeleteAll(IEnumerable<JObject> entities)
         {
-            await Task.Run(() =>
-            {
+            await Task.Run(() => {
                 writer.DeleteDocuments(entities.Select(CreateIdentityTerm).Where(x => x != null).ToArray());
             });
         }
@@ -218,7 +220,6 @@ namespace DotJEM.Json.Index
         {
             IndexWriter writer = index.Storage.GetWriter(index.Analyzer);
             writer.UpdateDocument(CreateIdentityTerm(entity), factory.Create(entity));
-            writer.Commit();
         }
 
         private int InternalUpdateDocument(IndexWriter writer, Term term, Document doc)
@@ -252,15 +253,13 @@ namespace DotJEM.Json.Index
         public void WriteAll(IEnumerable<JObject> entities)
         {
             IndexWriter writer = index.Storage.GetWriter(index.Analyzer);
-
-            var executed = from entity in entities
+            IEnumerable<int> executed = from entity in entities
                 let term = CreateIdentityTerm(entity)
                 where term != null
                 let document = InternalCreateDocument(entity)
                 where document != null
                 select InternalUpdateDocument(writer, term, document);
             int failed = executed.Sum();
-            writer.Commit();
         }
 
 
@@ -268,20 +267,29 @@ namespace DotJEM.Json.Index
         {
             IndexWriter writer = index.Storage.GetWriter(index.Analyzer);
             writer.DeleteDocuments(CreateIdentityTerm(entity));
-            writer.Commit();
         }
 
         public void DeleteAll(IEnumerable<JObject> entities)
         {
             IndexWriter writer = index.Storage.GetWriter(index.Analyzer);
             writer.DeleteDocuments(entities.Select(CreateIdentityTerm).Where(x => x != null).ToArray());
-            writer.Commit();
         }
 
         public void Optimize()
         {
             index.Storage.GetWriter(index.Analyzer).Optimize();
         }
+
+        public void Commit()
+        {
+            index.Storage.GetWriter(index.Analyzer).Commit();
+        }
+
+        public void Flush(bool triggerMerge = false, bool flushDocStores = false, bool flushDeletes = false)
+        {
+            index.Storage.GetWriter(index.Analyzer).Flush(triggerMerge, flushDocStores, flushDeletes);
+        }
+
 
         private Term CreateIdentityTerm(JObject entity)
         {
