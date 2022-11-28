@@ -213,12 +213,12 @@ namespace DotJEM.Json.Index
 
         public ILuceneWriteContext WriteContext(int buffersize = 512)
         {
-            return new LuceneWriteContext(index.Storage.GetWriter(index.Analyzer), factory, index, buffersize);
+            return new LuceneWriteContext(index.Storage.Writer, factory, index, buffersize);
         }
 
         public void Write(JObject entity)
         {
-            IndexWriter writer = index.Storage.GetWriter(index.Analyzer);
+            IndexWriter writer = index.Storage.Writer;
             writer.UpdateDocument(CreateIdentityTerm(entity), factory.Create(entity));
         }
 
@@ -252,7 +252,7 @@ namespace DotJEM.Json.Index
 
         public void WriteAll(IEnumerable<JObject> entities)
         {
-            IndexWriter writer = index.Storage.GetWriter(index.Analyzer);
+            IndexWriter writer = index.Storage.Writer;
             IEnumerable<int> executed = from entity in entities
                 let term = CreateIdentityTerm(entity)
                 where term != null
@@ -265,29 +265,29 @@ namespace DotJEM.Json.Index
 
         public void Delete(JObject entity)
         {
-            IndexWriter writer = index.Storage.GetWriter(index.Analyzer);
+            IndexWriter writer = index.Storage.Writer;
             writer.DeleteDocuments(CreateIdentityTerm(entity));
         }
 
         public void DeleteAll(IEnumerable<JObject> entities)
         {
-            IndexWriter writer = index.Storage.GetWriter(index.Analyzer);
+            IndexWriter writer = index.Storage.Writer;
             writer.DeleteDocuments(entities.Select(CreateIdentityTerm).Where(x => x != null).ToArray());
         }
 
         public void Optimize()
         {
-            index.Storage.GetWriter(index.Analyzer).Optimize();
+            index.Storage.Writer.Optimize();
         }
 
         public void Commit()
         {
-            index.Storage.GetWriter(index.Analyzer).Commit();
+            index.Storage.Writer.Commit();
         }
 
         public void Flush(bool triggerMerge = false, bool flushDocStores = false, bool flushDeletes = false)
         {
-            index.Storage.GetWriter(index.Analyzer).Flush(triggerMerge, flushDocStores, flushDeletes);
+            index.Storage.Writer.Flush(triggerMerge, flushDocStores, flushDeletes);
         }
 
 

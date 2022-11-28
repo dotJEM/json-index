@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.IO;
-using DotJEM.Json.Index.Configuration;
 using Lucene.Net.Analysis;
 using Lucene.Net.Analysis.Standard;
 using Lucene.Net.Util;
@@ -14,11 +13,10 @@ namespace DotJEM.Json.Index.Analyzation
         private readonly bool enableStopPositionIncrements;
         private readonly Version matchVersion;
 
-        private readonly IIndexConfiguration configuration;
 
         public int MaxTokenLength { get; set; }
 
-        public DotJemAnalyzer(Version matchVersion, IIndexConfiguration configuration = null, ISet<string> stopwords = null)
+        public DotJemAnalyzer(Version matchVersion,  ISet<string> stopwords = null)
         {
             MaxTokenLength = byte.MaxValue;
 
@@ -28,7 +26,6 @@ namespace DotJEM.Json.Index.Analyzation
             this.stopSet = stopwords ?? StopAnalyzer.ENGLISH_STOP_WORDS_SET;
 
             this.matchVersion = matchVersion;
-            this.configuration = configuration;
         }
 
         public override TokenStream TokenStream(string fieldName, TextReader reader)
