@@ -160,35 +160,35 @@ namespace DotJEM.Json.Index
 
     public class LuceneMemmoryIndexStorage : AbstractLuceneIndexStorage
     {
-        public LuceneMemmoryIndexStorage()
-            : base(new RAMDirectory())
+        public LuceneMemmoryIndexStorage(Analyzer analyzer = null)
+            : base(new RAMDirectory(), analyzer)
         {
         }
     }
 
     public class LuceneFileIndexStorage : AbstractLuceneIndexStorage
     {
-        public LuceneFileIndexStorage(string path)
+        public LuceneFileIndexStorage(string path, Analyzer analyzer = null)
             //Note: Ensure Directory.
-            : base(FSDirectory.Open(System.IO.Directory.CreateDirectory(path).FullName))
+            : base(FSDirectory.Open(System.IO.Directory.CreateDirectory(path).FullName), analyzer)
         {
         }
     }
 
     public class LuceneCachedMemmoryIndexStorage : AbstractLuceneIndexStorage
     {
-        public LuceneCachedMemmoryIndexStorage(string path)
+        public LuceneCachedMemmoryIndexStorage(string path, Analyzer analyzer = null)
             //Note: Ensure cacheDirectory.
-            : base(new MemoryCachedDirective(System.IO.Directory.CreateDirectory(path).FullName))
+            : base(new MemoryCachedDirective(System.IO.Directory.CreateDirectory(path).FullName), analyzer)
         {
         }
     }
 
     public class LuceneMemmoryMappedFileIndexStorage : AbstractLuceneIndexStorage
     {
-        public LuceneMemmoryMappedFileIndexStorage(string path)
+        public LuceneMemmoryMappedFileIndexStorage(string path, Analyzer analyzer = null)
             //Note: Ensure cacheDirectory.
-            : base(new MMapDirectory(System.IO.Directory.CreateDirectory(path)))
+            : base(new MMapDirectory(System.IO.Directory.CreateDirectory(path)), analyzer)
         {
         }
     }
