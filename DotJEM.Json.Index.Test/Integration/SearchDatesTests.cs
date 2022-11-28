@@ -24,6 +24,7 @@ namespace DotJEM.Json.Index.Test.Integration
 
             index = TestObjects(1000).Aggregate(
                 index, (idx, json) => idx.Write(json));
+            index.Commit();
         }
 
         // Dates in this range is 2000-01-01 to 2002-09-27

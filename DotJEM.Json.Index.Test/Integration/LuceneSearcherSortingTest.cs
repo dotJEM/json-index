@@ -35,6 +35,8 @@ namespace DotJEM.Json.Index.Test.Integration
             Write("{ id: '00000000-0000-0000-0000-000000000008', term: 'CCC', type: 'port', locode: 'NOBAR' }");
             Write("{ id: '00000000-0000-0000-0000-000000000004', term: 'CCC', type: 'port', locode: 'FRRAS' }");
             Write("{ id: '00000000-0000-0000-0000-000000000009', term: 'CCC', type: 'port', locode: 'IT888' }");
+            index.Commit();
+
         }
 
         [Test]
@@ -78,6 +80,7 @@ namespace DotJEM.Json.Index.Test.Integration
             Write("{ id: '00000000-0000-0000-0000-000000000008', order: 8, date: '2015-01-08T00:00:00Z', term: 'CCC', type: 'date' }");
             Write("{ id: '00000000-0000-0000-0000-000000000004', order: 4, date: '2015-01-04T00:00:00Z', term: 'CCC', type: 'date' }");
             Write("{ id: '00000000-0000-0000-0000-000000000009', order: 9, date: '2015-01-09T00:00:00Z', term: 'CCC', type: 'date' }");
+            index.Commit();
         }
 
         [Test]

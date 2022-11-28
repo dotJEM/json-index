@@ -31,12 +31,14 @@ namespace DotJEM.Json.Index
         IStorageIndex DeleteAll(IEnumerable<JObject> entities);
 
         IStorageIndex Optimize();
+        IStorageIndex Commit();
 
         ISearchResult Search(string query);
         ISearchResult Search(string queryFormat, params object[] args);
         ISearchResult Search(Query query);
         ISearchResult Search(object query);
         ISearchResult Search(JObject query);
+
 
         IEnumerable<string> Terms(string field);
 
@@ -103,8 +105,6 @@ namespace DotJEM.Json.Index
         public ILuceneWriter Writer => writer.Value;
         public ILuceneSearcher Searcher => searcher.Value;
 
-        #region Short hand helpers
-
         public ISearchResult Search(string query)
         {
             return Searcher.Search(query);
@@ -167,12 +167,12 @@ namespace DotJEM.Json.Index
             Writer.Optimize();
             return this;
         }
-
-        public IEnumerable<string> Terms(string field)
+        public IStorageIndex Commit()
         {
-            return Searcher.Terms(field);
+            Writer.Commit();
+            return this;
         }
 
-        #endregion
+        public IEnumerable<string> Terms(string field) => Searcher.Terms(field);
     }
 }
