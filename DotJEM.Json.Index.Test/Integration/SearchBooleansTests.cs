@@ -22,6 +22,7 @@ namespace DotJEM.Json.Index.Test.Integration.Types
 
             index = TestObjects(1000).Aggregate(
                 index, (idx, json) => idx.Write(json));
+            index.Commit();
         }
 
         //[TestCase("[0 TO 10]", 200)]
