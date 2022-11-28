@@ -1,26 +1,23 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
-using System.Threading;
 using DotJEM.Json.Index.Storage;
 using Lucene.Net.Analysis;
-using Lucene.Net.Analysis.Standard;
 using Lucene.Net.Index;
 using Lucene.Net.Store;
-using Lucene.Net.Util;
 using Directory = Lucene.Net.Store.Directory;
-using System.Collections.Generic;
 using DotJEM.Json.Index.Storage.Snapshot;
-using static Lucene.Net.Documents.Field;
 using ILuceneFile = DotJEM.Json.Index.Storage.Snapshot.ILuceneFile;
+using DotJEM.Json.Index.Analyzation;
+using Version = Lucene.Net.Util.Version;
 
 namespace DotJEM.Json.Index
 {
     public interface IIndexStorage
     {
+        Analyzer Analyzer { get; }
         IndexReader OpenReader();
-        IndexWriter GetWriter(Analyzer analyzer);
+        IndexWriter Writer { get; }
         bool Exists { get; }
         void Close();
         void Flush();
@@ -38,20 +35,25 @@ namespace DotJEM.Json.Index
 
         private IndexWriter writer;
         private IndexReader reader;
-        private Analyzer analyzer;
-        private SnapshotDeletionPolicy deletePolicy = new SnapshotDeletionPolicy(new KeepOnlyLastCommitDeletionPolicy());
+        private readonly SnapshotDeletionPolicy deletePolicy = new SnapshotDeletionPolicy(new KeepOnlyLastCommitDeletionPolicy());
 
-        protected AbstractLuceneIndexStorage(Directory directory)
+        public Analyzer Analyzer { get; private set; }
+
+        protected AbstractLuceneIndexStorage(Directory directory, Analyzer analyzer = null)
         {
             Directory = directory;
+            Analyzer = analyzer ?? new DotJemAnalyzer(Version.LUCENE_30);
         }
 
-        public IndexWriter GetWriter(Analyzer analyzer)
+        public IndexWriter Writer
         {
-            //TODO: The storage should define the analyzer, not the writer.
-            lock (padlock)
+            get
             {
-                return writer ??= new IndexWriter(Directory, this.analyzer = analyzer, !Exists, deletePolicy, IndexWriter.MaxFieldLength.UNLIMITED);
+                //TODO: The storage should define the analyzer, not the writer.
+                lock (padlock)
+                {
+                    return writer ??= new IndexWriter(Directory, this.Analyzer = Analyzer, !Exists, deletePolicy, IndexWriter.MaxFieldLength.UNLIMITED);
+                }
             }
         }
 
@@ -62,7 +64,7 @@ namespace DotJEM.Json.Index
 
             lock (padlock)
             {
-                return reader = reader?.Reopen() ?? IndexReader.Open(Directory, true);
+                return reader = reader?.Reopen() ?? Writer.GetReader();// IndexReader.Open(Directory, true);
             }
         }
 
@@ -83,17 +85,8 @@ namespace DotJEM.Json.Index
             lock (padlock)
             {
                 Close();
-                if (analyzer == null)
-                {
-                    var temp = new IndexWriter(Directory, new SimpleAnalyzer(), true, deletePolicy, IndexWriter.MaxFieldLength.UNLIMITED);
-                    temp.Commit();
-                    temp.Dispose();
-                }
-                else
-                {
-                    writer = new IndexWriter(Directory, analyzer, true, deletePolicy, IndexWriter.MaxFieldLength.UNLIMITED);
-                    writer.Commit();
-                }
+                writer = new IndexWriter(Directory, Analyzer, true, deletePolicy, IndexWriter.MaxFieldLength.UNLIMITED);
+                writer.Commit();
             }
 
             return true;

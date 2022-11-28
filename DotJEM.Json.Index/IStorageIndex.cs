@@ -56,7 +56,6 @@ namespace DotJEM.Json.Index
         public IIndexConfiguration Configuration { get; }
         public IServiceFactory Factory { get; }
 
-        #region Constructor Overloads
         public LuceneStorageIndex()
             : this(new IndexConfiguration(), new LuceneMemmoryIndexStorage())
         {
@@ -67,13 +66,12 @@ namespace DotJEM.Json.Index
         {
         }
 
-        public LuceneStorageIndex(IIndexStorage storage, Analyzer analyzer = null)
-            : this(new IndexConfiguration(), storage, analyzer: analyzer)
+        public LuceneStorageIndex(IIndexStorage storage)
+            : this(new IndexConfiguration(), storage)
         {
         }
-        #endregion
 
-        public LuceneStorageIndex(IIndexConfiguration configuration = null, IIndexStorage storage= null, IServiceFactory factory = null, Analyzer analyzer = null)
+        public LuceneStorageIndex(IIndexConfiguration configuration = null, IIndexStorage storage= null, IServiceFactory factory = null)
         {
             //TODO: Version should come from outside
             Version = Version.LUCENE_30;
@@ -82,10 +80,9 @@ namespace DotJEM.Json.Index
             Schemas = Factory.CreateSchemaCollection(this);
             writer = new Lazy<ILuceneWriter>(() => new LuceneWriter(this, Factory.CreateDocumentFactory(this)));
             searcher = new Lazy<ILuceneSearcher>(() => Factory.CreateSearcher(this));
-
-            Analyzer = analyzer ?? new DotJemAnalyzer(Version.LUCENE_30, configuration);
             Storage = storage ?? new LuceneMemmoryIndexStorage();
             Configuration = configuration ?? new IndexConfiguration();
+            Analyzer = Storage.Analyzer;
         }
 
         //TODO: Do we need to be able to release these?
