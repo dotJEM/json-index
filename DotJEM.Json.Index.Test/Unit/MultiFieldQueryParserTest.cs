@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using DotJEM.Json.Index.Configuration;
 using DotJEM.Json.Index.Configuration.FieldStrategies;
 using DotJEM.Json.Index.Schema;
@@ -10,12 +11,19 @@ using Lucene.Net.QueryParsers;
 using Lucene.Net.Search;
 using Moq;
 using Moq.AutoMock;
+using Moq.Language.Flow;
 using NUnit.Framework;
 using MultiFieldQueryParser = DotJEM.Json.Index.Searching.MultiFieldQueryParser;
 using Version = Lucene.Net.Util.Version;
 
 namespace DotJEM.Json.Index.Test.Unit
 {
+    public static class AutoMockExtensions
+    {
+        public static ISetup<TFake, object> Setup<TFake>(this AutoMocker mocker, Expression<Func<TFake, object>> expression) where TFake : class => mocker.GetMock<TFake>().Setup(expression);
+        public static ISetup<TFake> Setup<TFake>(this AutoMocker mocker, Expression<Action<TFake>> expression) where TFake : class => mocker.GetMock<TFake>().Setup(expression);
+    }
+
     [TestFixture]
     public class MultiFieldQueryParserTest
     {
