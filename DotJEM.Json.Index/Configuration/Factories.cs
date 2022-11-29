@@ -8,28 +8,31 @@ using DotJEM.Json.Index.Searching;
 
 namespace DotJEM.Json.Index.Configuration
 {
-    public interface IServiceFactory
+    public interface IServiceCollection
     {
-        ISchemaCollection CreateSchemaCollection(IStorageIndex index);
-        IDocumentFactory CreateDocumentFactory(IStorageIndex index);
-        ILuceneSearcher CreateSearcher(IStorageIndex index);
+        ISchemaCollection SchemaCollection { get; }
+        IDocumentFactory DocumentFactory { get; }
+        ILuceneSearcher Searcher { get; }
+
     }
 
-    public class DefaultServiceFactory : IServiceFactory
+    public interface IServiceCollectionFactory
     {
-        public virtual ISchemaCollection CreateSchemaCollection(IStorageIndex index)
-        {
-            return new SchemaCollection();
-        }
+        IServiceCollection Create(IStorageIndex index);
+    }
 
-        public virtual IDocumentFactory CreateDocumentFactory(IStorageIndex index)
-        {
-            return new DefaultDocumentFactory(index);
-        }
+    public class DefaultServiceFactory : IServiceCollectionFactory, IServiceCollection
+    {
+        public ISchemaCollection SchemaCollection { get; private set; }
+        public IDocumentFactory DocumentFactory { get; private set; }
+        public ILuceneSearcher Searcher { get; private set; }
 
-        public virtual ILuceneSearcher CreateSearcher(IStorageIndex index)
+        public IServiceCollection Create(IStorageIndex index)
         {
-            return new LuceneSearcher(index);
+            SchemaCollection = new SchemaCollection();
+            DocumentFactory = new DefaultDocumentFactory(index);
+            Searcher = new LuceneSearcher(index);
+            return this;
         }
     }
 }

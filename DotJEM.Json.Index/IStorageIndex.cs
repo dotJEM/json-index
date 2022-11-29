@@ -21,7 +21,7 @@ namespace DotJEM.Json.Index
         ISchemaCollection Schemas { get; }
         IIndexStorage Storage { get; }
         IIndexConfiguration Configuration { get; }
-        IServiceFactory Factory { get; }
+        IServiceCollection Services { get; }
 
         ILuceneWriter Writer { get; }
         ILuceneSearcher Searcher { get; }
@@ -40,7 +40,6 @@ namespace DotJEM.Json.Index
         ISearchResult Search(object query);
         ISearchResult Search(JObject query);
 
-
         IEnumerable<string> Terms(string field);
 
         void Close();
@@ -55,7 +54,7 @@ namespace DotJEM.Json.Index
         public ISchemaCollection Schemas { get; }
         public IIndexStorage Storage { get; }
         public IIndexConfiguration Configuration { get; }
-        public IServiceFactory Factory { get; }
+        public IServiceCollection Services { get; }
 
         public LuceneStorageIndex(Analyzer analyzer)
             : this(new IndexConfiguration(), new LuceneMemmoryIndexStorage(analyzer))
@@ -72,15 +71,16 @@ namespace DotJEM.Json.Index
         {
         }
 
-        public LuceneStorageIndex(IIndexConfiguration configuration = null, IIndexStorage storage= null, IServiceFactory factory = null)
+        public LuceneStorageIndex(IIndexConfiguration configuration = null, IIndexStorage storage= null, IServiceCollectionFactory factory = null)
         {
             //TODO: Version should come from outside
             Version = Version.LUCENE_30;
 
-            Factory = factory ?? new DefaultServiceFactory();
-            Schemas = Factory.CreateSchemaCollection(this);
-            writer = new Lazy<ILuceneWriter>(() => new LuceneWriter(this, Factory.CreateDocumentFactory(this)));
-            searcher = new Lazy<ILuceneSearcher>(() => Factory.CreateSearcher(this));
+            factory ??= new DefaultServiceFactory();
+            Services = factory.Create(this);
+            Schemas = Services.SchemaCollection;
+            writer = new Lazy<ILuceneWriter>(() => new LuceneWriter(this, Services.DocumentFactory));
+            searcher = new Lazy<ILuceneSearcher>(() => Services.Searcher);
             Storage = storage ?? new LuceneMemmoryIndexStorage();
             Configuration = configuration ?? new IndexConfiguration();
             Analyzer = Storage.Analyzer;
