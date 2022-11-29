@@ -21,7 +21,7 @@ namespace DotJEM.Json.Index.Test.Integration
                 .ForAll()
                 .SetIdentity("Id");
 
-            using (ILuceneWriteContext writer = index.Writer.WriteContext(1024))
+            using (ILuceneWriteContext writer = index.Writer.WriteContext())
             {
                 await writer.Write(JObject.FromObject(new { Id = new Guid("00000000-0000-0000-0000-000000000001"), Type = "Person", Name = "John", LastName = "Doe", Area = "Foo" }));
                 await writer.Write(JObject.FromObject(new { Id = new Guid("00000000-0000-0000-0000-000000000002"), Type = "Person", Name = "Peter", LastName = "Pan", Area = "Foo" }));
