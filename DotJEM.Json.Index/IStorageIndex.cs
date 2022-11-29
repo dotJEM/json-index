@@ -21,6 +21,7 @@ namespace DotJEM.Json.Index
         ISchemaCollection Schemas { get; }
         IIndexStorage Storage { get; }
         IIndexConfiguration Configuration { get; }
+        IServiceFactory Factory { get; }
 
         ILuceneWriter Writer { get; }
         ILuceneSearcher Searcher { get; }

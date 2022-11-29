@@ -1,4 +1,5 @@
 ﻿using System;
+using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -28,7 +29,7 @@ namespace DotJEM.Json.Index
 
         void Commit();
         void Flush(bool triggerMerge = false, bool flushDocStores = false, bool flushDeletes = false);
-        ILuceneWriteContext WriteContext(int buffersize = 512);
+        ILuceneWriteContext WriteContext(ILuceneWriteContextSettings settings = null);
     }
 
     // TODO: Need to work in a async full implementation instead of this.
@@ -49,16 +50,29 @@ namespace DotJEM.Json.Index
         Task Commit();
     }
 
+    public interface ILuceneWriteContextSettings
+    {
+        double BufferSize { get; }
+        void AfterWrite(IndexWriter writer, LuceneStorageIndex index, int counterValue);
+    }
+
+    public class DefaultLuceneWriteContextSettings : ILuceneWriteContextSettings
+    {
+        public double BufferSize { get; } = 512;
+        public void AfterWrite(IndexWriter writer, LuceneStorageIndex index, int counterValue) { }
+    }
+
     internal class LuceneWriteContext : ILuceneWriteContext
     {
         public event EventHandler<IndexWriterInfoEventArgs> InfoEvent;
 
-        private readonly double buffersize;
         private readonly IndexWriter writer;
         private readonly LuceneStorageIndex index;
+        private readonly ILuceneWriteContextSettings settings;
         private readonly IDocumentFactory factory;
 
         private readonly InterlockedCounter counter = new InterlockedCounter();
+        private readonly double buffersize;
 
         public int WriteCount => counter.Value;
 
@@ -66,29 +80,32 @@ namespace DotJEM.Json.Index
         {
             public int Value { get; private set; }
 
-            public void Add(int value)
+            public int Add(int value)
             {
                 lock (this)
                 {
-                    Value += value;
+                    return Value += value;
                 }
             }
         }
 
-        public LuceneWriteContext(IndexWriter writer, IDocumentFactory factory, LuceneStorageIndex index, double buffersize)
+        public LuceneWriteContext(IndexWriter writer, IDocumentFactory factory, LuceneStorageIndex index, ILuceneWriteContextSettings settings = null)
         {
             this.buffersize = writer.GetRAMBufferSizeMB();
-
             this.writer = writer;
             this.factory = factory;
             this.index = index;
-
-            writer.SetRAMBufferSizeMB(buffersize);
+            this.settings = settings ?? new DefaultLuceneWriteContextSettings();
+            writer.SetRAMBufferSizeMB(this.settings.BufferSize);
         }
 
         public Task Create(JObject entity)
         {
-            return Task.Run(() => writer.AddDocument(factory.Create(entity)));
+            return Task.Run(() =>
+            {
+                writer.AddDocument(factory.Create(entity));
+                PostWrite();
+            });
         }
 
         public Task CreateAll(IEnumerable<JObject> entities)
@@ -99,14 +116,22 @@ namespace DotJEM.Json.Index
                                               let document = InternalCreateDocument(entity)
                                               where document != null
                                               select InternalAddDocument(document);
-                counter.Add(executed.Sum());
+                PostWrite(executed.Sum());
             });
         }
 
+        private void PostWrite(int count = 1)
+        {
+            settings.AfterWrite(writer, index, counter.Add(count));
+        }
 
         public Task Write(JObject entity)
         {
-            return Task.Run(() => writer.UpdateDocument(CreateIdentityTerm(entity), factory.Create(entity)));
+            return Task.Run(() =>
+            {
+                writer.UpdateDocument(CreateIdentityTerm(entity), factory.Create(entity));
+                PostWrite();
+            });
         }
 
         public Task WriteAll(IEnumerable<JObject> entities)
@@ -121,7 +146,7 @@ namespace DotJEM.Json.Index
                                               let document = InternalCreateDocument(entity)
                                               where document != null
                                               select InternalUpdateDocument(term, document);
-                counter.Add(executed.Sum());
+                PostWrite(executed.Sum());
             });
         }
 
@@ -226,9 +251,9 @@ namespace DotJEM.Json.Index
             this.factory = factory;
         }
 
-        public ILuceneWriteContext WriteContext(int buffersize = 512)
+        public ILuceneWriteContext WriteContext(ILuceneWriteContextSettings settings = null)
         {
-            return new LuceneWriteContext(index.Storage.Writer, factory, index, buffersize);
+            return new LuceneWriteContext(index.Storage.Writer, factory, index, settings);
         }
 
         public void Write(JObject entity)
