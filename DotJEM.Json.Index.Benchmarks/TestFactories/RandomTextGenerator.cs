@@ -27,14 +27,14 @@ namespace DotJEM.Json.Index.Benchmarks.TestFactories
         private IEnumerable<string> Open(string @from)
         {
             if(!texts.Contains(@from))
-                throw new ArgumentException(string.Format("The text '{0}' was unknown.", @from),"from");
+                throw new ArgumentException($"The text '{from}' was unknown.",nameof(from));
 
             Debug.Assert(LoremIpsums.ResourceManager != null, "LoremIpsums.ResourceManager != null");
 
             string text = LoremIpsums.ResourceManager.GetString(@from, LoremIpsums.Culture);
             Debug.Assert(text != null, "text != null");
 
-            return text.Split(new []{' '},StringSplitOptions.RemoveEmptyEntries);
+            return text.Split(new []{' ', '\r', '\n', '\t'},StringSplitOptions.RemoveEmptyEntries);
         }
 
         public string[] Words(string @from, int minLength = 2, int count = 20)

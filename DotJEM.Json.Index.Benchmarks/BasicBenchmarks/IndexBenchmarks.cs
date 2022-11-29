@@ -57,13 +57,13 @@ namespace DotJEM.Json.Index.Benchmarks.BasicBenchmarks
                 & Has.Property("CountPass").True);
         }
 
-        [Test,Repeat(500)]
+        [Test,Repeat(500), Explicit]
         public void Benchmark_RandomText()
         {
             string text = generator.RandomText();
             string word = generator.Word(text);
 
-            BenchmarkResult result = BenchmarkQuery(string.Format("content: {0}*", word));
+            BenchmarkResult result = BenchmarkQuery($"content:{word}*");
 
             Assert.That(result,
                 Has.Property("Count").GreaterThan(0)
