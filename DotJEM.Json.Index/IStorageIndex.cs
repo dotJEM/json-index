@@ -56,13 +56,13 @@ namespace DotJEM.Json.Index
         public IIndexConfiguration Configuration { get; }
         public IServiceFactory Factory { get; }
 
-        public LuceneStorageIndex()
-            : this(new IndexConfiguration(), new LuceneMemmoryIndexStorage())
+        public LuceneStorageIndex(Analyzer analyzer)
+            : this(new IndexConfiguration(), new LuceneMemmoryIndexStorage(analyzer))
         {
         }
 
-        public LuceneStorageIndex(string path)
-            : this(new IndexConfiguration(), new LuceneFileIndexStorage(path))
+        public LuceneStorageIndex(string path, Analyzer analyzer = null)
+            : this(new IndexConfiguration(), new LuceneFileIndexStorage(path, analyzer))
         {
         }
 

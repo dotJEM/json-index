@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using DotJEM.NUnit.Json;
-using DotJEM.NUnit.Json.Extensions;
+using DotJEM.NUnit3.Legacy;
+using DotJEM.NUnit3.Legacy.Extensions;
 using Lucene.Net.Index;
 using Lucene.Net.Search;
 using Lucene.Net.Util;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
+using Has = DotJEM.NUnit3.Has;
 
 namespace DotJEM.Json.Index.Test.Integration
 {
@@ -16,7 +17,7 @@ namespace DotJEM.Json.Index.Test.Integration
     {
         private readonly IStorageIndex index = new LuceneStorageIndex();
 
-        [TestFixtureSetUp]
+        [OneTimeSetUp]
         //[Test]
         public void TestFixtureSetUp()
         {
@@ -56,6 +57,7 @@ namespace DotJEM.Json.Index.Test.Integration
         [Test]
         public void Search_Id4_ReturnsCarMustang()
         {
+
             List<dynamic> result = index.Searcher.Search("Id: 00000000-0000-0000-0000-000000000004").Select(hit => hit.Json).ToList();
             Assert.That(result,
                 Has.Count.EqualTo(1) &

@@ -12,7 +12,7 @@ namespace DotJEM.Json.Index.Test.Integration.Types
     {
         private IStorageIndex index = new LuceneStorageIndex();
 
-        [TestFixtureSetUp]
+        [OneTimeSetUp]
         public void TestFixtureSetUp()
         {
             index.Configuration

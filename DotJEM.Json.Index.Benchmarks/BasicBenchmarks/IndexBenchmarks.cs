@@ -19,7 +19,7 @@ namespace DotJEM.Json.Index.Benchmarks.BasicBenchmarks
         private readonly RandomTextGenerator generator = new RandomTextGenerator();
         private TestIndexBuilder builder;
 
-        [TestFixtureSetUp]
+        [OneTimeSetUp]
         public void TestFixtureSetUp()
         {
             builder = new TestIndexBuilder(index);

@@ -16,7 +16,7 @@ namespace DotJEM.Json.Index.Test.Integration
         private readonly IStorageIndex index = new LuceneStorageIndex();
 
         [Test]
-        public async void WriteContext_MakesDocumentsAvailable()
+        public async Task WriteContext_MakesDocumentsAvailable()
         {
             var config = index.Configuration;
             config

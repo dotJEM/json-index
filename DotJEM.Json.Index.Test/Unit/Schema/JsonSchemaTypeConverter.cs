@@ -6,11 +6,12 @@ using System.Text;
 using System.Threading.Tasks;
 using DotJEM.Json.Index.Configuration;
 using DotJEM.Json.Index.Schema;
-using DotJEM.NUnit.Json;
+using DotJEM.NUnit3.Constraints.Objects;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Schema;
 using NUnit.Framework;
+using Has = DotJEM.NUnit3.Has;
 
 namespace DotJEM.Json.Index.Test.Unit.Schema
 {
@@ -59,7 +60,7 @@ namespace DotJEM.Json.Index.Test.Unit.Schema
             JSchema schema = new JSchemaGenerator().Generate(JObject.Parse(json));
             JSchema deserialized = JsonConvert.DeserializeObject<JSchema>(JsonConvert.SerializeObject(schema));
 
-            Assert.That(deserialized, ObjectHas.Properties.EqualTo(schema));
+            Assert.That(deserialized, Has.Properties.EqualTo(schema));
         }
 
 

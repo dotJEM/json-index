@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Lucene.Net.Analysis.Standard;
 using Lucene.Net.Documents;
@@ -36,22 +37,43 @@ namespace DotJEM.Json.Index
         //TODO: Need a better design, but similar to lucene's info streams.
         event EventHandler<IndexWriterInfoEventArgs> InfoEvent;
 
+        int WriteCount { get; }
+
         Task Create(JObject entity);
         Task CreateAll(IEnumerable<JObject> entities);
         Task Write(JObject entity);
         Task WriteAll(IEnumerable<JObject> entities);
         Task Delete(JObject entity);
         Task DeleteAll(IEnumerable<JObject> entities);
+
+        Task Commit();
     }
 
     internal class LuceneWriteContext : ILuceneWriteContext
     {
         public event EventHandler<IndexWriterInfoEventArgs> InfoEvent;
 
+        private readonly double buffersize;
         private readonly IndexWriter writer;
         private readonly LuceneStorageIndex index;
-        private readonly double buffersize;
         private readonly IDocumentFactory factory;
+
+        private readonly InterlockedCounter counter = new InterlockedCounter();
+
+        public int WriteCount => counter.Value;
+
+        private class InterlockedCounter
+        {
+            public int Value { get; private set; }
+
+            public void Add(int value)
+            {
+                lock (this)
+                {
+                    Value += value;
+                }
+            }
+        }
 
         public LuceneWriteContext(IndexWriter writer, IDocumentFactory factory, LuceneStorageIndex index, double buffersize)
         {
@@ -64,39 +86,32 @@ namespace DotJEM.Json.Index
             writer.SetRAMBufferSizeMB(buffersize);
         }
 
-
-        public async Task Create(JObject entity)
+        public Task Create(JObject entity)
         {
-            await Task.Run(() =>
-            {
-                writer.AddDocument(factory.Create(entity));
-            });
+            return Task.Run(() => writer.AddDocument(factory.Create(entity)));
         }
 
-        public async Task CreateAll(IEnumerable<JObject> entities)
+        public Task CreateAll(IEnumerable<JObject> entities)
         {
-            await Task.Run(() =>
+            return Task.Run(() =>
             {
                 IEnumerable<int> executed = from entity in entities
                                               let document = InternalCreateDocument(entity)
                                               where document != null
                                               select InternalAddDocument(document);
-                return executed.Sum();
+                counter.Add(executed.Sum());
             });
         }
 
 
-        public async Task Write(JObject entity)
+        public Task Write(JObject entity)
         {
-            await Task.Run(() =>
-            {
-                writer.UpdateDocument(CreateIdentityTerm(entity), factory.Create(entity));
-            });
+            return Task.Run(() => writer.UpdateDocument(CreateIdentityTerm(entity), factory.Create(entity)));
         }
 
-        public async Task WriteAll(IEnumerable<JObject> entities)
+        public Task WriteAll(IEnumerable<JObject> entities)
         {
-            await Task.Run(() =>
+            return Task.Run(() =>
             {
                 //Note: We cannot do this in paralel as it could potentially apply two updates for the same document in the wrong order.
                 //      So we have to group by "ID"'s before we can consider doing it in paralel.
@@ -106,23 +121,23 @@ namespace DotJEM.Json.Index
                                               let document = InternalCreateDocument(entity)
                                               where document != null
                                               select InternalUpdateDocument(term, document);
-                return executed.Sum();
+                counter.Add(executed.Sum());
             });
         }
 
-        public async Task Delete(JObject entity)
+        public Task Delete(JObject entity)
         {
-            await Task.Run(() =>
-            {
-                writer.DeleteDocuments(CreateIdentityTerm(entity));
-            });
+            return Task.Run(() => writer.DeleteDocuments(CreateIdentityTerm(entity)));
         }
 
-        public async Task DeleteAll(IEnumerable<JObject> entities)
+        public Task DeleteAll(IEnumerable<JObject> entities)
         {
-            await Task.Run(() => {
-                writer.DeleteDocuments(entities.Select(CreateIdentityTerm).Where(x => x != null).ToArray());
-            });
+            return Task.Run(() => writer.DeleteDocuments(entities.Select(CreateIdentityTerm).Where(x => x != null).ToArray()));
+        }
+
+        public Task Commit()
+        {
+            return Task.Run(writer.Commit);
         }
 
         public void Dispose()
@@ -150,12 +165,12 @@ namespace DotJEM.Json.Index
             try
             {
                 writer.AddDocument(document);
-                return 0;
+                return 1;
             }
             catch (Exception ex)
             {
                 OnInfoEvent(new IndexWriterExceptionEventArgs("Failed to add document: " + document, ex));
-                return 1;
+                return 0;
             }
         }
 
@@ -164,12 +179,12 @@ namespace DotJEM.Json.Index
             try
             {
                 writer.UpdateDocument(term, document);
-                return 0;
+                return 1;
             }
             catch (Exception ex)
             {
                 OnInfoEvent(new IndexWriterExceptionEventArgs("Failed to update document: " + document, ex));
-                return 1;
+                return 0;
             }
         }
 

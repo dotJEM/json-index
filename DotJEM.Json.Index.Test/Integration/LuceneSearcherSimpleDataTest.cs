@@ -1,11 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using DotJEM.NUnit.Json;
-using DotJEM.NUnit.Json.Extensions;
-using Lucene.Net.Index;
-using Lucene.Net.Search;
-using Lucene.Net.Util;
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 
@@ -17,7 +12,7 @@ namespace DotJEM.Json.Index.Test.Integration
         private readonly IStorageIndex index = new LuceneStorageIndex();
 
         [Test]
-        public async void WriteContext_MakesDocumentsAvailable()
+        public async Task WriteContext_MakesDocumentsAvailable()
         {
             var config = index.Configuration;
             config
