@@ -75,15 +75,17 @@ namespace DotJEM.Json.Index
         {
             //TODO: Version should come from outside
             Version = Version.LUCENE_30;
+            Storage = storage ?? new LuceneMemmoryIndexStorage();
+            Analyzer = Storage.Analyzer;
+
+            Configuration = configuration ?? new IndexConfiguration();
 
             factory ??= new DefaultServiceFactory();
             Services = factory.Create(this);
+            
             Schemas = Services.SchemaCollection;
             writer = new Lazy<ILuceneWriter>(() => new LuceneWriter(this, Services.DocumentFactory));
             searcher = new Lazy<ILuceneSearcher>(() => Services.Searcher);
-            Storage = storage ?? new LuceneMemmoryIndexStorage();
-            Configuration = configuration ?? new IndexConfiguration();
-            Analyzer = Storage.Analyzer;
         }
 
         //TODO: Do we need to be able to release these?
