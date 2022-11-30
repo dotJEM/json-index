@@ -131,21 +131,19 @@ namespace DotJEM.Json.Index
 
                 using ISnapshot snapshot = snapshotSource.Open();
                 foreach (ILuceneFile file in snapshot.Files)
-                {
-                    using Stream source = file.Open();
-                    using IndexOutputStream target =new (file.Name, Directory.CreateOutput(file.Name));
-                    source.CopyTo(target);
-                    target.Flush();
-                }
-
-                using Stream segmentsSource = snapshot.SegmentsFile.Open();
-                using IndexOutputStream segmentsTarget =new (snapshot.SegmentsFile.Name, Directory.CreateOutput(snapshot.SegmentsFile.Name));
-                segmentsSource.CopyTo(segmentsTarget);
-                segmentsTarget.Flush();
-
+                    CopyFile(file);
+                CopyFile(snapshot.SegmentsFile);
                 Directory.Sync(snapshot.SegmentsFile.Name);
             }
             return true;
+
+            void CopyFile(ILuceneFile file)
+            {
+                using Stream source = file.Open();
+                using IndexOutputStream target = new(file.Name, Directory.CreateOutput(file.Name));
+                source.CopyTo(target);
+                target.Flush();
+            }
         }
 
         public void Flush()

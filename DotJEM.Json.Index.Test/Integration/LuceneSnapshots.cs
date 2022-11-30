@@ -44,7 +44,7 @@ namespace DotJEM.Json.Index.Test.Integration
             index.Storage.Snapshot(target);
 
             ISnapshotSource source = target.LastCreatedWriter.GetSource();
-            index.Storage.Restore(source);
+            Assert.That(index.Storage.Restore(source));
 
             Assert.That(index.Search("*").Count(), Is.EqualTo(9));
         }
