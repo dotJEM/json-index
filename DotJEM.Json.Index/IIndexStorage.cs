@@ -136,7 +136,10 @@ namespace DotJEM.Json.Index
                 using ISnapshot snapshot = snapshotSource.Open();
                 foreach (ILuceneFile file in snapshot.Files)
                     CopyFile(file);
+
                 CopyFile(snapshot.SegmentsFile);
+                //TODO: This should be generated instead.
+                CopyFile(snapshot.SegmentsGenFile);
                 Directory.Sync(snapshot.SegmentsFile.Name);
             }
             return true;
