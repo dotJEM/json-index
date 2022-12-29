@@ -112,6 +112,10 @@ namespace DotJEM.Json.Index
 
                     using IndexInputStream segmentsSource = new (commit.SegmentsFileName, Directory.OpenInput(commit.SegmentsFileName));
                     writer.WriteSegmentsFile(segmentsSource);
+
+                    using IndexInputStream genFile = new IndexInputStream("segments.gen", Directory.OpenInput("segments.gen"));
+                    writer.WriteSegmentsGenFile(genFile);
+
                 }
                 finally
                 {

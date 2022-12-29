@@ -63,6 +63,7 @@ namespace DotJEM.Json.Index.Test.Integration
     {
         private readonly long generation;
         private ILuceneFile segmentsFile;
+        private ILuceneFile segmentsGenFile;
         private readonly List<ILuceneFile> files = new List<ILuceneFile>();
 
         public FakeSnapshotWriter(long generation)
@@ -86,6 +87,14 @@ namespace DotJEM.Json.Index.Test.Integration
             segmentsFile = file;
         }
 
+        public void WriteSegmentsGenFile(IndexInputStream stream)
+        {
+            FakeFile file = new FakeFile(stream.FileName);
+            stream.CopyTo(file.Stream);
+            file.Stream.Flush();
+            segmentsGenFile = file;
+        }
+
         public class FakeFile : ILuceneFile
         {
 
@@ -106,7 +115,7 @@ namespace DotJEM.Json.Index.Test.Integration
 
         public ISnapshotSource GetSource()
         {
-            return new FakeSnapshotSource(new FakeSnapshot(generation, segmentsFile, files));
+            return new FakeSnapshotSource(new FakeSnapshot(generation, segmentsFile, segmentsGenFile, files));
         }
 
         public void Dispose()
@@ -133,13 +142,15 @@ namespace DotJEM.Json.Index.Test.Integration
     {
         public long Generation { get; }
         public ILuceneFile SegmentsFile { get; }
+        public ILuceneFile SegmentsGenFile { get; }
         public IEnumerable<ILuceneFile> Files { get; }
 
-        public FakeSnapshot(long generation, ILuceneFile segmentsFile, IEnumerable<ILuceneFile> files)
+        public FakeSnapshot(long generation, ILuceneFile segmentsFile, ILuceneFile segmentsGenFile, IEnumerable<ILuceneFile> files)
         {
             Generation = generation;
             SegmentsFile = segmentsFile;
             Files = files;
+            SegmentsGenFile = segmentsGenFile;
         }
 
         public void Dispose()

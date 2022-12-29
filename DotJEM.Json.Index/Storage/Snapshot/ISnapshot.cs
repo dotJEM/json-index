@@ -15,6 +15,7 @@ public interface ISnapshotWriter : IDisposable
 {
     void WriteFile(IndexInputStream stream);
     void WriteSegmentsFile(IndexInputStream stream);
+    void WriteSegmentsGenFile(IndexInputStream stream);
 }
 
 public interface ISnapshotSource
@@ -27,6 +28,7 @@ public interface ISnapshot : IDisposable
 {
     long Generation { get; }
     ILuceneFile SegmentsFile { get; }
+    ILuceneFile SegmentsGenFile { get; }
     IEnumerable<ILuceneFile> Files { get; }
 }
 
