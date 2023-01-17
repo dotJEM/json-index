@@ -35,14 +35,15 @@ namespace DotJEM.Json.Index
 
         private IndexWriter writer;
         private IndexReader reader;
-        private readonly SnapshotDeletionPolicy deletePolicy = new SnapshotDeletionPolicy(new KeepOnlyLastCommitDeletionPolicy());
+        private readonly IndexDeletionPolicy deletePolicy;
 
         public Analyzer Analyzer { get; private set; }
 
-        protected AbstractLuceneIndexStorage(Directory directory, Analyzer analyzer = null)
+        protected AbstractLuceneIndexStorage(Directory directory, Analyzer analyzer = null, IndexDeletionPolicy deletionPolicy = null)
         {
             Directory = directory;
             Analyzer = analyzer ?? new DotJemAnalyzer(Version.LUCENE_30);
+            deletePolicy = deletionPolicy ??  new SnapshotDeletionPolicy(new KeepOnlyLastCommitDeletionPolicy());
         }
 
         public IndexWriter Writer
@@ -97,10 +98,15 @@ namespace DotJEM.Json.Index
             if (writer == null)
                 return false;
 
-            if (snapshotTarget == null) throw new ArgumentNullException(nameof(snapshotTarget));
+            if (snapshotTarget == null)
+                throw new ArgumentNullException(nameof(snapshotTarget));
+
+            if (deletePolicy is not SnapshotDeletionPolicy snapshotDeletionPolicy)
+                throw new InvalidOperationException($"Snaptshots requires a {nameof(SnapshotDeletionPolicy)} but the configured policy was {deletePolicy.GetType().Name}");
+            
             lock (padlock)
             {
-                IndexCommit commit = deletePolicy.Snapshot();
+                IndexCommit commit = snapshotDeletionPolicy.Snapshot();
                 try
                 {
                     using ISnapshotWriter writer = snapshotTarget.Open(commit);
@@ -119,7 +125,7 @@ namespace DotJEM.Json.Index
                 }
                 finally
                 {
-                    deletePolicy.Release();
+                    snapshotDeletionPolicy.Release();
                 }
             }
             return true;
@@ -165,35 +171,35 @@ namespace DotJEM.Json.Index
 
     public class LuceneMemmoryIndexStorage : AbstractLuceneIndexStorage
     {
-        public LuceneMemmoryIndexStorage(Analyzer analyzer = null)
-            : base(new RAMDirectory(), analyzer)
+        public LuceneMemmoryIndexStorage(Analyzer analyzer = null, IndexDeletionPolicy deletionPolicy = null)
+            : base(new RAMDirectory(), analyzer, deletionPolicy)
         {
         }
     }
 
     public class LuceneFileIndexStorage : AbstractLuceneIndexStorage
     {
-        public LuceneFileIndexStorage(string path, Analyzer analyzer = null)
+        public LuceneFileIndexStorage(string path, Analyzer analyzer = null, IndexDeletionPolicy deletionPolicy = null)
             //Note: Ensure Directory.
-            : base(FSDirectory.Open(System.IO.Directory.CreateDirectory(path).FullName), analyzer)
+            : base(FSDirectory.Open(System.IO.Directory.CreateDirectory(path).FullName), analyzer, deletionPolicy)
         {
         }
     }
 
     public class LuceneCachedMemmoryIndexStorage : AbstractLuceneIndexStorage
     {
-        public LuceneCachedMemmoryIndexStorage(string path, Analyzer analyzer = null)
+        public LuceneCachedMemmoryIndexStorage(string path, Analyzer analyzer = null, IndexDeletionPolicy deletionPolicy = null)
             //Note: Ensure cacheDirectory.
-            : base(new MemoryCachedDirective(System.IO.Directory.CreateDirectory(path).FullName), analyzer)
+            : base(new MemoryCachedDirective(System.IO.Directory.CreateDirectory(path).FullName), analyzer, deletionPolicy)
         {
         }
     }
 
     public class LuceneMemmoryMappedFileIndexStorage : AbstractLuceneIndexStorage
     {
-        public LuceneMemmoryMappedFileIndexStorage(string path, Analyzer analyzer = null)
+        public LuceneMemmoryMappedFileIndexStorage(string path, Analyzer analyzer = null, IndexDeletionPolicy deletionPolicy = null)
             //Note: Ensure cacheDirectory.
-            : base(new MMapDirectory(System.IO.Directory.CreateDirectory(path)), analyzer)
+            : base(new MMapDirectory(System.IO.Directory.CreateDirectory(path)), analyzer, deletionPolicy)
         {
         }
     }
