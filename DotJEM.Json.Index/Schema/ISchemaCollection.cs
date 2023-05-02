@@ -4,7 +4,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime.Remoting.Messaging;
 using Lucene.Net.Documents;
 using Lucene.Net.QueryParsers;
 using Newtonsoft.Json.Linq;

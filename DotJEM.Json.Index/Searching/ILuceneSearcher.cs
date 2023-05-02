@@ -53,13 +53,20 @@ namespace DotJEM.Json.Index.Searching
                 yield break;
 
             IndexReader reader = index.Storage.OpenReader();
-            TermEnum terms = reader.Terms(new Term(field));
-            do
+
+            Fields fields = MultiFields.GetFields(reader);
+            if(fields == null)
+                yield break;
+
+            Terms terms = fields.GetTerms(field);
+            if(terms == null)
+                yield break;
+
+            TermsEnum enumerator = terms.GetEnumerator();
+            while (enumerator.MoveNext())
             {
-                if (terms.Term.Field != field)
-                    yield break;
-                yield return terms.Term.Text;
-            } while (terms.Next());
+                yield return enumerator.Current.Term.Utf8ToString();
+            }
         }
     }
 }

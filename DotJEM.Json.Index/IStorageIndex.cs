@@ -7,15 +7,15 @@ using DotJEM.Json.Index.Searching;
 using Lucene.Net.Analysis;
 using Lucene.Net.Analysis.Standard;
 using Lucene.Net.Search;
+using Lucene.Net.Util;
 using Newtonsoft.Json.Linq;
-using Version = Lucene.Net.Util.Version;
 
 namespace DotJEM.Json.Index
 {
     //TODO: -> IIndexContext to align to IStorageContext, then allow for multiple indexes.
     public interface IStorageIndex
     {
-        Version Version { get; }
+        LuceneVersion Version { get; }
         Analyzer Analyzer { get; }
 
         ISchemaCollection Schemas { get; }
@@ -31,7 +31,6 @@ namespace DotJEM.Json.Index
         IStorageIndex Delete(JObject entity);
         IStorageIndex DeleteAll(IEnumerable<JObject> entities);
 
-        IStorageIndex Optimize();
         IStorageIndex Commit();
 
         ISearchResult Search(string query);
@@ -48,7 +47,7 @@ namespace DotJEM.Json.Index
 
     public class LuceneStorageIndex : IStorageIndex
     {
-        public Version Version { get; }
+        public LuceneVersion Version { get; }
         public Analyzer Analyzer { get; }
 
         public ISchemaCollection Schemas { get; }
@@ -74,7 +73,7 @@ namespace DotJEM.Json.Index
         public LuceneStorageIndex(IIndexConfiguration configuration = null, IIndexStorage storage= null, IServiceCollectionFactory factory = null)
         {
             //TODO: Version should come from outside
-            Version = Version.LUCENE_30;
+            Version = LuceneVersion.LUCENE_48;
             Storage = storage ?? new LuceneMemmoryIndexStorage();
             Analyzer = Storage.Analyzer;
 
@@ -162,11 +161,6 @@ namespace DotJEM.Json.Index
             return this;
         }
 
-        public IStorageIndex Optimize()
-        {
-            Writer.Optimize();
-            return this;
-        }
         public IStorageIndex Commit()
         {
             Writer.Commit();

@@ -55,11 +55,6 @@ namespace DotJEM.Json.Index.Searching
             this.Query = query;
             this.index = index;
         }
-        
-        private JObject ResolveJObject(IHit hit)
-        {
-            return index.Configuration.Serializer.Deserialize(index.Configuration.RawField, searcher.Doc(hit.Doc));
-        }
 
         public ISearchResult Take(int count)
         {
@@ -97,8 +92,9 @@ namespace DotJEM.Json.Index.Searching
                 yield break;
 
             Stopwatch timer = Stopwatch.StartNew();
-            using (searcher = new IndexSearcher(index.Storage.OpenReader()))
+            using (ReferenceContext<IndexSearcher> context = index.Storage.OpenSearcher())
             {
+                IndexSearcher searcher = context.Reference;
                 Query query = searcher.Rewrite(Query);
                 TopDocs hits = sorting == null
                     ? searcher.Search(query, filtering, take + skip)
@@ -106,11 +102,20 @@ namespace DotJEM.Json.Index.Searching
                 TotalCount = hits.TotalHits;
 
                 SearchTime = timer.Elapsed;
-
+                
                 foreach (ScoreDoc hit in hits.ScoreDocs.Skip(skip))
-                    yield return new Hit(hit.Doc, hit.Score, ResolveJObject);
+                {
+                    //TODO: This was lazy before.
+                    JObject json = index.Configuration.Serializer.Deserialize(index.Configuration.RawField, searcher.Doc(hit.Doc));
+                    yield return new Hit(hit.Doc, hit.Score, _ => json);
+                }
             }
             TotalTime = timer.Elapsed;
+        }
+        
+        private JObject ResolveJObject(IHit hit)
+        {
+            return index.Configuration.Serializer.Deserialize(index.Configuration.RawField, searcher.Doc(hit.Doc));
         }
 
         IEnumerator IEnumerable.GetEnumerator()

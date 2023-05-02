@@ -45,7 +45,9 @@ namespace DotJEM.Json.Index.Test.Integration
         [Test]
         public void Search_ForMustangWithSpecifiedFields_Returns()
         {
-            Query query = new TermQuery(new Term("Number", NumericUtils.LongToPrefixCoded(5)));
+            BytesRef bytes = new BytesRef();
+            NumericUtils.Int64ToPrefixCoded(5, 0, bytes);
+            Query query = new TermQuery(new Term("Number", bytes));
             //Query query = NumericRangeQuery.NewLongRange("Number", 5, 5, true, true);
 
             //List<dynamic> result = index.CreateSearcher().Search("Number:5").Select(hit => hit.Json).ToList();

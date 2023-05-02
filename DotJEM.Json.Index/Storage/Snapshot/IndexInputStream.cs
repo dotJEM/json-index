@@ -44,7 +44,7 @@ public class IndexInputStream : Stream
 
     public override int Read(byte[] buffer, int offset, int count)
     {
-        long remaining = IndexInput.Length() - IndexInput.FilePointer;
+        long remaining = IndexInput.Length - IndexInput.Position;
         int readCount = (int)Math.Min(remaining, count);
         IndexInput.ReadBytes(buffer, offset, readCount);
         return readCount;
@@ -58,11 +58,11 @@ public class IndexInputStream : Stream
     public override bool CanRead => true;
     public override bool CanSeek => true;
     public override bool CanWrite => false;
-    public override long Length => IndexInput.Length();
+    public override long Length => IndexInput.Length;
 
     public override long Position
     {
-        get => IndexInput.FilePointer;
+        get => IndexInput.Position;
         set => IndexInput.Seek(value);
     }
 

@@ -39,7 +39,7 @@ public class IndexOutputStream : Stream
 
     public override void SetLength(long value)
     {
-        IndexOutput.SetLength(value);
+        IndexOutput.Length=value;
     }
 
     public override int Read(byte[] buffer, int offset, int count)
@@ -59,7 +59,7 @@ public class IndexOutputStream : Stream
 
     public override long Position
     {
-        get => IndexOutput.FilePointer;
+        get => IndexOutput.Position;
         set => IndexOutput.Seek(value);
     }
 

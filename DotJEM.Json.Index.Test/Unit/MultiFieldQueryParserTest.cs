@@ -7,12 +7,12 @@ using DotJEM.Json.Index.Searching;
 using DotJEM.Json.Index.Test.Util;
 using Lucene.Net.Analysis.Standard;
 using Lucene.Net.QueryParsers;
+using Lucene.Net.QueryParsers.Classic;
 using Lucene.Net.Search;
 using Moq;
 using Moq.AutoMock;
 using NUnit.Framework;
 using MultiFieldQueryParser = DotJEM.Json.Index.Searching.MultiFieldQueryParser;
-using Version = Lucene.Net.Util.Version;
 
 namespace DotJEM.Json.Index.Test.Unit
 {

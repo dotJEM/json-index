@@ -1,11 +1,12 @@
 ﻿using Lucene.Net.Documents;
+using Lucene.Net.Index;
 using Lucene.Net.Search;
 
 namespace DotJEM.Json.Index
 {
     internal static class LuceneExtensions
     {
-        public static Document Put(this Document self, IFieldable field)
+        public static Document Put(this Document self, IIndexableField field)
         {
             self.Add(field);
             return self;

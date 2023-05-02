@@ -11,7 +11,6 @@ using Lucene.Net.Documents;
 using Lucene.Net.Index;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Version = Lucene.Net.Util.Version;
 
 namespace DotJEM.Json.Index
 {
@@ -25,10 +24,8 @@ namespace DotJEM.Json.Index
         void WriteAll(IEnumerable<JObject> entities);
         void Delete(JObject entity);
         void DeleteAll(IEnumerable<JObject> entities);
-        void Optimize();
-
         void Commit();
-        void Flush(bool triggerMerge = false, bool flushDocStores = false, bool flushDeletes = false);
+        void Flush(bool triggerMerge = false, bool applyAllDeletes = false);
         ILuceneWriteContext WriteContext(ILuceneWriteContextSettings settings = null);
     }
 
@@ -46,20 +43,17 @@ namespace DotJEM.Json.Index
         Task WriteAll(IEnumerable<JObject> entities);
         Task Delete(JObject entity);
         Task DeleteAll(IEnumerable<JObject> entities);
-
         Task Commit();
     }
 
     public interface ILuceneWriteContextSettings
     {
-        double BufferSize { get; }
         void AfterWrite(IndexWriter writer, LuceneStorageIndex index, int counterValue);
     }
 
     public class DefaultLuceneWriteContextSettings : ILuceneWriteContextSettings
     {
-        public double BufferSize { get; } = 512;
-        public void AfterWrite(IndexWriter writer, LuceneStorageIndex index, int counterValue) { }
+        public void AfterWrite(IndexWriter write , LuceneStorageIndex index, int counterValue) { }
     }
 
     internal class LuceneWriteContext : ILuceneWriteContext
@@ -72,7 +66,7 @@ namespace DotJEM.Json.Index
         private readonly IDocumentFactory factory;
 
         private readonly InterlockedCounter counter = new InterlockedCounter();
-        private readonly double buffersize;
+        private readonly long buffersize;
 
         public int WriteCount => counter.Value;
 
@@ -91,12 +85,10 @@ namespace DotJEM.Json.Index
 
         public LuceneWriteContext(IndexWriter writer, IDocumentFactory factory, LuceneStorageIndex index, ILuceneWriteContextSettings settings = null)
         {
-            this.buffersize = writer.GetRAMBufferSizeMB();
             this.writer = writer;
             this.factory = factory;
             this.index = index;
             this.settings = settings ?? new DefaultLuceneWriteContextSettings();
-            writer.SetRAMBufferSizeMB(this.settings.BufferSize);
         }
 
         public Task Create(JObject entity)
@@ -168,7 +160,6 @@ namespace DotJEM.Json.Index
         public void Dispose()
         {
             writer.Commit();
-            writer.SetRAMBufferSizeMB(buffersize);
         }
 
         private Term CreateIdentityTerm(JObject entity)
@@ -301,8 +292,6 @@ namespace DotJEM.Json.Index
                 select InternalUpdateDocument(writer, term, document);
             int failed = executed.Sum();
         }
-
-
         public void Delete(JObject entity)
         {
             IndexWriter writer = index.Storage.Writer;
@@ -315,19 +304,14 @@ namespace DotJEM.Json.Index
             writer.DeleteDocuments(entities.Select(CreateIdentityTerm).Where(x => x != null).ToArray());
         }
 
-        public void Optimize()
-        {
-            index.Storage.Writer.Optimize();
-        }
-
         public void Commit()
         {
             index.Storage.Writer.Commit();
         }
 
-        public void Flush(bool triggerMerge = false, bool flushDocStores = false, bool flushDeletes = false)
+        public void Flush(bool triggerMerge = false, bool applyAllDeletes = false)
         {
-            index.Storage.Writer.Flush(triggerMerge, flushDocStores, flushDeletes);
+            index.Storage.Writer.Flush(triggerMerge, applyAllDeletes);
         }
 
 

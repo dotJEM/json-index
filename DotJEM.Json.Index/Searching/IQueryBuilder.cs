@@ -5,10 +5,10 @@ using System.Linq;
 using DotJEM.Json.Index.Schema;
 using Lucene.Net.Analysis.Standard;
 using Lucene.Net.QueryParsers;
+using Lucene.Net.QueryParsers.Classic;
 using Lucene.Net.Search;
 using Lucene.Net.Util;
 using Newtonsoft.Json.Linq;
-using Version = Lucene.Net.Util.Version;
 
 namespace DotJEM.Json.Index.Searching
 {
@@ -39,7 +39,7 @@ namespace DotJEM.Json.Index.Searching
         {
             MultiFieldQueryParser parser = new MultiFieldQueryParser(index, query);
             parser.AllowLeadingWildcard = true;
-            parser.DefaultOperator = QueryParser.Operator.AND;
+            parser.DefaultOperator = QueryParser.AND_OPERATOR;
             return DebugLog(parser.Parse(query));
         }
 

@@ -4,6 +4,7 @@ using System.Globalization;
 using DotJEM.Json.Index.Schema;
 using DotJEM.Json.Index.Searching;
 using Lucene.Net.QueryParsers;
+using Lucene.Net.QueryParsers.Classic;
 using Lucene.Net.Search;
 
 namespace DotJEM.Json.Index.Configuration.FieldStrategies.Querying
@@ -11,10 +12,11 @@ namespace DotJEM.Json.Index.Configuration.FieldStrategies.Querying
     public interface IFieldQueryBuilder
     {
         Query BuildFieldQuery(CallContext call, string query, int slop);
+        Query BuildFieldQuery(CallContext call, string query, bool quoted);
         Query BuildFuzzyQuery(CallContext call, string query, float similarity);
         Query BuildPrefixQuery(CallContext call, string query);
         Query BuildWildcardQuery(CallContext call, string query);
-        Query BuildRangeQuery(CallContext call, string part1, string part2, bool inclusive);
+        Query BuildRangeQuery(CallContext call, string part1, string part2, bool startInclusive, bool endInclusive);
     }
 
     public class FieldQueryBuilder : IFieldQueryBuilder
@@ -34,6 +36,11 @@ namespace DotJEM.Json.Index.Configuration.FieldStrategies.Querying
         {
             return call.CallDefault();
         }
+        
+        public virtual Query BuildFieldQuery(CallContext call, string query, bool quoted)
+        {
+            return call.CallDefault();
+        }
 
         public virtual Query BuildFuzzyQuery(CallContext call, string query, float similarity)
         {
@@ -50,7 +57,7 @@ namespace DotJEM.Json.Index.Configuration.FieldStrategies.Querying
             return call.CallDefault();
         }
         
-        public virtual Query BuildRangeQuery(CallContext call, string part1, string part2, bool inclusive)
+        public virtual Query BuildRangeQuery(CallContext call, string part1, string part2, bool startInclusive, bool endInclusive)
         {
             //TODO: Try parse and separate type generators.
             IList<BooleanClause> clauses = new List<BooleanClause>();
@@ -61,11 +68,11 @@ namespace DotJEM.Json.Index.Configuration.FieldStrategies.Querying
                 {
                     clauses.Add(
                         new BooleanClause(
-                            NumericRangeQuery.NewIntRange(Field,
-                                part1 == "null" ? (int?)null : int.Parse(part1),
-                                part2 == "null" ? (int?)null : int.Parse(part2),
-                                inclusive,
-                                inclusive), Occur.MUST));
+                            NumericRangeQuery.NewInt32Range(Field,
+                                part1 == null ? (int?)null : int.Parse(part1),
+                                part2 == null ? (int?)null : int.Parse(part2),
+                                startInclusive,
+                                endInclusive), Occur.MUST));
                 }
                 catch (FormatException ex)
                 {
@@ -78,7 +85,7 @@ namespace DotJEM.Json.Index.Configuration.FieldStrategies.Querying
             {
                 try
                 {
-                    clauses.Add(new BooleanClause(new DateRangeFieldQueryFactory().Create(Field, call, part1, part2, inclusive), 
+                    clauses.Add(new BooleanClause(new DateRangeFieldQueryFactory().Create(Field, call, part1, part2, startInclusive,endInclusive), 
                         Type == JsonSchemaExtendedType.Date ? Occur.MUST : Occur.SHOULD));
                 }
                 catch (FormatException ex)
@@ -96,11 +103,11 @@ namespace DotJEM.Json.Index.Configuration.FieldStrategies.Querying
                 {
                     clauses.Add(
                         new BooleanClause(
-                            NumericRangeQuery.NewLongRange(Field,
-                                part1 == "null" ? (long?)null : long.Parse(part1),
-                                part2 == "null" ? (long?)null : long.Parse(part2),
-                                inclusive,
-                                inclusive), Type == JsonSchemaExtendedType.Integer ? Occur.MUST : Occur.SHOULD));
+                            NumericRangeQuery.NewInt64Range(Field,
+                                part1 == null ? (long?)null : long.Parse(part1),
+                                part2 == null ? (long?)null : long.Parse(part2),
+                                startInclusive,
+                                endInclusive), Type == JsonSchemaExtendedType.Integer ? Occur.MUST : Occur.SHOULD));
                 }
                 catch (FormatException ex)
                 {

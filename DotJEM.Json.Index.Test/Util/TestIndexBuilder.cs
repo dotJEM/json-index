@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using Lucene.Net.Analysis;
+using Lucene.Net.Analysis.Core;
+using Lucene.Net.Util;
 using Newtonsoft.Json.Linq;
 
 namespace DotJEM.Json.Index.Test.Util
@@ -29,7 +31,7 @@ namespace DotJEM.Json.Index.Test.Util
 
         private readonly List<JObject> buffer = new List<JObject>();   
 
-        public TestIndexBuilder() : this(new LuceneStorageIndex(new LuceneMemmoryIndexStorage(new WhitespaceAnalyzer())))
+        public TestIndexBuilder() : this(new LuceneStorageIndex(new LuceneMemmoryIndexStorage(new WhitespaceAnalyzer(LuceneVersion.LUCENE_48))))
         {
         }
 

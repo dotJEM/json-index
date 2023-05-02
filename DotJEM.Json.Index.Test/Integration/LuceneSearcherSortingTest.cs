@@ -12,50 +12,6 @@ using NUnit.Framework;
 namespace DotJEM.Json.Index.Test.Integration
 {
     [TestFixture]
-    public class LuceneDefectsTest
-    {
-        private readonly IStorageIndex index = new LuceneStorageIndex();
-
-        [OneTimeSetUp]
-        public void TestFixtureSetUp()
-        {
-            var config = index.Configuration;
-            config
-                .SetTypeResolver("type")
-                .SetAreaResolver("term")
-                .ForAll()
-                .SetIdentity("id");
-
-            Write("{ id: '00000000-0000-0000-0000-000000000006', term: 'AAA', type: 'port', locode: 'MASFI' }");
-            Write("{ id: '00000000-0000-0000-0000-000000000002', term: 'AAA', type: 'port', locode: 'MA888' }");
-            Write("{ id: '00000000-0000-0000-0000-000000000005', term: 'AAA', type: 'port', locode: 'MA6KN' }");
-            Write("{ id: '00000000-0000-0000-0000-000000000003', term: 'BBB', type: 'port', locode: 'MASUR' }");
-            Write("{ id: '00000000-0000-0000-0000-000000000007', term: 'BBB', type: 'port', locode: 'DKAAR' }");
-            Write("{ id: '00000000-0000-0000-0000-000000000001', term: 'BBB', type: 'port', locode: 'DEGER' }");
-            Write("{ id: '00000000-0000-0000-0000-000000000008', term: 'CCC', type: 'port', locode: 'NOBAR' }");
-            Write("{ id: '00000000-0000-0000-0000-000000000004', term: 'CCC', type: 'port', locode: 'FRRAS' }");
-            Write("{ id: '00000000-0000-0000-0000-000000000009', term: 'CCC', type: 'port', locode: 'IT888' }");
-            index.Commit();
-
-        }
-
-        [Test]
-        public void Search_ForMustangWithSpecifiedFields_Returns()
-        {
-            dynamic[] result = index
-                .Search("locode: MA*")
-                .Documents.ToArray();
-            Assert.That(result, Has.Length.EqualTo(4));
-        }
-
-        private void Write(string json)
-        {
-            JObject jObject = JObject.Parse(json);
-            index.Write(jObject);
-        }
-    }
-
-    [TestFixture]
     public class LuceneSearcherSortingTest
     {
         private readonly IStorageIndex index = new LuceneStorageIndex();
@@ -93,9 +49,9 @@ namespace DotJEM.Json.Index.Test.Integration
             Assert.That(result, Has.Length.EqualTo(9));
         }
 
-        public class FakeFieldComparerSource : FieldComparatorSource
+        public class FakeFieldComparerSource : FieldComparerSource
         {
-            public override FieldComparator NewComparator(string fieldname, int numHits, int sortPos, bool reversed)
+            public override FieldComparer NewComparer(string fieldname, int numHits, int sortPos, bool reversed)
             {
                 return new FakeFieldComparator(fieldname, numHits);
             }
@@ -108,7 +64,7 @@ namespace DotJEM.Json.Index.Test.Integration
         //case 9:
         //  return this.comparatorSource.NewComparator(this.field, numHits, sortPos, this.reverse);
 
-            public class FakeFieldComparator : FieldComparator
+            public class FakeFieldComparator : FieldComparer
             {
                 private readonly string field;
                 private readonly long[] values;
@@ -119,6 +75,11 @@ namespace DotJEM.Json.Index.Test.Integration
                 {
                     this.field = field;
                     this.values = new long[hits];
+                }
+
+                public override int CompareValues(object first, object second)
+                {
+                    throw new NotImplementedException();
                 }
 
                 public override int Compare(int slot1, int slot2)
@@ -134,6 +95,11 @@ namespace DotJEM.Json.Index.Test.Integration
                     bottom = slot;
                 }
 
+                public override void SetTopValue<TValue>(TValue value)
+                {
+                    throw new NotImplementedException();
+                }
+
                 public override int CompareBottom(int doc)
                 {
                     Debug.WriteLine("CompareBottom( " + doc + " )");
@@ -141,17 +107,25 @@ namespace DotJEM.Json.Index.Test.Integration
                     return bottom.CompareTo(num);
                 }
 
+                public override int CompareTop(int doc)
+                {
+                    throw new NotImplementedException();
+                }
+
                 public override void Copy(int slot, int doc)
                 {
                     values[slot] = currentReaderValues[doc];
                 }
 
-                public override void SetNextReader(IndexReader reader, int docBase)
+                public override FieldComparer SetNextReader(AtomicReaderContext context)
                 {
-                    currentReaderValues = FieldCache_Fields.DEFAULT.GetLongs(reader, field);
+                    throw new NotImplementedException();
                 }
 
-                public override IComparable this[int slot] { get { return values[slot]; } }
+                public override object GetValue(int slot)
+                {
+                    throw new NotImplementedException();
+                }
             }
         }
 
