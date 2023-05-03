@@ -1,7 +1,7 @@
 using System;
 using System.Globalization;
 using DotJEM.Json.Index.Searching;
-using DotJEM.Json.Index.Util;
+using DotJEM.AdvParsers;
 using Lucene.Net.Search;
 
 namespace DotJEM.Json.Index.Configuration.FieldStrategies.Querying
@@ -23,22 +23,22 @@ namespace DotJEM.Json.Index.Configuration.FieldStrategies.Querying
                 return now.Date;
 
             if (value.StartsWith("+"))
-                return now.Add(AdvConvert.ConvertToTimeSpan(value.Substring(1)));
+                return now.Add(AdvParser.ParseTimeSpan(value.Substring(1)));
 
             if (value.StartsWith("-"))
-                return now.Subtract(AdvConvert.ConvertToTimeSpan(value.Substring(1)));
+                return now.Subtract(AdvParser.ParseTimeSpan(value.Substring(1)));
 
             if (value.StartsWith("NOW+", StringComparison.InvariantCultureIgnoreCase))
-                return now.Add(AdvConvert.ConvertToTimeSpan(value.Substring(4)));
+                return now.Add(AdvParser.ParseTimeSpan(value.Substring(4)));
 
             if (value.StartsWith("NOW-", StringComparison.InvariantCultureIgnoreCase))
-                return now.Subtract(AdvConvert.ConvertToTimeSpan(value.Substring(4)));
+                return now.Subtract(AdvParser.ParseTimeSpan(value.Substring(4)));
 
             if (value.StartsWith("TODAY+", StringComparison.InvariantCultureIgnoreCase))
-                return now.Date.Add(AdvConvert.ConvertToTimeSpan(value.Substring(6)));
+                return now.Date.Add(AdvParser.ParseTimeSpan(value.Substring(6)));
 
             if (value.StartsWith("TODAY-", StringComparison.InvariantCultureIgnoreCase))
-                return now.Date.Subtract(AdvConvert.ConvertToTimeSpan(value.Substring(6)));
+                return now.Date.Subtract(AdvParser.ParseTimeSpan(value.Substring(6)));
 
             return DateTime.Parse(value, CultureInfo.InvariantCulture);
         }

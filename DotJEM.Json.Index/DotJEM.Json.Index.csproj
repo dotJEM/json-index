@@ -41,6 +41,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="DotJEM.AdvParsers" Version="1.1.7" />
     <PackageReference Include="Lucene.Net" Version="4.8.0-beta00016" />
     <PackageReference Include="Lucene.Net.Queries" Version="4.8.0-beta00016" />
     <PackageReference Include="Lucene.Net.QueryParser" Version="4.8.0-beta00016" />

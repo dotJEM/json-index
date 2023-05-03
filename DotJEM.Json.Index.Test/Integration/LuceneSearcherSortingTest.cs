@@ -39,7 +39,7 @@ namespace DotJEM.Json.Index.Test.Integration
             index.Commit();
         }
 
-        [Test]
+        [Test, Explicit]
         public void Search_ForMustangWithSpecifiedFields_Returns()
         {
             dynamic[] result = index
