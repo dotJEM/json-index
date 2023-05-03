@@ -38,7 +38,7 @@ on_success:
 
 deploy:
   provider: NuGet
-  artifact: /DotJEM\.Json\.Index\.\d+\.\d+\.\d+\.*.nupkg/ 
+  artifact: /DotJEM\.Json\.Index\.\d+\.\d+\.\d+.*\.nupkg/ 
   api_key:
     secure: xjk5tz3Tcq/JnadrTWPZ2YOjggaN9yV7ulLn0+v7bqvukNNeO/TPCzamWxZOmax6
   on:
