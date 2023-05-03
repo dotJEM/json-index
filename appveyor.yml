@@ -1,10 +1,10 @@
-version: 2.0.{build}-Alfa.L48-01
+version: 2.0.{build}
 image: Visual Studio 2022
 
 configuration: Release
 
 init:
-- ps: Update-AppveyorBuild -Version "1.1.$env:appveyor_build_number+sha.$($env:appveyor_repo_commit.substring(0,7))"
+- ps: Update-AppveyorBuild -Version "2.0.$env:appveyor_build_number-Alfa.L48-01+sha.$($env:appveyor_repo_commit.substring(0,7))"
 
 nuget:
   disable_publish_on_pr: true
@@ -14,8 +14,8 @@ dotnet_csproj:
   file: '**\*.csproj'
   version: '{version}'
   package_version: '{version}'
-  assembly_version: '1.1.{build}.0'
-  file_version: '1.1.{build}.0'
+  assembly_version: '2.0.{build}.0'
+  file_version: '2.0.{build}.0'
   informational_version: '{version}'
 
 matrix:
